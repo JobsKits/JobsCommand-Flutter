@@ -93,7 +93,7 @@ resolve_flutter_root() {
 }
 
 install_homebrew() {
-  local arch="$(get_cpu_arch)"                    # 获取当前架构（arm64 或 x86_64）
+  local arch="$(get_cpu_arch)"                   # 获取当前架构（arm64 或 x86_64）
   local shell_path="${SHELL##*/}"                # 获取当前 shell 名称（如 zsh、bash）
   local profile_file=""
   local brew_bin=""
@@ -103,12 +103,14 @@ install_homebrew() {
     warn_echo "🧩 未检测到 Homebrew，正在安装中...（架构：$arch）"
 
     if [[ "$arch" == "arm64" ]]; then
+      # Apple Silicon 原生 Homebrew（/opt/homebrew）
       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || {
         error_echo "❌ Homebrew 安装失败（arm64）"
         exit 1
       }
       brew_bin="/opt/homebrew/bin/brew"
     else
+      # Intel 或在 Apple Silicon 下装一份 Intel 版 Homebrew（需要 Rosetta）
       arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || {
         error_echo "❌ Homebrew 安装失败（x86_64）"
         exit 1
@@ -120,19 +122,35 @@ install_homebrew() {
 
     # ==== 注入 shellenv 到对应配置文件（自动生效） ====
     shellenv_cmd="eval \"\$(${brew_bin} shellenv)\""
-
     case "$shell_path" in
       zsh)   profile_file="$HOME/.zprofile" ;;
       bash)  profile_file="$HOME/.bash_profile" ;;
       *)     profile_file="$HOME/.profile" ;;
     esac
-
     inject_shellenv_block "$profile_file" "$shellenv_cmd"
 
+    # 立刻对当前会话生效（不等重开终端）
+    eval "$(${brew_bin} shellenv)"
+
   else
-    info_echo "🔄 Homebrew 已安装，正在更新..."
-    brew update && brew upgrade && brew cleanup && brew doctor && brew -v
-    success_echo "✅ Homebrew 已更新"
+    info_echo "🔄 Homebrew 已安装。是否执行更新？"
+    echo "👉 按 [Enter] 继续：将依次执行  brew update && brew upgrade && brew cleanup && brew doctor && brew -v"
+    echo "👉 输入任意字符后回车：跳过更新"
+    # 仅当“直接回车”时继续；其他输入一律跳过
+    local confirm
+    IFS= read -r confirm
+    if [[ -z "$confirm" ]]; then
+      info_echo "⏳ 正在更新 Homebrew..."
+      # 分步执行，任一步失败立即报错退出，方便定位
+      brew update       || { error_echo "❌ brew update 失败"; return 1; }
+      brew upgrade      || { error_echo "❌ brew upgrade 失败"; return 1; }
+      brew cleanup      || { error_echo "❌ brew cleanup 失败"; return 1; }
+      brew doctor       || { warn_echo  "⚠️  brew doctor 有警告/错误，请按提示处理"; }
+      brew -v           || { warn_echo  "⚠️  打印 brew 版本失败（可忽略）"; }
+      success_echo "✅ Homebrew 已更新"
+    else
+      note_echo "⏭️ 已选择跳过 Homebrew 更新"
+    fi
   fi
 }
 
@@ -227,7 +245,7 @@ inject_shellenv_block() {
 
 # ✅ 安装 Homebrew（芯片架构兼容、含环境注入）
 install_homebrew() {
-  local arch="$(get_cpu_arch)"                    # 获取当前架构（arm64 或 x86_64）
+  local arch="$(get_cpu_arch)"                   # 获取当前架构（arm64 或 x86_64）
   local shell_path="${SHELL##*/}"                # 获取当前 shell 名称（如 zsh、bash）
   local profile_file=""
   local brew_bin=""
@@ -237,12 +255,14 @@ install_homebrew() {
     warn_echo "🧩 未检测到 Homebrew，正在安装中...（架构：$arch）"
 
     if [[ "$arch" == "arm64" ]]; then
+      # Apple Silicon 原生 Homebrew（/opt/homebrew）
       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || {
         error_echo "❌ Homebrew 安装失败（arm64）"
         exit 1
       }
       brew_bin="/opt/homebrew/bin/brew"
     else
+      # Intel 或在 Apple Silicon 下装一份 Intel 版 Homebrew（需要 Rosetta）
       arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || {
         error_echo "❌ Homebrew 安装失败（x86_64）"
         exit 1
@@ -254,19 +274,35 @@ install_homebrew() {
 
     # ==== 注入 shellenv 到对应配置文件（自动生效） ====
     shellenv_cmd="eval \"\$(${brew_bin} shellenv)\""
-
     case "$shell_path" in
       zsh)   profile_file="$HOME/.zprofile" ;;
       bash)  profile_file="$HOME/.bash_profile" ;;
       *)     profile_file="$HOME/.profile" ;;
     esac
-
     inject_shellenv_block "$profile_file" "$shellenv_cmd"
 
+    # 立刻对当前会话生效（不等重开终端）
+    eval "$(${brew_bin} shellenv)"
+
   else
-    info_echo "🔄 Homebrew 已安装，正在更新..."
-    brew update && brew upgrade && brew cleanup && brew doctor && brew -v
-    success_echo "✅ Homebrew 已更新"
+    info_echo "🔄 Homebrew 已安装。是否执行更新？"
+    echo "👉 按 [Enter] 继续：将依次执行  brew update && brew upgrade && brew cleanup && brew doctor && brew -v"
+    echo "👉 输入任意字符后回车：跳过更新"
+    # 仅当“直接回车”时继续；其他输入一律跳过
+    local confirm
+    IFS= read -r confirm
+    if [[ -z "$confirm" ]]; then
+      info_echo "⏳ 正在更新 Homebrew..."
+      # 分步执行，任一步失败立即报错退出，方便定位
+      brew update       || { error_echo "❌ brew update 失败"; return 1; }
+      brew upgrade      || { error_echo "❌ brew upgrade 失败"; return 1; }
+      brew cleanup      || { error_echo "❌ brew cleanup 失败"; return 1; }
+      brew doctor       || { warn_echo  "⚠️  brew doctor 有警告/错误，请按提示处理"; }
+      brew -v           || { warn_echo  "⚠️  打印 brew 版本失败（可忽略）"; }
+      success_echo "✅ Homebrew 已更新"
+    else
+      note_echo "⏭️ 已选择跳过 Homebrew 更新"
+    fi
   fi
 }
 
@@ -277,10 +313,26 @@ ensure_perl_installed() {
       error_echo "❌ Perl 安装失败，请检查网络或更换镜像"
       exit 1
     }
+    success_echo "✅ Perl 安装成功"
   else
-    info_echo "🔄 检测到 Perl，正在升级..."
-    brew upgrade perl
+    info_echo "🔄 检测到 Perl。是否执行升级？"
+    echo "👉 按 [Enter] 继续：将执行  brew upgrade perl && brew cleanup"
+    echo "👉 输入任意字符后回车：跳过升级"
+
+    local confirm
+    IFS= read -r confirm
+    if [[ -z "$confirm" ]]; then
+      info_echo "⏳ 正在升级 Perl..."
+      brew upgrade perl      || { error_echo "❌ Perl 升级失败"; return 1; }
+      brew cleanup           || { warn_echo "⚠️ brew cleanup 执行时有警告"; }
+      success_echo "✅ Perl 已升级到最新版本"
+    else
+      note_echo "⏭️ 已选择跳过 Perl 升级"
+    fi
   fi
+
+  # 🔍 打印版本并写入日志
+  perl -v | head -n 2 | tee -a "${LOG_FILE:-/tmp/install.log}"
 }
 
 ensure_uri_escape_installed() {
@@ -338,7 +390,7 @@ main() {
   check_flutter_project_root    # 🔍 检查并进入 Flutter 项目根目录
   detect_flutter_command        # 🧩 检测 Flutter 命令（fvm 或全局）
   install_homebrew              # 🍺 确保 Homebrew 已安装并更新
-  ensure_perl_installed         # 🐪 安装或升级 perl
+  ensure_perl_installed         # 🐪 安装或升级 Homebrew.perl
   ensure_uri_escape_installed   # 📦 安装 URI::Escape 模块
   replace_uri_imports           # 🔧 修复 import 中的中文 URI 编码路径
   ask_flutter_analyze           # 🔍 是否执行 flutter analyze 分析
