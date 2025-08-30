@@ -429,6 +429,30 @@ maybe_flutter_clean_and_get() {
   fi
 }
 
+# ✅ 在 Flutter 根目录下的 plugins/htprotect 执行 flutter pub get
+ensure_htprotect_pub_get() {
+  local plugin_dir="$flutter_root/plugins/htprotect"
+  if [[ ! -d "$plugin_dir" ]]; then
+    note_echo "⏭️ 未找到插件目录：$plugin_dir，跳过"
+    return 0
+  fi
+  if [[ ! -f "$plugin_dir/pubspec.yaml" ]]; then
+    warn_echo "⚠️ 插件目录存在，但缺少 pubspec.yaml：$plugin_dir，跳过"
+    return 0
+  fi
+
+  if confirm_step "在 plugins/htprotect 执行 flutter pub get"; then
+    pushd "$plugin_dir" >/dev/null || { error_echo "❌ 进入目录失败：$plugin_dir"; return 1; }
+    # 继承当前 JAVA_HOME 与 flutter_cmd（支持 FVM）
+    JAVA_HOME="$JAVA_HOME" PATH="$JAVA_HOME/bin:$PATH" "${flutter_cmd[@]}" pub get \
+      && success_echo "✅ plugins/htprotect 依赖拉取完成" \
+      || { error_echo "✖ plugins/htprotect pub get 失败"; popd >/dev/null; return 1; }
+    popd >/dev/null
+  else
+    note_echo "⏭️ 已选择跳过 plugins/htprotect 的 pub get"
+  fi
+}
+
 # ✅ 环境信息输出
 print_env_diagnostics() {
   local log_file="/tmp/flutter_build_log.txt"
@@ -507,6 +531,7 @@ main() {
     
     print_env_diagnostics                       # ✅ 第一阶段：环境信息检查
     maybe_flutter_clean_and_get                 # ✅ 第二阶段：flutter clean 与 pub get
+    ensure_htprotect_pub_get                    # ✅ 插件 htprotect 依赖拉取
     run_flutter_build                           # ✅ 第三阶段：执行构建
     
     open_output_folder                          # ✅ 打开构建产物目录
