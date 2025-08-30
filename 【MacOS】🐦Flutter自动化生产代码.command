@@ -111,7 +111,8 @@ main() {
   dart run build_runner build --delete-conflicting-outputs
   dart run build_runner watch --delete-conflicting-outputs
   # —— App Icon —— #
-  dart run run flutter_launcher_icons:main
+#  dart run run flutter_launcher_icons:main
+  flutter pub run flutter_launcher_icons:main
   # —— Splash —— #
   dart run flutter_native_splash:create
   # —— L10n（官方） —— #
