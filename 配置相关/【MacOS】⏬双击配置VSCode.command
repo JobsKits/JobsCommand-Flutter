@@ -99,9 +99,9 @@ print_readme() {
 ==================== VSCode 配置初始化脚本 ====================
 
 步骤：
-1) 若脚本目录下 .vscode 已存在且非空 -> 先备份打包（YYYYMMDD-HHMMSS）
-2) 在脚本目录下创建/使用 .vscode，并拉取：
-   https://github.com/JobsKits/VScodeConfigByFlutter
+1) 若脚本目录下 .vscode 已存在且非空 -> 先备份打包（YYYYMMDD-HHMMSS），随后删除旧 .vscode
+2) 在脚本目录下拉取仓库 https://github.com/JobsKits/VScodeConfigByFlutter
+   拉取到的文件夹会改名为 .vscode（即 .vscode 本身就是该仓库）
 3) 检测 VS Code 用户目录：
    ~/Library/Application Support/Code/User
    - 不存在：打开官网并循环等待你安装完成
@@ -121,21 +121,53 @@ EOF
 setup_project_vscode_dir() {
   local vscode_dir="$SCRIPT_DIR/.vscode"
   local repo="https://github.com/JobsKits/VScodeConfigByFlutter"
-  local dest="$vscode_dir/VScodeConfigByFlutter"
+  local clone_name="VScodeConfigByFlutter"
+  local clone_dir="$SCRIPT_DIR/$clone_name"
 
   info_echo "脚本目录：$SCRIPT_DIR"
 
+  # 确保在脚本目录执行（双击运行时，默认工作目录可能不是脚本所在目录）
+  cd "$SCRIPT_DIR"
+
+  # 1) 若已存在 .vscode：先备份（若非空）-> 再删除 .vscode
   if [[ -d "$vscode_dir" ]]; then
     success_echo "找到 .vscode：$vscode_dir"
     backup_vscode_dir_if_non_empty "$vscode_dir"
-  else
-    info_echo "未找到 .vscode，正在创建：$vscode_dir"
-    mkdir -p "$vscode_dir"
-    success_echo "创建完成：$vscode_dir"
+    info_echo "删除旧 .vscode：$vscode_dir"
+    rm -rf "$vscode_dir"
+    success_echo "已删除：$vscode_dir"
   fi
 
-  info_echo "在 .vscode 下拉取配置仓库..."
-  git_clone_or_pull "$repo" "$dest"
+  # 2) 避免残留同名 clone 目录导致 clone 失败（尽量安全处理：备份后移除）
+  if [[ -e "$clone_dir" ]]; then
+    local ts
+    ts="$(date +"%Y%m%d-%H%M%S")"
+    local conflict_dir="${SCRIPT_DIR}/${clone_name}_backup_${ts}"
+    local conflict_zip="${SCRIPT_DIR}/${clone_name}_backup_${ts}.zip"
+
+    warn_echo "发现残留目录：$clone_dir"
+    warn_echo "将先备份再移除，避免影响本次拉取..."
+
+    mv "$clone_dir" "$conflict_dir"
+
+    if ditto -c -k --sequesterRsrc --keepParent "$conflict_dir" "$conflict_zip"; then
+      success_echo "残留目录已备份：$conflict_zip"
+      rm -rf "$conflict_dir"
+    else
+      warn_echo "残留目录压缩失败：$conflict_zip"
+      warn_echo "已保留备份目录：$conflict_dir（请自行处理）"
+    fi
+  fi
+
+  # 3) 在脚本目录下拉取仓库（生成文件夹 VScodeConfigByFlutter）
+  info_echo "拉取仓库到当前目录：$repo"
+  git clone "$repo" "$clone_dir"
+  success_echo "拉取完成：$clone_dir"
+
+  # 4) 将拉取到的文件夹改名为 .vscode
+  info_echo "重命名为 .vscode"
+  mv "$clone_dir" "$vscode_dir"
+  success_echo "已生成：$vscode_dir"
 }
 
 # ================================== 3、配置 VS Code 用户核心目录 ==================================
