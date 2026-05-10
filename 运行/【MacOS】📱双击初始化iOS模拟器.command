@@ -82,6 +82,7 @@ install_homebrew() {
   local profile_file=""
   local brew_bin=""
   local shellenv_cmd=""
+  local user_input=""
 
   if ! command -v brew &>/dev/null; then
     warn_echo "🧩 未检测到 Homebrew，正在安装中...（架构：$arch）"
@@ -111,25 +112,49 @@ install_homebrew() {
       *)     profile_file="$HOME/.profile" ;;
     esac
 
-    inject_shellenv_block "$profile_file" "$shellenv_cmd"
+    PROFILE_FILE="$profile_file"
+    selected_envs=("homebrew_env")
+    inject_shellenv_block "homebrew_env" "$shellenv_cmd"
 
   else
-    info_echo "🔄 Homebrew 已安装，正在更新..."
-    brew update && brew upgrade && brew cleanup && brew doctor && brew -v
-    success_echo "✅ Homebrew 已更新"
+    echo ""
+    note_echo "📦 检测到 Homebrew 已安装"
+    gray_echo "直接回车：跳过更新"
+    gray_echo "输入任意字符后回车：执行更新升级"
+    read "?👉 是否更新 Homebrew：" user_input
+
+    if [[ -n "$user_input" ]]; then
+      info_echo "🔄 开始更新 Homebrew..."
+      brew update && brew upgrade && brew cleanup && brew doctor && brew -v
+      success_echo "✅ Homebrew 已更新"
+    else
+      warn_echo "⏭️ 已跳过 Homebrew 更新"
+    fi
   fi
 }
 
 # ✅ 自检安装 Homebrew.fzf
 install_fzf() {
+  local user_input=""
+
   if ! command -v fzf &>/dev/null; then
     note_echo "📦 未检测到 fzf，正在通过 Homebrew 安装..."
     brew install fzf || { error_echo "❌ fzf 安装失败"; exit 1; }
     success_echo "✅ fzf 安装成功"
   else
-    info_echo "🔄 fzf 已安装，升级中..."
-    brew upgrade fzf && brew cleanup
-    success_echo "✅ fzf 已是最新版"
+    echo ""
+    note_echo "📦 检测到 fzf 已安装"
+    gray_echo "直接回车：跳过更新"
+    gray_echo "输入任意字符后回车：执行更新升级"
+    read "?👉 是否更新 fzf：" user_input
+
+    if [[ -n "$user_input" ]]; then
+      info_echo "🔄 开始升级 fzf..."
+      brew upgrade fzf && brew cleanup
+      success_echo "✅ fzf 已是最新版"
+    else
+      warn_echo "⏭️ 已跳过 fzf 更新"
+    fi
   fi
 }
 
