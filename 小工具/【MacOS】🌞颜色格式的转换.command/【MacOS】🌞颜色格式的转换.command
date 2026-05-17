@@ -1,15 +1,17 @@
 #!/bin/zsh
-# =====================================================================
-# Jobs 标准化脚本外壳
-# 说明：保留原脚本业务逻辑，补齐 README 防误触、彩色日志、zsh 入口、Homebrew 健康自检标准。
-# =====================================================================
 
+set -o pipefail
+setopt NO_NOMATCH
+
+# ---------- 基础路径 ----------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
 SCRIPT_PATH="${SCRIPT_DIR}/$(basename -- "$0")"
-SCRIPT_BASENAME="$(basename "$0" | sed 's/\.[^.]*$//')"
+SCRIPT_BASENAME=$(basename "$0" | sed 's/\.[^.]*$//')
 LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"
+
 : > "$LOG_FILE"
 
+# ---------- 彩色日志 ----------
 log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
 color_echo()     { log "\033[1;32m$1\033[0m"; }
 info_echo()      { log "\033[1;34mℹ $1\033[0m"; }
@@ -25,342 +27,458 @@ gray_echo()      { log "\033[0;90m$1\033[0m"; }
 bold_echo()      { log "\033[1m$1\033[0m"; }
 underline_echo() { log "\033[4m$1\033[0m"; }
 
-# ============================= 标准工具函数 =============================
-get_cpu_arch() {
-  [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
+# ---------- 内置自述 ----------
+jobs_cor_show_readme_and_wait() {
+  clear 2>/dev/null || true
+  cat <<'EOFREADME' | tee -a "$LOG_FILE"
+============================================================
+cor - 颜色转换 / 终端色块预览
+============================================================
+
+功能：
+  转换 HEX / RGB / RGBA / 0xAARRGGBB，并在 macOS 终端直接显示色块。
+
+支持输入：
+  #D2D4DE
+  D2D4DE
+  #D2D4DE80
+  D2D4DE80
+  #ABC
+  #ABCF
+  rgb(210,212,222)
+  rgba(210,212,222,0.5)
+  0x80D2D4DE       按 0xAARRGGBB 解析
+  0xD2D4DE         按 0xRRGGBB 解析
+
+说明：
+  - macOS Terminal.app / iTerm2 / VS Code 终端默认使用 24-bit True Color 预览。
+  - 透明度无法由终端背景色真实呈现；色块预览按 RGB 原色显示，Alpha 只参与格式转换。
+  - 日志路径：/tmp/cor.log
+============================================================
+EOFREADME
+
+  if [[ -t 0 && "${JOBS_MAC_ENV_SKIP_README:-}" != "1" ]]; then
+    log ""
+    warm_echo "按回车继续执行 cor..."
+    local _answer=""
+    IFS= read -r _answer
+  fi
 }
 
-abs_path() {
-  local p="$1"
-  [[ -z "$p" ]] && return 1
-  p="${p//\"/}"
-  [[ "$p" != "/" ]] && p="${p%/}"
-  if [[ -d "$p" ]]; then
-    (cd "$p" 2>/dev/null && pwd -P)
-  elif [[ -f "$p" ]]; then
-    (cd "${p:h}" 2>/dev/null && printf "%s/%s\n" "$(pwd -P)" "${p:t}")
+# ---------- 基础工具 ----------
+jobs_cor_supports_truecolor() {
+  emulate -L zsh
+
+  # macOS 自带 Terminal.app 常常不设置 COLORTERM，但支持 24-bit ANSI True Color。
+  [[ "${COLORTERM:-}" == *truecolor* ]] && return 0
+  [[ "${COLORTERM:-}" == *24bit* ]] && return 0
+  [[ "${TERM_PROGRAM:-}" == "Apple_Terminal" ]] && return 0
+  [[ "${TERM_PROGRAM:-}" == "iTerm.app" ]] && return 0
+  [[ "${TERM_PROGRAM:-}" == "vscode" ]] && return 0
+  [[ "${TERM_PROGRAM:-}" == "WezTerm" ]] && return 0
+  [[ "${TERM:-}" == *truecolor* ]] && return 0
+  [[ "${TERM:-}" == *24bit* ]] && return 0
+
+  return 1
+}
+
+jobs_cor_title_color() {
+  emulate -L zsh
+
+  local esc=$'\033'
+  if jobs_cor_supports_truecolor; then
+    printf "%s" "${esc}[38;2;210;212;222m"
   else
-    return 1
+    printf "%s" "${esc}[37m"
   fi
 }
 
-ask_run() {
-  echo ""
-  note_echo "👉 $1"
-  gray_echo "【回车=跳过，输入任意字符后回车=执行】"
-  local input=""
-  IFS= read -r "input?➤ "
-  [[ -n "$input" ]]
+jobs_cor_to_hex() {
+  emulate -L zsh
+  printf "%02X" "$1"
 }
 
-confirm_yes() {
-  echo ""
-  warn_echo "⚠ $1"
-  gray_echo "危险操作必须输入 YES 后回车；其它输入一律取消。"
-  local input=""
-  IFS= read -r "input?➤ "
-  [[ "$input" == "YES" ]]
+jobs_cor_hex_to_dec() {
+  emulate -L zsh
+  printf "%d" "$(( 16#$1 ))"
 }
 
-inject_shellenv_block() {
-  local profile_file="$1"
-  local shellenv_cmd="$2"
-  local header="# >>> Homebrew 环境变量 >>>"
-  [[ -z "$profile_file" || -z "$shellenv_cmd" ]] && { error_echo "缺少参数：inject_shellenv_block <profile_file> <shellenv_cmd>"; return 1; }
-  mkdir -p "$(dirname "$profile_file")"
-  touch "$profile_file"
-  if grep -Fq "$shellenv_cmd" "$profile_file" 2>/dev/null; then
-    info_echo "已存在 Homebrew shellenv：$profile_file"
-  elif grep -Fq "$header" "$profile_file" 2>/dev/null; then
-    info_echo "已存在 Homebrew 环境变量块：$profile_file"
+jobs_cor_is_hex() {
+  emulate -L zsh
+  [[ "$1" =~ '^[0-9a-fA-F]+$' ]]
+}
+
+jobs_cor_expand_short_hex() {
+  emulate -L zsh
+
+  local hex="$1" out="" i c
+  for (( i = 1; i <= ${#hex}; i++ )); do
+    c="${hex[i]}"
+    out+="${c}${c}"
+  done
+  print -r -- "$out"
+}
+
+jobs_cor_alpha_float_to_255() {
+  emulate -L zsh
+  awk -v v="$1" 'BEGIN { if (v < 0) v = 0; if (v > 1) v = 1; printf("%d", (v * 255) + 0.5) }'
+}
+
+jobs_cor_alpha_255_to_float() {
+  emulate -L zsh
+  awk -v v="$1" 'BEGIN { printf("%.2f", v / 255) }'
+}
+
+jobs_cor_clamp_alpha_float() {
+  emulate -L zsh
+  awk -v v="$1" 'BEGIN { if (v < 0) v = 0; if (v > 1) v = 1; printf("%.2f", v) }'
+}
+
+jobs_cor_sanitize_input() {
+  emulate -L zsh
+  print -r -- "$1" | tr -d '[:space:]' | tr -d '"' | tr -d "'"
+}
+
+jobs_cor_upper_hex() {
+  emulate -L zsh
+  print -r -- "$1" | tr '[:lower:]' '[:upper:]'
+}
+
+jobs_cor_rel_luma() {
+  emulate -L zsh
+  awk -v r="$1" -v g="$2" -v b="$3" 'BEGIN { printf("%.0f", 0.2126 * r + 0.7152 * g + 0.0722 * b) }'
+}
+
+jobs_cor_pick_fg_rgb() {
+  emulate -L zsh
+
+  local l
+  l="$(jobs_cor_rel_luma "$1" "$2" "$3")"
+  if (( l > 186 )); then
+    print -r -- "0;0;0"
   else
-    {
-      echo ""
-      echo "$header"
-      echo "$shellenv_cmd"
-    } >> "$profile_file"
-    success_echo "已写入 Homebrew shellenv：$profile_file"
+    print -r -- "255;255;255"
   fi
-  eval "$shellenv_cmd" || true
 }
 
-activate_homebrew_shellenv() {
-  local arch="$(get_cpu_arch)"
-  local brew_bin=""
-  if command -v brew >/dev/null 2>&1; then
-    brew_bin="$(command -v brew)"
-  elif [[ "$arch" == "arm64" && -x "/opt/homebrew/bin/brew" ]]; then
-    brew_bin="/opt/homebrew/bin/brew"
-  elif [[ -x "/usr/local/bin/brew" ]]; then
-    brew_bin="/usr/local/bin/brew"
-  fi
-  [[ -z "$brew_bin" ]] && return 1
+jobs_cor_pick_fg_code() {
+  emulate -L zsh
 
-  local shell_name="${SHELL##*/}"
-  local profile_file=""
-  case "$shell_name" in
-    zsh)  profile_file="$HOME/.zprofile" ;;
-    bash) profile_file="$HOME/.bash_profile" ;;
-    *)    profile_file="$HOME/.profile" ;;
+  local l
+  l="$(jobs_cor_rel_luma "$1" "$2" "$3")"
+  if (( l > 186 )); then
+    print -r -- "30"
+  else
+    print -r -- "97"
+  fi
+}
+
+jobs_cor_rgb_to_ansi256() {
+  emulate -L zsh
+
+  local r="$1" g="$2" b="$3"
+  if (( r == g && g == b )); then
+    if (( r < 8 )); then
+      print -r -- 16
+      return 0
+    elif (( r > 248 )); then
+      print -r -- 231
+      return 0
+    else
+      print -r -- $(( 232 + ((r - 8) * 24 / 247) ))
+      return 0
+    fi
+  fi
+
+  local rc=$(( r * 5 / 255 ))
+  local gc=$(( g * 5 / 255 ))
+  local bc=$(( b * 5 / 255 ))
+  print -r -- $(( 16 + 36 * rc + 6 * gc + bc ))
+}
+
+jobs_cor_set_globals_from_hex() {
+  emulate -L zsh
+
+  local hex="$1" mode="${2:-RRGGBB_OR_RRGGBBAA}" rr gg bb aa
+  hex="$(jobs_cor_upper_hex "$hex")"
+
+  case "$mode" in
+    AARRGGBB)
+      (( ${#hex} == 8 )) || return 1
+      aa="${hex[1,2]}"
+      rr="${hex[3,4]}"
+      gg="${hex[5,6]}"
+      bb="${hex[7,8]}"
+      ;;
+    RRGGBB)
+      (( ${#hex} == 6 )) || return 1
+      rr="${hex[1,2]}"
+      gg="${hex[3,4]}"
+      bb="${hex[5,6]}"
+      aa="FF"
+      ;;
+    *)
+      case "${#hex}" in
+        3|4)
+          hex="$(jobs_cor_expand_short_hex "$hex")"
+          ;;
+      esac
+
+      case "${#hex}" in
+        6)
+          rr="${hex[1,2]}"
+          gg="${hex[3,4]}"
+          bb="${hex[5,6]}"
+          aa="FF"
+          ;;
+        8)
+          rr="${hex[1,2]}"
+          gg="${hex[3,4]}"
+          bb="${hex[5,6]}"
+          aa="${hex[7,8]}"
+          ;;
+        *)
+          return 1
+          ;;
+      esac
+      ;;
   esac
-  inject_shellenv_block "$profile_file" "eval \"\$(${brew_bin} shellenv)\""
-  eval "$(${brew_bin} shellenv)"
+
+  typeset -g JOBS_COR_R="$(jobs_cor_hex_to_dec "$rr")"
+  typeset -g JOBS_COR_G="$(jobs_cor_hex_to_dec "$gg")"
+  typeset -g JOBS_COR_B="$(jobs_cor_hex_to_dec "$bb")"
+  typeset -g JOBS_COR_AA_HEX="$aa"
+  typeset -g JOBS_COR_A_FLOAT="$(jobs_cor_alpha_255_to_float "$(jobs_cor_hex_to_dec "$aa")")"
+  return 0
 }
 
-run_brew_health_update() {
-  info_echo "正在执行 Homebrew 健康更新..."
-  brew update  || { error_echo "brew update 失败"; return 1; }
-  brew upgrade || { error_echo "brew upgrade 失败"; return 1; }
-  brew cleanup || { error_echo "brew cleanup 失败"; return 1; }
-  brew doctor  || warn_echo "brew doctor 有警告，请按输出处理"
-  brew -v      || warn_echo "打印 brew 版本失败，可忽略"
-  success_echo "Homebrew 健康更新完成"
-}
+# ---------- 色块输出 ----------
+jobs_cor_show_block_line() {
+  emulate -L zsh
 
-install_homebrew() {
-  local arch="$(get_cpu_arch)"
-  local brew_bin=""
+  local rr="$1" gg="$2" bb="$3" label="$4" fg_rgb fg_code idx
 
-  if ! command -v brew >/dev/null 2>&1 && [[ ! -x "/opt/homebrew/bin/brew" && ! -x "/usr/local/bin/brew" ]]; then
-    warn_echo "未检测到 Homebrew，准备按架构安装：$arch"
-    if [[ "$arch" == "arm64" ]]; then
-      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || { error_echo "Homebrew 安装失败（arm64）"; return 1; }
-      brew_bin="/opt/homebrew/bin/brew"
-    else
-      arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || { error_echo "Homebrew 安装失败（x86_64）"; return 1; }
-      brew_bin="/usr/local/bin/brew"
-    fi
-    success_echo "Homebrew 安装完成"
-    activate_homebrew_shellenv || true
-    return 0
-  fi
-
-  activate_homebrew_shellenv || true
-  info_echo "Homebrew 已安装。"
-  if ask_run "是否执行 Homebrew 更新 / 升级 / 清理 / doctor？"; then
-    run_brew_health_update
+  if jobs_cor_supports_truecolor; then
+    fg_rgb="$(jobs_cor_pick_fg_rgb "$rr" "$gg" "$bb")"
+    printf "\033[48;2;%d;%d;%dm" "$rr" "$gg" "$bb"
+    printf "\033[38;2;%sm" "$fg_rgb"
   else
-    note_echo "已跳过 Homebrew 更新"
+    idx="$(jobs_cor_rgb_to_ansi256 "$rr" "$gg" "$bb")"
+    fg_code="$(jobs_cor_pick_fg_code "$rr" "$gg" "$bb")"
+    printf "\033[48;5;%sm" "$idx"
+    printf "\033[%sm" "$fg_code"
   fi
+
+  printf "  %-30s  " "$label"
+  printf "\033[0m\n"
 }
 
-brew_install_or_upgrade() {
-  local formula="$1"
-  [[ -z "$formula" ]] && return 1
-  install_homebrew || return 1
-  if ! brew list --formula "$formula" >/dev/null 2>&1 && ! command -v "$formula" >/dev/null 2>&1; then
-    note_echo "未检测到 $formula，正在安装..."
-    brew install "$formula" || { error_echo "$formula 安装失败"; return 1; }
-    success_echo "$formula 安装完成"
+jobs_cor_show_block() {
+  emulate -L zsh
+
+  local rr="$1" gg="$2" bb="$3" hex="$4"
+  printf "\n"
+  jobs_cor_show_block_line "$rr" "$gg" "$bb" "${hex}"
+  jobs_cor_show_block_line "$rr" "$gg" "$bb" "RGB ${rr}, ${gg}, ${bb}"
+  jobs_cor_show_block_line "$rr" "$gg" "$bb" "终端色块预览"
+  printf "\n"
+  if jobs_cor_supports_truecolor; then
+    printf "前景色预览：\033[38;2;%d;%d;%dm%s\033[0m\n" "$rr" "$gg" "$bb" "${hex} 文字颜色"
   else
-    info_echo "$formula 已安装。"
-    if ask_run "是否升级 $formula？"; then
-      brew upgrade "$formula" || warn_echo "$formula 可能已是最新或升级失败，请检查输出"
-      brew cleanup || true
-    else
-      note_echo "已跳过 $formula 升级"
-    fi
+    local idx
+    idx="$(jobs_cor_rgb_to_ansi256 "$rr" "$gg" "$bb")"
+    printf "前景色预览：\033[38;5;%sm%s\033[0m\n" "$idx" "${hex} 文字颜色"
   fi
 }
 
-show_readme_and_wait() {
-  clear
-  local readme_path="${SCRIPT_DIR}/README.md"
-  if [[ -f "$readme_path" ]]; then
-    highlight_echo "正在显示脚本自述文件：$readme_path"
-    echo ""
-    cat "$readme_path" | tee -a "$LOG_FILE"
-  else
-    warn_echo "未找到 README.md：$readme_path"
-  fi
-  echo ""
-  read "?👉 请先阅读上面的自述文件，按回车继续执行，或按 Ctrl+C 取消..."
-}
+# ---------- 解析输入 ----------
+jobs_cor_parse_rgb_parts() {
+  emulate -L zsh
 
-run_original_logic() {
-  # ============================= 原脚本业务逻辑区 =============================
-  # ================================== 自述 ==================================
-  # 名称：万能颜色格式转换器（纯 Shell）
-  # 功能：在 #RRGGBB / #RRGGBBAA / rgb() / rgba() / 0xAARRGGBB 之间互转 + 终端色块预览
-  # 输出：#RRGGBB、#RRGGBBAA、rgb()、rgba()、0xAARRGGBB，并显示“原色”色块（不做叠白/叠黑）
-  # 交互：
-  #   - 无参数 → 进入交互模式（可多次输入，q 退出）
-  #   - 有参数 → 逐个批量转换并输出
-  # 依赖：bash/zsh + awk/sed/printf（无第三方）
-  # =========================================================================
+  local body="$1" R G B A A255
+  local -a parts
+  parts=("${(@s:,:)body}")
 
-  # ================================== 全局配置 ==================================
-  # 标题颜色: #D2D4DE (210,212,222)
-  TITLE_R=210; TITLE_G=212; TITLE_B=222
-  ESC=$'\033'
-  RESET="${ESC}[0m"
-  TITLE_FG_TRUECOLOR="${ESC}[38;2;${TITLE_R};${TITLE_G};${TITLE_B}m"
-  TITLE_FG_FALLBACK="${ESC}[37m"
+  R="${parts[1]:-}"
+  G="${parts[2]:-}"
+  B="${parts[3]:-}"
+  A="${parts[4]:-1}"
 
-  supports_truecolor() {
-    [[ "${COLORTERM:-}" == *truecolor* || "${COLORTERM:-}" == *24bit* ]]
-  }
+  [[ -n "$R" && -n "$G" && -n "$B" ]] || return 1
+  (( ${#parts} == 3 || ${#parts} == 4 )) || return 1
 
-  TITLE_COLOR() {
-    if supports_truecolor; then printf "%s" "$TITLE_FG_TRUECOLOR"; else printf "%s" "$TITLE_FG_FALLBACK"; fi
-  }
+  R="${R%%.*}"
+  G="${G%%.*}"
+  B="${B%%.*}"
 
-  # ================================== 基础工具函数 ==================================
-  to_hex() { printf "%02X" "$1"; }
-  alpha_float_to_255() { awk 'BEGIN{v='"$1"'; if(v<0)v=0;if(v>1)v=1; printf("%d",(v*255)+0.5)}'; }
-  alpha_255_to_float() { awk 'BEGIN{printf("%.2f",'"$1"'/255)}'; }
-  sanitize_input() { echo "$1" | tr -d '[:space:]' | tr -d '"' | tr -d "'"; }
-  upper_hex() { echo "$1" | tr '[:lower:]' '[:upper:]'; }
-
-  # 亮度（用于选择黑/白前景）
-  rel_luma() { awk 'BEGIN{r='"$1"';g='"$2"';b='"$3"'; printf("%.0f",0.2126*r+0.7152*g+0.0722*b)}'; }
-  pick_fg_code() { local l; l=$(rel_luma "$1" "$2" "$3"); if (( l > 186 )); then echo "30"; else echo "97"; fi; }
-
-  # xterm-256 背景色计算（TrueColor 不可用时退化）
-  rgb_to_ansi256() {
-    local r=$1 g=$2 b=$3
-    if (( r==g && g==b )); then
-      if   (( r < 8 ));   then echo 16;  return
-      elif (( r > 248 )); then echo 231; return
-      else echo $(( 232 + ( (r-8) * 24 / 247 ) )); return
-      fi
-    fi
-    local rc=$(( (r * 5) / 255 ))
-    local gc=$(( (g * 5) / 255 ))
-    local bc=$(( (b * 5) / 255 ))
-    echo $(( 16 + 36*rc + 6*gc + bc ))
-  }
-
-  # 色块输出
-  show_block() {
-    local rr=$1 gg=$2 bb=$3 label=$4
-    local fg; fg=$(pick_fg_code "$rr" "$gg" "$bb")
-    if supports_truecolor; then
-      printf "\e[48;2;%d;%d;%dm" "$rr" "$gg" "$bb"
-    else
-      local idx; idx=$(rgb_to_ansi256 "$rr" "$gg" "$bb")
-      printf "\e[48;5;%sm" "$idx"
-    fi
-    printf "\e[%sm" "$fg"
-    printf "  %-18s  " "$label"
-    printf "\e[0m"
-  }
-
-  # ================================== 解析输入为 RGBA =============================
-  parse_input() {
-    local raw="$1" input
-    input=$(sanitize_input "$raw")
-
-    if [[ "$input" =~ ^0x[0-9a-fA-F]{8}$ ]]; then
-      local hex="${input:2}"; hex=$(upper_hex "$hex")
-      local aa=${hex:0:2} rr=${hex:2:2} gg=${hex:4:2} bb=${hex:6:2}
-      r=$((16#$rr)); g=$((16#$gg)); b=$((16#$bb))
-      aa_hex="$aa"; a_float=$(alpha_255_to_float $((16#$aa))); return 0
-    fi
-    if [[ "$input" =~ ^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$ ]]; then
-      local hex="${input:1}"; hex=$(upper_hex "$hex")
-      local rr=${hex:0:2} gg=${hex:2:2} bb=${hex:4:2}
-      r=$((16#$rr)); g=$((16#$gg)); b=$((16#$bb))
-      if [[ ${#hex} -eq 8 ]]; then
-        aa_hex=${hex:6:2}; a_float=$(alpha_255_to_float $((16#$aa_hex)))
-      else
-        aa_hex="FF"; a_float="1.00"
-      fi; return 0
-    fi
-    if [[ "$input" =~ ^rgba?\( ]]; then
-      local nums; nums=$(echo "$input" | sed -E 's/^rgba?\(|\)//g')
-      IFS=',' read -r R G B A <<<"$nums"
-      r=${R%%.*}; g=${G%%.*}; b=${B%%.*}
-      [[ -z "$A" ]] && A="1"
-      a_float=$(awk 'BEGIN{printf("%.2f",'"$A"')}')
-      local A255; A255=$(alpha_float_to_255 "$a_float")
-      aa_hex=$(to_hex "$A255"); return 0
-    fi
+  if ! [[ "$R" =~ '^[0-9]+$' && "$G" =~ '^[0-9]+$' && "$B" =~ '^[0-9]+$' ]]; then
     return 1
-  }
+  fi
 
-  # ================================== 格式化输出（含色块） ========================
-  format_and_print_all() {
-    local RR=$(to_hex "$r") GG=$(to_hex "$g") BB=$(to_hex "$b") AA="$aa_hex"
-    echo
-    echo -e "${ESC}[1m输入：$user_input${RESET}"
-    echo "----------------------------------------"
-    echo "HEX（不透明）:  #${RR}${GG}${BB}"
-    echo "HEX（含透明） :  #${RR}${GG}${BB}${AA}"
-    echo "RGB           :  rgb(${r}, ${g}, ${b})"
-    echo "RGBA          :  rgba(${r}, ${g}, ${b}, $(printf '%.2f' "$a_float"))"
-    echo "0x 格式       :  0x${AA}${RR}${GG}${BB}"
-    show_block "$r" "$g" "$b" "原色 #${RR}${GG}${BB}"
-    echo; echo
-  }
+  if (( R < 0 || R > 255 || G < 0 || G > 255 || B < 0 || B > 255 )); then
+    return 1
+  fi
 
-  # ================================== UI & 交互 ==================================
-  print_title() {
-    local c; c="$(TITLE_COLOR)"
-    echo -e "${c}================== 颜色格式转换器 ==================${RESET}"
-    echo -e "${c}支持：#RRGGBB / #RRGGBBAA / rgb() / rgba() / 0xAARRGGBB${RESET}"
-    echo -e "${c}标题使用颜色：#D2D4DE（210,212,222）${RESET}"
-    echo -e "${c}在线取色器：https://photokit.com/colors/color-picker/?lang=zh${RESET}"
-    echo
-  }
+  if ! [[ "$A" =~ '^([0-9]+([.][0-9]+)?|[.][0-9]+)$' ]]; then
+    return 1
+  fi
 
-  preface_and_wait() {
-    print_title
-    echo "自述："
-    echo " - 纯 Shell 实现，不依赖第三方。"
-    echo " - 输出包含 HEX、RGBA、以及 0xAARRGGBB（Flutter/Dart 常用）。"
-    echo " - 无参进入交互模式，输入 q 退出。"
-    echo
-    printf "按回车开始执行..."
-    IFS= read -r _
-  }
+  typeset -g JOBS_COR_R="$R"
+  typeset -g JOBS_COR_G="$G"
+  typeset -g JOBS_COR_B="$B"
+  typeset -g JOBS_COR_A_FLOAT="$(jobs_cor_clamp_alpha_float "$A")"
+  A255="$(jobs_cor_alpha_float_to_255 "$JOBS_COR_A_FLOAT")"
+  typeset -g JOBS_COR_AA_HEX="$(jobs_cor_to_hex "$A255")"
+  return 0
+}
 
-  interactive_loop() {
-    while true; do
-      echo
-      printf "请输入颜色值（q 退出）： "
-      IFS= read -r user_input
-      [[ -z "$user_input" ]] && continue
-      [[ "$user_input" == [Qq] ]] && { echo "✅ 已退出"; break; }
-      if parse_input "$user_input"; then
-        format_and_print_all
-      else
-        echo "❌ 无法识别：$user_input"
-        echo "示例：#D2D4DE、#D2D4DE80、rgb(210,212,222)、rgba(210,212,222,0.5)、0x80D2D4DE"
-      fi
+jobs_cor_parse_input() {
+  emulate -L zsh
+
+  local raw="$1" input hex body
+  input="$(jobs_cor_sanitize_input "$raw")"
+  [[ -n "$input" ]] || return 1
+
+  # 0xAARRGGBB / 0xRRGGBB
+  if [[ "$input" =~ '^0[xX][0-9a-fA-F]{6}$' ]]; then
+    hex="${input[3,-1]}"
+    jobs_cor_set_globals_from_hex "$hex" "RRGGBB"
+    return $?
+  fi
+
+  if [[ "$input" =~ '^0[xX][0-9a-fA-F]{8}$' ]]; then
+    hex="${input[3,-1]}"
+    jobs_cor_set_globals_from_hex "$hex" "AARRGGBB"
+    return $?
+  fi
+
+  # #RGB / #RGBA / #RRGGBB / #RRGGBBAA
+  if [[ "$input" == \#* ]]; then
+    hex="${input[2,-1]}"
+    jobs_cor_is_hex "$hex" || return 1
+    jobs_cor_set_globals_from_hex "$hex"
+    return $?
+  fi
+
+  # 裸 HEX：RGB / RGBA / RRGGBB / RRGGBBAA
+  if jobs_cor_is_hex "$input"; then
+    jobs_cor_set_globals_from_hex "$input"
+    return $?
+  fi
+
+  # rgb(...) / rgba(...)
+  if [[ "$input" =~ '^rgb\(.+\)$' ]]; then
+    body="$(print -r -- "$input" | sed -E 's/^rgb\((.*)\)$/\1/')"
+    jobs_cor_parse_rgb_parts "$body"
+    return $?
+  fi
+
+  if [[ "$input" =~ '^rgba\(.+\)$' ]]; then
+    body="$(print -r -- "$input" | sed -E 's/^rgba\((.*)\)$/\1/')"
+    jobs_cor_parse_rgb_parts "$body"
+    return $?
+  fi
+
+  return 1
+}
+
+# ---------- 输出 ----------
+jobs_cor_format_and_print_all() {
+  emulate -L zsh
+
+  local raw="$1" RR GG BB AA HEX6 HEX8
+  RR="$(jobs_cor_to_hex "$JOBS_COR_R")"
+  GG="$(jobs_cor_to_hex "$JOBS_COR_G")"
+  BB="$(jobs_cor_to_hex "$JOBS_COR_B")"
+  AA="$JOBS_COR_AA_HEX"
+  HEX6="#${RR}${GG}${BB}"
+  HEX8="#${RR}${GG}${BB}${AA}"
+
+  printf "\n\033[1m输入：%s\033[0m\n" "$raw"
+  printf "%s\n" "----------------------------------------"
+  printf "HEX（不透明）:  %s\n" "$HEX6"
+  printf "HEX（含透明） :  %s\n" "$HEX8"
+  printf "RGB           :  rgb(%d, %d, %d)\n" "$JOBS_COR_R" "$JOBS_COR_G" "$JOBS_COR_B"
+  printf "RGBA          :  rgba(%d, %d, %d, %.2f)\n" "$JOBS_COR_R" "$JOBS_COR_G" "$JOBS_COR_B" "$JOBS_COR_A_FLOAT"
+  printf "0xAARRGGBB    :  0x%s%s%s%s\n" "$AA" "$RR" "$GG" "$BB"
+  if jobs_cor_supports_truecolor; then
+    printf "终端支持      :  24-bit True Color\n"
+  else
+    printf "终端支持      :  ANSI 256 色近似\n"
+  fi
+  jobs_cor_show_block "$JOBS_COR_R" "$JOBS_COR_G" "$JOBS_COR_B" "$HEX6"
+  printf "\n"
+}
+
+jobs_cor_print_title() {
+  emulate -L zsh
+
+  local c reset=$'\033[0m'
+  c="$(jobs_cor_title_color)"
+  printf "%b================== 颜色格式转换器 ==================%b\n" "$c" "$reset"
+  printf "%b支持：#RGB / #RRGGBB / #RRGGBBAA / rgb() / rgba() / 0xAARRGGBB%b\n" "$c" "$reset"
+  printf "%b输出：HEX / RGB / RGBA / 0x，并显示终端色块预览%b\n" "$c" "$reset"
+  printf "\n"
+}
+
+jobs_cor_convert_once() {
+  emulate -L zsh
+
+  local user_input="$1"
+  if jobs_cor_parse_input "$user_input"; then
+    jobs_cor_format_and_print_all "$user_input"
+  else
+    print -P "%F{red}❌ 无法识别：$user_input%f"
+    print -r -- "示例：#D2D4DE、D2D4DE、#ABC、rgb(210,212,222)、rgba(210,212,222,0.5)、0x80D2D4DE"
+    return 1
+  fi
+}
+
+jobs_cor_interactive_loop() {
+  emulate -L zsh
+
+  local user_input
+  while true; do
+    read -r "user_input?请输入颜色值（q 退出）： " || {
+      printf "\n"
+      break
+    }
+
+    [[ -z "$user_input" ]] && continue
+
+    case "$user_input" in
+      q|Q|quit|QUIT|exit|EXIT)
+        print -P "%F{green}✅ 已退出 cor%f"
+        break
+        ;;
+    esac
+
+    jobs_cor_convert_once "$user_input"
+  done
+}
+
+cor() {
+  emulate -L zsh
+
+  jobs_cor_print_title
+
+  if (( $# > 0 )); then
+    local failed=0 user_input
+    for user_input in "$@"; do
+      jobs_cor_convert_once "$user_input" || failed=1
     done
-  }
+    return "$failed"
+  fi
 
-  convert_once() {
-    user_input="$1"
-    if parse_input "$user_input"; then
-      format_and_print_all
-    else
-      echo "❌ 无法识别：$user_input"
-    fi
-  }
-
-  # ================================== main ==================================
-  main() {
-    preface_and_wait
-    if [[ $# -ge 1 ]]; then
-      for user_input in "$@"; do
-        convert_once "$user_input"
-      done
-    else
-      interactive_loop
-    fi
-  }
-
-  main "$@"
-
-  # =========================== 原脚本业务逻辑区结束 ===========================
+  jobs_cor_interactive_loop
 }
 
-main() {
-  show_readme_and_wait
-  run_original_logic "$@"
-  success_echo "脚本执行结束。日志：$LOG_FILE"
+# ---------- 主流程统一收口 ----------
+jobs_cor_main() {
+  jobs_cor_show_readme_and_wait
+  cor "$@"
 }
 
-main "$@"
+if [[ "${JOBS_MAC_ENV_SOURCE_MODE:-}" != "1" ]]; then
+  jobs_cor_main "$@"
+fi
