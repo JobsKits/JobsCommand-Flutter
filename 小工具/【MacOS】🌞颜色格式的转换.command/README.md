@@ -1,6 +1,13 @@
 # cor.command
+
 ![Jobs倾情奉献](https://picsum.photos/1500/400 "Jobs出品，必属精品")
+
 [toc]
+
+## 🔥 <font id=前言>前言</font>
+
+- 采用 Shell 脚本的原因：Shell 来自 [**macOS**](https://www.apple.com/macos/) 原生系统底层，虽然写法相对繁琐冗杂，但执行效率高，并且不需要额外介入 [**Ruby**](https://www.ruby-lang.org)、[**Python**](https://www.python.org) 等第三方运行环境，因此具备更好的移植性。
+
 
 ## 一、功能
 
@@ -38,7 +45,7 @@
 ./cor.command
 ```
 
-如果已经加入 PATH，也可以执行：
+如果已经加入 `PATH`，也可以执行：
 
 ```zsh
 cor
@@ -69,3 +76,13 @@ flowchart TD
     G([结束])
     F --> G
 ```
+
+## 六、日志文件
+
+运行日志默认写入 `/tmp`，文件名通常来自脚本名去掉扩展名：
+
+```shell
+/tmp/【MacOS】🌞颜色格式的转换.log
+```
+
+<a id="🔚" href="#前言" style="font-size:17px; color:green; font-weight:bold;">我是有底线的➤点我回到首页</a>
