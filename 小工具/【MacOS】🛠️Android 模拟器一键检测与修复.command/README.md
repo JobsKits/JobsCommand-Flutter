@@ -1,6 +1,6 @@
 # `【MacOS】🛠️Android 模拟器一键检测与修复.command`
 
-![Jobs倾情奉献](https://picsum.photos/1500/400 "Jobs出品，必属精品")
+![Jobs出品，必属精品](https://picsum.photos/1500/400)
 
 [toc]
 

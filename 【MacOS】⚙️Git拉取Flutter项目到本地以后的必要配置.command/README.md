@@ -1,6 +1,6 @@
 # `【MacOS】⚙️Git拉取Flutter项目到本地以后的必要配置.command`
 
-![Jobs倾情奉献](https://picsum.photos/1500/400 "Jobs出品，必属精品")
+![Jobs出品，必属精品](https://picsum.photos/1500/400)
 
 [toc]
 

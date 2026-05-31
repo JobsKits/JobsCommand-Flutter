@@ -1,6 +1,6 @@
 # `【MacOS】♻️双击修复：找不到 Android SDK 或 platforms 目录为空.command`
 
-![Jobs倾情奉献](https://picsum.photos/1500/400 "Jobs出品，必属精品")
+![Jobs出品，必属精品](https://picsum.photos/1500/400)
 
 [toc]
 

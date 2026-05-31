@@ -1,6 +1,6 @@
 # `【MacOS】♻️当前脚本所在目录的快捷方式放到桌面.command`
 
-![Jobs倾情奉献](https://picsum.photos/1500/400 "Jobs出品，必属精品")
+![Jobs出品，必属精品](https://picsum.photos/1500/400)
 
 [toc]
 
