@@ -10,19 +10,33 @@ SCRIPT_BASENAME="$(basename "$0" | sed 's/\.[^.]*$//')"
 LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"
 : > "$LOG_FILE"
 
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 color_echo()     { log "\033[1;32m$1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 info_echo()      { log "\033[1;34mℹ $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 success_echo()   { log "\033[1;32m✔ $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 warn_echo()      { log "\033[1;33m⚠ $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 warm_echo()      { log "\033[1;33m$1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 note_echo()      { log "\033[1;35m➤ $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 error_echo()     { log "\033[1;31m✖ $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 err_echo()       { log "\033[1;31m$1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 debug_echo()     { log "\033[1;35m🐞 $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 highlight_echo() { log "\033[1;36m🔹 $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 gray_echo()      { log "\033[0;90m$1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 bold_echo()      { log "\033[1m$1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 underline_echo() { log "\033[4m$1\033[0m"; }
 
 # ============================= 标准工具函数 =============================
@@ -30,6 +44,7 @@ get_cpu_arch() {
   [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
 }
 
+# 封装 abs_path 对应的独立处理逻辑。
 abs_path() {
   local p="$1"
   [[ -z "$p" ]] && return 1
@@ -44,6 +59,7 @@ abs_path() {
   fi
 }
 
+# 收集并校验用户输入，决定后续执行路径。
 ask_run() {
   echo ""
   note_echo "👉 $1"
@@ -53,6 +69,7 @@ ask_run() {
   [[ -n "$input" ]]
 }
 
+# 收集并校验用户输入，决定后续执行路径。
 confirm_yes() {
   echo ""
   warn_echo "⚠ $1"
@@ -62,6 +79,7 @@ confirm_yes() {
   [[ "$input" == "YES" ]]
 }
 
+# 封装 inject_shellenv_block 对应的独立处理逻辑。
 inject_shellenv_block() {
   local profile_file="$1"
   local shellenv_cmd="$2"
@@ -84,6 +102,7 @@ inject_shellenv_block() {
   eval "$shellenv_cmd" || true
 }
 
+# 封装 activate_homebrew_shellenv 对应的独立处理逻辑。
 activate_homebrew_shellenv() {
   local arch="$(get_cpu_arch)"
   local brew_bin=""
@@ -107,6 +126,7 @@ activate_homebrew_shellenv() {
   eval "$(${brew_bin} shellenv)"
 }
 
+# 执行已经拆分完成的独立业务步骤。
 run_brew_health_update() {
   info_echo "正在执行 Homebrew 健康更新..."
   brew update  || { error_echo "brew update 失败"; return 1; }
@@ -117,6 +137,7 @@ run_brew_health_update() {
   success_echo "Homebrew 健康更新完成"
 }
 
+# 执行对应的环境配置或同步处理。
 install_homebrew() {
   local arch="$(get_cpu_arch)"
   local brew_bin=""
@@ -144,6 +165,7 @@ install_homebrew() {
   fi
 }
 
+# 封装 brew_install_or_upgrade 对应的独立处理逻辑。
 brew_install_or_upgrade() {
   local formula="$1"
   [[ -z "$formula" ]] && return 1
@@ -163,6 +185,7 @@ brew_install_or_upgrade() {
   fi
 }
 
+# 展示脚本用途和影响范围，并在执行前等待用户确认。
 show_readme_and_wait() {
   clear
   local readme_path="${SCRIPT_DIR}/README.md"
@@ -177,6 +200,7 @@ show_readme_and_wait() {
   read "?👉 请先阅读上面的自述文件，按回车继续执行，或按 Ctrl+C 取消..."
 }
 
+# 执行已经拆分完成的独立业务步骤。
 run_original_logic() {
   # ============================= 原脚本业务逻辑区 =============================
   # ================================== 自述 ==================================
@@ -208,16 +232,24 @@ run_original_logic() {
   # ------- 语义化输出 -------
   ESC=$'\033'
   RESET="${ESC}[0m"
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   bold(){ echo "${ESC}[1m$*${RESET}"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   gray(){ echo "${ESC}[90m$*${RESET}"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   info_echo(){ echo "ℹ️  $*"; echo "[INFO] $*" >>"$LOG_FILE"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   success_echo(){ echo "✅ $*"; echo "[OK] $*" >>"$LOG_FILE"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   warn_echo(){ echo "⚠️  $*"; echo "[WARN] $*" >>"$LOG_FILE"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   error_echo(){ echo "❌ $*"; echo "[ERR] $*" >>"$LOG_FILE"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   highlight_echo(){ echo "✨ $*"; echo "[HIGHLIGHT] $*" >>"$LOG_FILE"; }
 
   # ------- 交互确认（支持 --yes 跳过） -------
   AUTO_YES=0
+  # 收集并校验用户输入，决定后续执行路径。
   confirm() {
     local msg="$1"
     if [[ $AUTO_YES -eq 1 ]]; then
@@ -232,6 +264,7 @@ run_original_logic() {
   APP_ID=""
   UNINSTALL_FIRST=0
 
+  # 封装 usage 对应的独立处理逻辑。
   usage() {
     cat <<EOF
   用法：
@@ -354,6 +387,7 @@ run_original_logic() {
     fi
   }
 
+  # 封装 report_space 对应的独立处理逻辑。
   report_space() {
     local free
     free=$(get_free_mb)
@@ -471,10 +505,17 @@ run_original_logic() {
   # =========================== 原脚本业务逻辑区结束 ===========================
 }
 
-main() {
+# 编排完整业务流程，复杂步骤继续下沉到职责明确的函数。
+run_main_flow() {
   show_readme_and_wait
   run_original_logic "$@"
   success_echo "脚本执行结束。日志：$LOG_FILE"
+}
+
+# 统一收口脚本入口，仅委托已经拆分完成的业务流程。
+main() {
+  # 主入口只负责委托完整业务流程，复杂逻辑统一下沉。
+  run_main_flow "$@"
 }
 
 main "$@"

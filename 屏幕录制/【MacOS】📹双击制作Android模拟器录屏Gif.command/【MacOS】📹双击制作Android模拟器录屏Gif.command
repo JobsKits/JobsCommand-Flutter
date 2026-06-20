@@ -10,19 +10,33 @@ SCRIPT_BASENAME="$(basename "$0" | sed 's/\.[^.]*$//')"
 LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"
 : > "$LOG_FILE"
 
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 color_echo()     { log "\033[1;32m$1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 info_echo()      { log "\033[1;34mℹ $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 success_echo()   { log "\033[1;32m✔ $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 warn_echo()      { log "\033[1;33m⚠ $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 warm_echo()      { log "\033[1;33m$1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 note_echo()      { log "\033[1;35m➤ $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 error_echo()     { log "\033[1;31m✖ $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 err_echo()       { log "\033[1;31m$1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 debug_echo()     { log "\033[1;35m🐞 $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 highlight_echo() { log "\033[1;36m🔹 $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 gray_echo()      { log "\033[0;90m$1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 bold_echo()      { log "\033[1m$1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 underline_echo() { log "\033[4m$1\033[0m"; }
 
 # ============================= 标准工具函数 =============================
@@ -30,6 +44,7 @@ get_cpu_arch() {
   [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
 }
 
+# 封装 abs_path 对应的独立处理逻辑。
 abs_path() {
   local p="$1"
   [[ -z "$p" ]] && return 1
@@ -44,6 +59,7 @@ abs_path() {
   fi
 }
 
+# 收集并校验用户输入，决定后续执行路径。
 ask_run() {
   echo ""
   note_echo "👉 $1"
@@ -53,6 +69,7 @@ ask_run() {
   [[ -n "$input" ]]
 }
 
+# 收集并校验用户输入，决定后续执行路径。
 confirm_yes() {
   echo ""
   warn_echo "⚠ $1"
@@ -62,6 +79,7 @@ confirm_yes() {
   [[ "$input" == "YES" ]]
 }
 
+# 封装 inject_shellenv_block 对应的独立处理逻辑。
 inject_shellenv_block() {
   local profile_file="$1"
   local shellenv_cmd="$2"
@@ -84,6 +102,7 @@ inject_shellenv_block() {
   eval "$shellenv_cmd" || true
 }
 
+# 封装 activate_homebrew_shellenv 对应的独立处理逻辑。
 activate_homebrew_shellenv() {
   local arch="$(get_cpu_arch)"
   local brew_bin=""
@@ -107,6 +126,7 @@ activate_homebrew_shellenv() {
   eval "$(${brew_bin} shellenv)"
 }
 
+# 执行已经拆分完成的独立业务步骤。
 run_brew_health_update() {
   info_echo "正在执行 Homebrew 健康更新..."
   brew update  || { error_echo "brew update 失败"; return 1; }
@@ -117,6 +137,7 @@ run_brew_health_update() {
   success_echo "Homebrew 健康更新完成"
 }
 
+# 执行对应的环境配置或同步处理。
 install_homebrew() {
   local arch="$(get_cpu_arch)"
   local brew_bin=""
@@ -144,6 +165,7 @@ install_homebrew() {
   fi
 }
 
+# 封装 brew_install_or_upgrade 对应的独立处理逻辑。
 brew_install_or_upgrade() {
   local formula="$1"
   [[ -z "$formula" ]] && return 1
@@ -163,6 +185,7 @@ brew_install_or_upgrade() {
   fi
 }
 
+# 展示脚本用途和影响范围，并在执行前等待用户确认。
 show_readme_and_wait() {
   clear
   local readme_path="${SCRIPT_DIR}/README.md"
@@ -177,6 +200,7 @@ show_readme_and_wait() {
   read "?👉 请先阅读上面的自述文件，按回车继续执行，或按 Ctrl+C 取消..."
 }
 
+# 执行已经拆分完成的独立业务步骤。
 run_original_logic() {
   # ============================= 原脚本业务逻辑区 =============================
   set -euo pipefail
@@ -185,21 +209,36 @@ run_original_logic() {
   SCRIPT_BASENAME=$(basename "$0" | sed 's/\.[^.]*$//')
   LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"
 
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   color_echo()     { log "\033[1;32m$1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   info_echo()      { log "\033[1;34mℹ $1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   success_echo()   { log "\033[1;32m✔ $1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   warn_echo()      { log "\033[1;33m⚠ $1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   warm_echo()      { log "\033[1;33m$1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   note_echo()      { log "\033[1;35m➤ $1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   error_echo()     { log "\033[1;31m✖ $1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   err_echo()       { log "\033[1;31m$1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   debug_echo()     { log "\033[1;35m🐞 $1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   highlight_echo() { log "\033[1;36m🔹 $1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   gray_echo()      { log "\033[0;90m$1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   bold_echo()      { log "\033[1m$1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   underline_echo() { log "\033[4m$1\033[0m"; }
 
+  # 封装 pause_enter 对应的独立处理逻辑。
   pause_enter() {
     echo -n $'\n'"按回车继续..."$'\n' | tee -a "$LOG_FILE"
     IFS= read -r _
@@ -260,6 +299,7 @@ run_original_logic() {
   get_cpu_arch() {
     [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
   }
+  # 封装 inject_shellenv_block 对应的独立处理逻辑。
   inject_shellenv_block() {
     local profile_file="$1"
     local shellenv_cmd="$2"
@@ -282,6 +322,7 @@ run_original_logic() {
     eval "$shellenv_cmd" || true
   }
 
+  # 执行对应的环境配置或同步处理。
   install_homebrew_if_needed() {
     if command -v brew >/dev/null 2>&1; then
       return 0
@@ -325,6 +366,7 @@ run_original_logic() {
     return 0
   }
 
+  # 封装 brew_install_pkg 对应的独立处理逻辑。
   brew_install_pkg() {
     local pkg="$1"
     install_homebrew_if_needed || return 1
@@ -333,6 +375,7 @@ run_original_logic() {
     success_echo "✅ 已安装：$pkg"
   }
 
+  # 检查当前运行条件是否满足后续流程要求。
   ensure_ffmpeg() {
     if command -v ffmpeg >/dev/null 2>&1; then
       return 0
@@ -341,6 +384,7 @@ run_original_logic() {
     brew_install_pkg ffmpeg || { error_echo "❌ ffmpeg 安装失败"; return 1; }
   }
 
+  # 检查当前运行条件是否满足后续流程要求。
   ensure_gifski() {
     if command -v gifski >/dev/null 2>&1; then
       return 0
@@ -358,6 +402,7 @@ run_original_logic() {
     return 0
   }
 
+  # 检查当前运行条件是否满足后续流程要求。
   check_requirements() {
     require_cmd adb || { error_echo "请先安装 Android Platform Tools（adb）"; exit 1; }
     if ! command -v fzf >/dev/null 2>&1; then
@@ -606,6 +651,7 @@ run_original_logic() {
     fi
   }
 
+  # 封装 convert_recording_to_gif 对应的独立处理逻辑。
   convert_recording_to_gif() {
     # 仅在用户确认后安装依赖、转换
     local input_file="$1"
@@ -681,6 +727,7 @@ run_original_logic() {
     open "$output_gif" >/dev/null 2>&1 || true
   }
 
+  # 封装 open_video_file 对应的独立处理逻辑。
   open_video_file() {
     local f="$1"
     [[ -z "$f" || ! -f "$f" ]] && return 0
@@ -749,10 +796,17 @@ run_original_logic() {
   # =========================== 原脚本业务逻辑区结束 ===========================
 }
 
-main() {
+# 编排完整业务流程，复杂步骤继续下沉到职责明确的函数。
+run_main_flow() {
   show_readme_and_wait
   run_original_logic "$@"
   success_echo "脚本执行结束。日志：$LOG_FILE"
+}
+
+# 统一收口脚本入口，仅委托已经拆分完成的业务流程。
+main() {
+  # 主入口只负责委托完整业务流程，复杂逻辑统一下沉。
+  run_main_flow "$@"
 }
 
 main "$@"

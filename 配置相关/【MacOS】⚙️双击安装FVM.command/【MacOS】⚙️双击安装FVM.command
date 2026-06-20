@@ -10,19 +10,33 @@ SCRIPT_BASENAME="$(basename "$0" | sed 's/\.[^.]*$//')"
 LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"
 : > "$LOG_FILE"
 
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 color_echo()     { log "\033[1;32m$1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 info_echo()      { log "\033[1;34mℹ $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 success_echo()   { log "\033[1;32m✔ $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 warn_echo()      { log "\033[1;33m⚠ $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 warm_echo()      { log "\033[1;33m$1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 note_echo()      { log "\033[1;35m➤ $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 error_echo()     { log "\033[1;31m✖ $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 err_echo()       { log "\033[1;31m$1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 debug_echo()     { log "\033[1;35m🐞 $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 highlight_echo() { log "\033[1;36m🔹 $1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 gray_echo()      { log "\033[0;90m$1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 bold_echo()      { log "\033[1m$1\033[0m"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 underline_echo() { log "\033[4m$1\033[0m"; }
 
 # ============================= 标准工具函数 =============================
@@ -30,6 +44,7 @@ get_cpu_arch() {
   [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
 }
 
+# 封装 abs_path 对应的独立处理逻辑。
 abs_path() {
   local p="$1"
   [[ -z "$p" ]] && return 1
@@ -44,6 +59,7 @@ abs_path() {
   fi
 }
 
+# 收集并校验用户输入，决定后续执行路径。
 ask_run() {
   echo ""
   note_echo "👉 $1"
@@ -53,6 +69,7 @@ ask_run() {
   [[ -n "$input" ]]
 }
 
+# 收集并校验用户输入，决定后续执行路径。
 confirm_yes() {
   echo ""
   warn_echo "⚠ $1"
@@ -62,6 +79,7 @@ confirm_yes() {
   [[ "$input" == "YES" ]]
 }
 
+# 封装 inject_shellenv_block 对应的独立处理逻辑。
 inject_shellenv_block() {
   local profile_file="$1"
   local shellenv_cmd="$2"
@@ -84,6 +102,7 @@ inject_shellenv_block() {
   eval "$shellenv_cmd" || true
 }
 
+# 封装 activate_homebrew_shellenv 对应的独立处理逻辑。
 activate_homebrew_shellenv() {
   local arch="$(get_cpu_arch)"
   local brew_bin=""
@@ -107,6 +126,7 @@ activate_homebrew_shellenv() {
   eval "$(${brew_bin} shellenv)"
 }
 
+# 执行已经拆分完成的独立业务步骤。
 run_brew_health_update() {
   info_echo "正在执行 Homebrew 健康更新..."
   brew update  || { error_echo "brew update 失败"; return 1; }
@@ -117,6 +137,7 @@ run_brew_health_update() {
   success_echo "Homebrew 健康更新完成"
 }
 
+# 执行对应的环境配置或同步处理。
 install_homebrew() {
   local arch="$(get_cpu_arch)"
   local brew_bin=""
@@ -144,6 +165,7 @@ install_homebrew() {
   fi
 }
 
+# 封装 brew_install_or_upgrade 对应的独立处理逻辑。
 brew_install_or_upgrade() {
   local formula="$1"
   [[ -z "$formula" ]] && return 1
@@ -163,6 +185,7 @@ brew_install_or_upgrade() {
   fi
 }
 
+# 展示脚本用途和影响范围，并在执行前等待用户确认。
 show_readme_and_wait() {
   clear
   local readme_path="${SCRIPT_DIR}/README.md"
@@ -177,6 +200,7 @@ show_readme_and_wait() {
   read "?👉 请先阅读上面的自述文件，按回车继续执行，或按 Ctrl+C 取消..."
 }
 
+# 执行已经拆分完成的独立业务步骤。
 run_original_logic() {
   # ============================= 原脚本业务逻辑区 =============================
   export PATH="$HOME/.pub-cache/bin:$PATH"
@@ -191,19 +215,33 @@ run_original_logic() {
   SCRIPT_BASENAME=$(basename "$0" | sed 's/\.[^.]*$//')   # 当前脚本名（去掉扩展名）
   LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"                  # 设置对应的日志文件路径
 
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   color_echo()     { log "\033[1;32m$1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   info_echo()      { log "\033[1;34mℹ $1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   success_echo()   { log "\033[1;32m✔ $1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   warn_echo()      { log "\033[1;33m⚠ $1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   warm_echo()      { log "\033[1;33m$1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   note_echo()      { log "\033[1;35m➤ $1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   error_echo()     { log "\033[1;31m✖ $1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   err_echo()       { log "\033[1;31m$1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   debug_echo()     { log "\033[1;35m🐞 $1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   highlight_echo() { log "\033[1;36m🔹 $1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   gray_echo()      { log "\033[0;90m$1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   bold_echo()      { log "\033[1m$1\033[0m"; }
+  # 按当前输出级别记录终端信息，并同步写入脚本日志。
   underline_echo() { log "\033[4m$1\033[0m"; }
 
   # ================================== 路径&项目根检测 ==================================
@@ -313,6 +351,7 @@ run_original_logic() {
   get_cpu_arch() {
     [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
   }
+  # 执行对应的环境配置或同步处理。
   install_homebrew() {
     local arch="$(get_cpu_arch)"
     local shell_name="${SHELL##*/}"
@@ -356,6 +395,7 @@ run_original_logic() {
     fi
   }
 
+  # 执行对应的环境配置或同步处理。
   install_jq() {
     if ! command -v jq &>/dev/null; then
       note_echo "📦 未检测到 jq，正在通过 Homebrew 安装..."
@@ -368,6 +408,7 @@ run_original_logic() {
     fi
   }
 
+  # 执行对应的环境配置或同步处理。
   install_dart() {
     if ! command -v dart &>/dev/null; then
       note_echo "📦 未检测到 dart，正在通过 Homebrew 安装..."
@@ -390,6 +431,7 @@ run_original_logic() {
     fi
   }
 
+  # 执行对应的环境配置或同步处理。
   install_fvm() {
     if ! command -v fvm &>/dev/null; then
       note_echo "📦 未检测到 fvm，正在通过 dart pub global 安装..."
@@ -404,6 +446,7 @@ run_original_logic() {
     inject_shellenv_block "fvm_env" 'export PATH="$HOME/.pub-cache/bin:$PATH"'
   }
 
+  # 解析并返回后续流程需要的目标信息。
   get_current_configured_version() {
     if [[ -f .fvmrc ]]; then
       jq -r '.flutterSdkVersion // empty' .fvmrc 2>/dev/null
@@ -412,12 +455,14 @@ run_original_logic() {
     fi
   }
 
+  # 封装 fetch_stable_versions 对应的独立处理逻辑。
   fetch_stable_versions() {
     curl -s https://storage.googleapis.com/flutter_infra_release/releases/releases_macos.json |
       jq -r '.releases[] | select(.channel=="stable") | .version' |
       sort -V | uniq | tac
   }
 
+  # 收集并校验用户输入，决定后续执行路径。
   select_flutter_version() {
     local current="$1"
     local versions="$2"
@@ -431,6 +476,7 @@ run_original_logic() {
     echo "$raw" | sed 's/^✅ //' | grep -Eo '^[0-9]+\.[0-9]+\.[0-9]+$'
   }
 
+  # 封装 prepare_flutter_versions 对应的独立处理逻辑。
   prepare_flutter_versions() {
     CURRENT_VERSION=$(get_current_configured_version)
     VERSIONS=$(fetch_stable_versions)
@@ -439,6 +485,7 @@ run_original_logic() {
     [[ -z "$SELECTED_VERSION" ]] && SELECTED_VERSION=$(echo "$VERSIONS" | head -n1)
   }
 
+  # 封装 write_fvm_config 对应的独立处理逻辑。
   write_fvm_config() {
     local version="$1"
     echo "{\"flutterSdkVersion\": \"$version\"}" > .fvmrc
@@ -448,12 +495,14 @@ run_original_logic() {
     note_echo "➤ 写入 .fvm/fvm_config.json"
   }
 
+  # 执行对应的环境配置或同步处理。
   install_flutter_version() {
     local version="$1"
     fvm install "$version"
     fvm use "$version"
   }
 
+  # 封装 write_flutter_alias 对应的独立处理逻辑。
   write_flutter_alias() {
     if ! grep -q 'flutter()' ~/.zshrc; then
       echo '' >> ~/.zshrc
@@ -462,6 +511,7 @@ run_original_logic() {
     fi
   }
 
+  # 检查当前运行条件是否满足后续流程要求。
   check_flutter_state_files() {
     [[ -f .packages ]] && note_echo "📦 检测到 .packages" || warn_echo "⚠️ 缺 .packages"
     [[ -f .flutter-plugins ]] && note_echo "📦 检测到 .flutter-plugins" || warn_echo "⚠️ 缺 .flutter-plugins"
@@ -469,6 +519,7 @@ run_original_logic() {
     [[ -d .dart_tool ]] && note_echo "📁 检测到 .dart_tool" || warn_echo "⚠️ 缺 .dart_tool"
   }
 
+  # 检查当前运行条件是否满足后续流程要求。
   check_duplicate_dependencies() {
     local list=$(awk '
       $1=="dependencies:" {mode="dep"; next}
@@ -478,6 +529,7 @@ run_original_logic() {
         if (mode == "dep") dep[pkg]++
         if (mode == "dev") dev[pkg]++
       }
+      # 封装 END 对应的独立处理逻辑。
       END {
         for (pkg in dep)
           if (dev[pkg]) print pkg
@@ -492,6 +544,7 @@ run_original_logic() {
     fi
   }
 
+  # 收集并校验用户输入，决定后续执行路径。
   ask_feature_toggle() {
     echo ""
     note_echo "👉 $1"
@@ -500,6 +553,7 @@ run_original_logic() {
     [[ "$input" == "y" || "$input" == "Y" ]]
   }
 
+  # 执行已经拆分完成的独立业务步骤。
   run_optional_commands() {
     ask_feature_toggle "是否执行 flutter clean？" && fvm flutter clean
     ask_feature_toggle "是否执行 flutter pub get？" && fvm flutter pub get
@@ -507,6 +561,7 @@ run_original_logic() {
     ask_feature_toggle "是否执行 flutter analyze？" && fvm flutter analyze
   }
 
+  # 封装 show_final_summary 对应的独立处理逻辑。
   show_final_summary() {
     local version="$1"
     local sdk_path="$HOME/.fvm/versions/$version"
@@ -566,10 +621,17 @@ run_original_logic() {
   # =========================== 原脚本业务逻辑区结束 ===========================
 }
 
-main() {
+# 编排完整业务流程，复杂步骤继续下沉到职责明确的函数。
+run_main_flow() {
   show_readme_and_wait
   run_original_logic "$@"
   success_echo "脚本执行结束。日志：$LOG_FILE"
+}
+
+# 统一收口脚本入口，仅委托已经拆分完成的业务流程。
+main() {
+  # 主入口只负责委托完整业务流程，复杂逻辑统一下沉。
+  run_main_flow "$@"
 }
 
 main "$@"

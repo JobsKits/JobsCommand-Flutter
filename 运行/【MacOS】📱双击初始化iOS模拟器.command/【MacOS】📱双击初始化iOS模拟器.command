@@ -4,19 +4,33 @@
 SCRIPT_BASENAME=$(basename "$0" | sed 's/\.[^.]*$//')   # 当前脚本名（去掉扩展名）
 LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"                  # 设置对应的日志文件路径
 
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 color_echo()     { log "\033[1;32m$1\033[0m"; }         # ✅ 正常绿色输出
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 info_echo()      { log "\033[1;34mℹ $1\033[0m"; }       # ℹ 信息
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 success_echo()   { log "\033[1;32m✔ $1\033[0m"; }       # ✔ 成功
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 warn_echo()      { log "\033[1;33m⚠ $1\033[0m"; }       # ⚠ 警告
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 warm_echo()      { log "\033[1;33m$1\033[0m"; }         # 🟡 温馨提示（无图标）
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 note_echo()      { log "\033[1;35m➤ $1\033[0m"; }       # ➤ 说明
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 error_echo()     { log "\033[1;31m✖ $1\033[0m"; }       # ✖ 错误
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 err_echo()       { log "\033[1;31m$1\033[0m"; }         # 🔴 错误纯文本
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 debug_echo()     { log "\033[1;35m🐞 $1\033[0m"; }      # 🐞 调试
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 highlight_echo() { log "\033[1;36m🔹 $1\033[0m"; }      # 🔹 高亮
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 gray_echo()      { log "\033[0;90m$1\033[0m"; }         # ⚫ 次要信息
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 bold_echo()      { log "\033[1m$1\033[0m"; }            # 📝 加粗
+# 按当前输出级别记录终端信息，并同步写入脚本日志。
 underline_echo() { log "\033[4m$1\033[0m"; }            # 🔗 下划线
 
 # ✅ 自述信息
@@ -158,6 +172,7 @@ install_fzf() {
   fi
 }
 
+# 收集并校验用户输入，决定后续执行路径。
 select_device_type() {
   info_echo "📦 获取可用设备类型..."
   device_options=("${(@f)$(xcrun simctl list devicetypes | grep '^iPhone' | sed -E 's/^(.+) \((.+)\)$/📱 \1|\2/')}")
@@ -174,6 +189,7 @@ select_device_type() {
   success_echo "🔗 设备 ID：$selected_device_id"
 }
 
+# 收集并校验用户输入，决定后续执行路径。
 select_runtime() {
   info_echo "🧬 获取可用系统版本..."
 
@@ -230,6 +246,7 @@ select_runtime() {
   success_echo "🔗 Runtime ID：$selected_runtime_id"
 }
 
+# 封装 create_and_boot_simulator 对应的独立处理逻辑。
 create_and_boot_simulator() {
   device_name="${selected_device_display#📱 }"
   datetime=$(date "+%Y.%m.%d %H:%M:%S")
@@ -277,12 +294,18 @@ interactive_simulator_creation_loop() {
 }
 
 # ✅ 主函数入口
-main() {
+run_main_flow() {
     print_banner                            # ✅ 自述信息
     shutdown_simulators                     # ✅ 彻底关闭所有模拟器
     install_homebrew                        # ✅ 自检安装 🍺 Homebrew（自动架构判断）
     install_fzf                             # ✅ 自检安装 Homebrew.fzf
     interactive_simulator_creation_loop     # ✅ 启动交互式模拟器创建循环
+}
+
+# 统一收口脚本入口，仅委托已经拆分完成的业务流程。
+main() {
+  # 主入口只负责委托完整业务流程，复杂逻辑统一下沉。
+  run_main_flow "$@"
 }
 
 main "$@"
