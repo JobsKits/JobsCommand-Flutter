@@ -1,4 +1,9 @@
 #!/bin/zsh
+# 脚本自述：
+# - 脚本名称：【MacOS】⚙️双击安装FVM.command
+# - 核心用途：执行“⚙️双击安装FVM”对应的本机环境配置任务。
+# - 影响范围：可能安装、更新或修改当前用户的工具链与配置文件。
+# - 运行提示：运行后会先打印内置自述；终端模式按回车确认后继续，按 Ctrl+C 可取消。
 # =====================================================================
 # Jobs 标准化脚本外壳
 # 说明：保留原脚本业务逻辑，补齐 README 防误触、彩色日志、zsh 入口、Homebrew 健康自检标准。
@@ -8,8 +13,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
 SCRIPT_PATH="${SCRIPT_DIR}/$(basename -- "$0")"
 SCRIPT_BASENAME="$(basename "$0" | sed 's/\.[^.]*$//')"
 LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"
-: > "$LOG_FILE"
-
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
 log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
@@ -38,12 +41,10 @@ gray_echo()      { log "\033[0;90m$1\033[0m"; }
 bold_echo()      { log "\033[1m$1\033[0m"; }
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
 underline_echo() { log "\033[4m$1\033[0m"; }
-
 # ============================= 标准工具函数 =============================
 get_cpu_arch() {
   [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
 }
-
 # 封装 abs_path 对应的独立处理逻辑。
 abs_path() {
   local p="$1"
@@ -58,7 +59,6 @@ abs_path() {
     return 1
   fi
 }
-
 # 收集并校验用户输入，决定后续执行路径。
 ask_run() {
   echo ""
@@ -68,7 +68,6 @@ ask_run() {
   IFS= read -r "input?➤ "
   [[ -n "$input" ]]
 }
-
 # 收集并校验用户输入，决定后续执行路径。
 confirm_yes() {
   echo ""
@@ -78,7 +77,6 @@ confirm_yes() {
   IFS= read -r "input?➤ "
   [[ "$input" == "YES" ]]
 }
-
 # 封装 inject_shellenv_block 对应的独立处理逻辑。
 inject_shellenv_block() {
   local profile_file="$1"
@@ -101,7 +99,6 @@ inject_shellenv_block() {
   fi
   eval "$shellenv_cmd" || true
 }
-
 # 封装 activate_homebrew_shellenv 对应的独立处理逻辑。
 activate_homebrew_shellenv() {
   local arch="$(get_cpu_arch)"
@@ -125,7 +122,6 @@ activate_homebrew_shellenv() {
   inject_shellenv_block "$profile_file" "eval \"\$(${brew_bin} shellenv)\""
   eval "$(${brew_bin} shellenv)"
 }
-
 # 执行已经拆分完成的独立业务步骤。
 run_brew_health_update() {
   info_echo "正在执行 Homebrew 健康更新..."
@@ -136,7 +132,6 @@ run_brew_health_update() {
   brew -v      || warn_echo "打印 brew 版本失败，可忽略"
   success_echo "Homebrew 健康更新完成"
 }
-
 # 执行对应的环境配置或同步处理。
 install_homebrew() {
   local arch="$(get_cpu_arch)"
@@ -164,7 +159,6 @@ install_homebrew() {
     note_echo "已跳过 Homebrew 更新"
   fi
 }
-
 # 封装 brew_install_or_upgrade 对应的独立处理逻辑。
 brew_install_or_upgrade() {
   local formula="$1"
@@ -184,10 +178,15 @@ brew_install_or_upgrade() {
     fi
   fi
 }
-
 # 展示脚本用途和影响范围，并在执行前等待用户确认。
 show_readme_and_wait() {
   clear
+  print -r -- '============================== 脚本内置自述 =============================='
+  print -r -- '脚本名称：【MacOS】⚙️双击安装FVM.command'
+  print -r -- '核心用途：执行“⚙️双击安装FVM”对应的本机环境配置任务。'
+  print -r -- '影响范围：可能安装、更新或修改当前用户的工具链与配置文件。'
+  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。'
+  print -r -- '============================================================================'
   local readme_path="${SCRIPT_DIR}/README.md"
   if [[ -f "$readme_path" ]]; then
     highlight_echo "正在显示脚本自述文件：$readme_path"
@@ -199,7 +198,6 @@ show_readme_and_wait() {
   echo ""
   read "?👉 请先阅读上面的自述文件，按回车继续执行，或按 Ctrl+C 取消..."
 }
-
 # 执行已经拆分完成的独立业务步骤。
 run_original_logic() {
   # ============================= 原脚本业务逻辑区 =============================
@@ -214,7 +212,6 @@ run_original_logic() {
   # ✅ 彩色输出函数封装
   SCRIPT_BASENAME=$(basename "$0" | sed 's/\.[^.]*$//')   # 当前脚本名（去掉扩展名）
   LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"                  # 设置对应的日志文件路径
-
   # 按当前输出级别记录终端信息，并同步写入脚本日志。
   log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
   # 按当前输出级别记录终端信息，并同步写入脚本日志。
@@ -243,7 +240,6 @@ run_original_logic() {
   bold_echo()      { log "\033[1m$1\033[0m"; }
   # 按当前输出级别记录终端信息，并同步写入脚本日志。
   underline_echo() { log "\033[4m$1\033[0m"; }
-
   # ================================== 路径&项目根检测 ==================================
   # 绝对路径规范化：兼容相对/~/含空格/符号链接
   abs_path() {
@@ -271,15 +267,12 @@ run_original_logic() {
       fi
     fi
   }
-
   # 判断是否为 Flutter 项目根
   is_flutter_project_root() {
     [[ -f "$1/pubspec.yaml" && -d "$1/lib" ]]
   }
-
   # 语义包装（保持你写法）
   is_ok_root() { is_flutter_project_root "$1"; }
-
   # 交互检测入口目录（拖拽或回车）
   detect_entry() {
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
@@ -325,7 +318,6 @@ run_original_logic() {
     SCRIPT_DIR="$ok_root"
     success_echo "🟢 工作目录已切换到项目根：$ok_root"
   }
-
   # ================================== 自述信息 ==================================
   print_description() {
     echo ""
@@ -336,7 +328,6 @@ run_original_logic() {
     note_echo "3️⃣ 自动写入环境变量到 ~/.bash_profile"
     gray_echo "------------------------------------------------------"
   }
-
   # ================================== 项目路径快速校验（保留，以便独立复用） ==================================
   check_flutter_project_path() {
     local p="${1:-$PWD}"
@@ -346,7 +337,6 @@ run_original_logic() {
     fi
     success_echo "📂 路径符合 Flutter 项目规范：$p"
   }
-
   # ================================== 芯片架构、安装工具等（原逻辑保持） ==================================
   get_cpu_arch() {
     [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
@@ -394,7 +384,6 @@ run_original_logic() {
       note_echo "已跳过 Homebrew 更新"
     fi
   }
-
   # 执行对应的环境配置或同步处理。
   install_jq() {
     if ! command -v jq &>/dev/null; then
@@ -407,7 +396,6 @@ run_original_logic() {
       success_echo "✅ jq 已是最新版"
     fi
   }
-
   # 执行对应的环境配置或同步处理。
   install_dart() {
     if ! command -v dart &>/dev/null; then
@@ -430,7 +418,6 @@ run_original_logic() {
       fi
     fi
   }
-
   # 执行对应的环境配置或同步处理。
   install_fvm() {
     if ! command -v fvm &>/dev/null; then
@@ -445,7 +432,6 @@ run_original_logic() {
     fi
     inject_shellenv_block "fvm_env" 'export PATH="$HOME/.pub-cache/bin:$PATH"'
   }
-
   # 解析并返回后续流程需要的目标信息。
   get_current_configured_version() {
     if [[ -f .fvmrc ]]; then
@@ -454,14 +440,12 @@ run_original_logic() {
       jq -r '.flutterSdkVersion // empty' .fvm/fvm_config.json 2>/dev/null
     fi
   }
-
   # 封装 fetch_stable_versions 对应的独立处理逻辑。
   fetch_stable_versions() {
     curl -s https://storage.googleapis.com/flutter_infra_release/releases/releases_macos.json |
       jq -r '.releases[] | select(.channel=="stable") | .version' |
       sort -V | uniq | tac
   }
-
   # 收集并校验用户输入，决定后续执行路径。
   select_flutter_version() {
     local current="$1"
@@ -475,7 +459,6 @@ run_original_logic() {
     local raw=$(echo "$choices" | fzf --prompt="🎯 选择 Flutter 版本：" --height=50% --border --ansi)
     echo "$raw" | sed 's/^✅ //' | grep -Eo '^[0-9]+\.[0-9]+\.[0-9]+$'
   }
-
   # 封装 prepare_flutter_versions 对应的独立处理逻辑。
   prepare_flutter_versions() {
     CURRENT_VERSION=$(get_current_configured_version)
@@ -484,7 +467,6 @@ run_original_logic() {
     SELECTED_VERSION=$(select_flutter_version "$CURRENT_VERSION" "$VERSIONS")
     [[ -z "$SELECTED_VERSION" ]] && SELECTED_VERSION=$(echo "$VERSIONS" | head -n1)
   }
-
   # 封装 write_fvm_config 对应的独立处理逻辑。
   write_fvm_config() {
     local version="$1"
@@ -494,14 +476,12 @@ run_original_logic() {
     echo "{\"flutterSdkVersion\": \"$version\"}" > .fvm/fvm_config.json
     note_echo "➤ 写入 .fvm/fvm_config.json"
   }
-
   # 执行对应的环境配置或同步处理。
   install_flutter_version() {
     local version="$1"
     fvm install "$version"
     fvm use "$version"
   }
-
   # 封装 write_flutter_alias 对应的独立处理逻辑。
   write_flutter_alias() {
     if ! grep -q 'flutter()' ~/.zshrc; then
@@ -510,7 +490,6 @@ run_original_logic() {
       success_echo "✔ 写入 flutter 函数别名 ~/.zshrc"
     fi
   }
-
   # 检查当前运行条件是否满足后续流程要求。
   check_flutter_state_files() {
     [[ -f .packages ]] && note_echo "📦 检测到 .packages" || warn_echo "⚠️ 缺 .packages"
@@ -518,7 +497,6 @@ run_original_logic() {
     [[ -f .metadata ]] && note_echo "📦 检测到 .metadata" || warn_echo "⚠️ 缺 .metadata"
     [[ -d .dart_tool ]] && note_echo "📁 检测到 .dart_tool" || warn_echo "⚠️ 缺 .dart_tool"
   }
-
   # 检查当前运行条件是否满足后续流程要求。
   check_duplicate_dependencies() {
     local list=$(awk '
@@ -543,7 +521,6 @@ run_original_logic() {
       done
     fi
   }
-
   # 收集并校验用户输入，决定后续执行路径。
   ask_feature_toggle() {
     echo ""
@@ -552,7 +529,6 @@ run_original_logic() {
     read "input?➤ "
     [[ "$input" == "y" || "$input" == "Y" ]]
   }
-
   # 执行已经拆分完成的独立业务步骤。
   run_optional_commands() {
     ask_feature_toggle "是否执行 flutter clean？" && fvm flutter clean
@@ -560,7 +536,6 @@ run_original_logic() {
     ask_feature_toggle "是否执行 flutter doctor？" && fvm flutter doctor
     ask_feature_toggle "是否执行 flutter analyze？" && fvm flutter analyze
   }
-
   # 封装 show_final_summary 对应的独立处理逻辑。
   show_final_summary() {
     local version="$1"
@@ -574,7 +549,6 @@ run_original_logic() {
     info_echo "SDK 路径：$sdk_path"
     gray_echo "------------------------------------------"
   }
-
   # ✅ 通用：回车跳过，任意字符执行
   ask_run() {
     echo ""
@@ -584,7 +558,6 @@ run_original_logic() {
     read "input?➤ "
     [[ -n "$input" ]]
   }
-
   # ================================== 主执行入口 ==================================
   main() {
     clear                                                # ✅ 清屏，保持终端输出整洁
@@ -620,18 +593,21 @@ run_original_logic() {
 
   # =========================== 原脚本业务逻辑区结束 ===========================
 }
-
-# 编排完整业务流程，复杂步骤继续下沉到职责明确的函数。
-run_main_flow() {
-  show_readme_and_wait
-  run_original_logic "$@"
-  success_echo "脚本执行结束。日志：$LOG_FILE"
+# 编排脚本的高层业务流程。
+# 初始化脚本运行环境，并集中承载原有的顶层执行逻辑。
+initialize_script_runtime() {
+  : > "$LOG_FILE"
 }
-
-# 统一收口脚本入口，仅委托已经拆分完成的业务流程。
+# 编排脚本的高层业务流程。
 main() {
-  # 主入口只负责委托完整业务流程，复杂逻辑统一下沉。
-  run_main_flow "$@"
+  # 展示脚本内置自述，并按运行入口完成防误触确认。
+  show_readme_and_wait
+  # 初始化 Shell 选项、日志、依赖和入口运行状态。
+  initialize_script_runtime
+  # 执行 run_original_logic 对应的核心业务步骤。
+  run_original_logic "$@"
+  # 输出脚本执行结果、摘要和日志位置。
+  success_echo "脚本执行结束。日志：$LOG_FILE"
 }
 
 main "$@"

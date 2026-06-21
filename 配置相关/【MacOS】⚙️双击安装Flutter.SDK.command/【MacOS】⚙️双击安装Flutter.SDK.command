@@ -1,4 +1,9 @@
 #!/bin/zsh
+# 脚本自述：
+# - 脚本名称：【MacOS】⚙️双击安装Flutter.SDK.command
+# - 核心用途：执行“⚙️双击安装Flutter.SDK”对应的移动端项目自动化任务。
+# - 影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。
+# - 运行提示：运行后会先打印内置自述；终端模式按回车确认后继续，按 Ctrl+C 可取消。
 # =====================================================================
 # Jobs 标准化脚本外壳
 # 说明：保留原脚本业务逻辑，补齐 README 防误触、彩色日志、zsh 入口、Homebrew 健康自检标准。
@@ -8,8 +13,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
 SCRIPT_PATH="${SCRIPT_DIR}/$(basename -- "$0")"
 SCRIPT_BASENAME="$(basename "$0" | sed 's/\.[^.]*$//')"
 LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"
-: > "$LOG_FILE"
-
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
 log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
@@ -38,12 +41,10 @@ gray_echo()      { log "\033[0;90m$1\033[0m"; }
 bold_echo()      { log "\033[1m$1\033[0m"; }
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
 underline_echo() { log "\033[4m$1\033[0m"; }
-
 # ============================= 标准工具函数 =============================
 get_cpu_arch() {
   [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
 }
-
 # 封装 abs_path 对应的独立处理逻辑。
 abs_path() {
   local p="$1"
@@ -58,7 +59,6 @@ abs_path() {
     return 1
   fi
 }
-
 # 收集并校验用户输入，决定后续执行路径。
 ask_run() {
   echo ""
@@ -68,7 +68,6 @@ ask_run() {
   IFS= read -r "input?➤ "
   [[ -n "$input" ]]
 }
-
 # 收集并校验用户输入，决定后续执行路径。
 confirm_yes() {
   echo ""
@@ -78,7 +77,6 @@ confirm_yes() {
   IFS= read -r "input?➤ "
   [[ "$input" == "YES" ]]
 }
-
 # 封装 inject_shellenv_block 对应的独立处理逻辑。
 inject_shellenv_block() {
   local profile_file="$1"
@@ -101,7 +99,6 @@ inject_shellenv_block() {
   fi
   eval "$shellenv_cmd" || true
 }
-
 # 封装 activate_homebrew_shellenv 对应的独立处理逻辑。
 activate_homebrew_shellenv() {
   local arch="$(get_cpu_arch)"
@@ -125,7 +122,6 @@ activate_homebrew_shellenv() {
   inject_shellenv_block "$profile_file" "eval \"\$(${brew_bin} shellenv)\""
   eval "$(${brew_bin} shellenv)"
 }
-
 # 执行已经拆分完成的独立业务步骤。
 run_brew_health_update() {
   info_echo "正在执行 Homebrew 健康更新..."
@@ -136,7 +132,6 @@ run_brew_health_update() {
   brew -v      || warn_echo "打印 brew 版本失败，可忽略"
   success_echo "Homebrew 健康更新完成"
 }
-
 # 执行对应的环境配置或同步处理。
 install_homebrew() {
   local arch="$(get_cpu_arch)"
@@ -164,7 +159,6 @@ install_homebrew() {
     note_echo "已跳过 Homebrew 更新"
   fi
 }
-
 # 封装 brew_install_or_upgrade 对应的独立处理逻辑。
 brew_install_or_upgrade() {
   local formula="$1"
@@ -184,10 +178,15 @@ brew_install_or_upgrade() {
     fi
   fi
 }
-
 # 展示脚本用途和影响范围，并在执行前等待用户确认。
 show_readme_and_wait() {
   clear
+  print -r -- '============================== 脚本内置自述 =============================='
+  print -r -- '脚本名称：【MacOS】⚙️双击安装Flutter.SDK.command'
+  print -r -- '核心用途：执行“⚙️双击安装Flutter.SDK”对应的移动端项目自动化任务。'
+  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。'
+  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。'
+  print -r -- '============================================================================'
   local readme_path="${SCRIPT_DIR}/README.md"
   if [[ -f "$readme_path" ]]; then
     highlight_echo "正在显示脚本自述文件：$readme_path"
@@ -199,14 +198,12 @@ show_readme_and_wait() {
   echo ""
   read "?👉 请先阅读上面的自述文件，按回车继续执行，或按 Ctrl+C 取消..."
 }
-
 # 执行已经拆分完成的独立业务步骤。
 run_original_logic() {
   # ============================= 原脚本业务逻辑区 =============================
   # ✅ 彩色输出函数
   SCRIPT_BASENAME=$(basename "$0" | sed 's/\.[^.]*$//')   # 当前脚本名（去掉扩展名）
   LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"                  # 设置对应的日志文件路径
-
   # 按当前输出级别记录终端信息，并同步写入脚本日志。
   log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
   # 按当前输出级别记录终端信息，并同步写入脚本日志。
@@ -235,12 +232,10 @@ run_original_logic() {
   bold_echo()      { log "\033[1m$1\033[0m"; }           # 📝 加粗
   # 按当前输出级别记录终端信息，并同步写入脚本日志。
   underline_echo() { log "\033[4m$1\033[0m"; }           # 🔗 下划线
-
   # ✅ CPU 架构检测（arm64 or x86）
   get_cpu_arch() {
     [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
   }
-
   # ✅ 单行写文件（避免重复写入）
   inject_shellenv_block() {
     local profile_file="$1"
@@ -263,7 +258,6 @@ run_original_logic() {
     fi
     eval "$shellenv_cmd" || true
   }
-
   # ✅ 安装 Homebrew（芯片架构兼容、含环境注入）
   install_homebrew() {
     local arch="$(get_cpu_arch)"
@@ -307,12 +301,10 @@ run_original_logic() {
       note_echo "已跳过 Homebrew 更新"
     fi
   }
-
   # ✅ 安装 fzf（fzf-select）
   fzf_select() {
     printf "%s\n" "$@" | fzf --prompt="👉 请选择：" --height=15 --reverse
   }
-
   # 执行对应的环境配置或同步处理。
   install_fzf() {
     if ! command -v fzf &>/dev/null; then
@@ -330,7 +322,6 @@ run_original_logic() {
       success_echo "✅ fzf 已是最新版"
     fi
   }
-
   # ✅ 选择安装方式
   select_flutter_install_method() {
     echo ""
@@ -343,7 +334,6 @@ run_original_logic() {
     )
     printf "%s\n" "${options[@]}" | fzf --prompt="👉 安装方式：" --height=15 --reverse
   }
-
   # ✅ 官方解压安装
   install_official() {
     echo ""
@@ -363,7 +353,6 @@ run_original_logic() {
     success_echo "✅ Flutter SDK 解压完成"
     open "$target_dir/flutter"
   }
-
   # ✅ Brew 安装 Flutter
   install_brew() {
     if command -v flutter >/dev/null 2>&1; then
@@ -376,7 +365,6 @@ run_original_logic() {
     success_echo "✅ 安装完成，执行 flutter doctor 检查配置"
     flutter doctor
   }
-
   # ✅ FVM 安装 Flutter（项目根目录）
   install_fvm() {
     # 检查当前运行条件是否满足后续流程要求。
@@ -407,7 +395,6 @@ run_original_logic() {
     success_echo "✅ 安装完成，执行 flutter doctor 检查配置"
     fvm flutter doctor
   }
-
   # ✅ 写入环境变量到 .bash_profile
   write_env_to_profile() {
     local target_file="$HOME/.bash_profile"
@@ -438,7 +425,7 @@ run_original_logic() {
     # 封装 flutter 对应的独立处理逻辑。
     flutter() { fvm flutter "$@"; }
   fi
-  EOF
+EOF
     echo "------------------------------------------------------"
     echo ""
 
@@ -466,7 +453,7 @@ run_original_logic() {
     # 封装 flutter 对应的独立处理逻辑。
     flutter() { fvm flutter "$@"; }
   fi
-  EOL
+EOL
         success_echo "✅ 写入完成，请执行：source $target_file"
       else
         info_echo "✅ 检测到配置已存在，未重复写入"
@@ -475,7 +462,6 @@ run_original_logic() {
       warn_echo "⛔️ 已取消写入 .bash_profile"
     fi
   }
-
   # ✅ 根据选择执行安装方式
   handle_flutter_install_selection() {
     local method
@@ -488,7 +474,6 @@ run_original_logic() {
         *) error_echo "❌ 未知选择：$method，脚本中止"; exit 1 ;;
       esac
   }
-
   # ✅ 自述信息
   print_intro() {
     clear
@@ -500,7 +485,6 @@ run_original_logic() {
     note_echo "3️⃣ 自动写入环境变量到 ~/.bash_profile"
     gray_echo "------------------------------------------------------"
   }
-
   # ✅ 主函数入口
   main() {
     print_intro                         # ✅ 自述信息
@@ -516,18 +500,21 @@ run_original_logic() {
 
   # =========================== 原脚本业务逻辑区结束 ===========================
 }
-
-# 编排完整业务流程，复杂步骤继续下沉到职责明确的函数。
-run_main_flow() {
-  show_readme_and_wait
-  run_original_logic "$@"
-  success_echo "脚本执行结束。日志：$LOG_FILE"
+# 编排脚本的高层业务流程。
+# 初始化脚本运行环境，并集中承载原有的顶层执行逻辑。
+initialize_script_runtime() {
+  : > "$LOG_FILE"
 }
-
-# 统一收口脚本入口，仅委托已经拆分完成的业务流程。
+# 编排脚本的高层业务流程。
 main() {
-  # 主入口只负责委托完整业务流程，复杂逻辑统一下沉。
-  run_main_flow "$@"
+  # 展示脚本内置自述，并按运行入口完成防误触确认。
+  show_readme_and_wait
+  # 初始化 Shell 选项、日志、依赖和入口运行状态。
+  initialize_script_runtime
+  # 执行 run_original_logic 对应的核心业务步骤。
+  run_original_logic "$@"
+  # 输出脚本执行结果、摘要和日志位置。
+  success_echo "脚本执行结束。日志：$LOG_FILE"
 }
 
 main "$@"

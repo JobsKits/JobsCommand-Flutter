@@ -1,4 +1,9 @@
 #!/bin/zsh
+# 脚本自述：
+# - 脚本名称：【MacOS】⚙️自动化替换Flutter图片资源.command
+# - 核心用途：执行“⚙️自动化替换Flutter图片资源”对应的移动端项目自动化任务。
+# - 影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。
+# - 运行提示：运行后会先打印内置自述；终端模式按回车确认后继续，按 Ctrl+C 可取消。
 # =====================================================================
 # Jobs 标准化脚本外壳
 # 说明：保留原脚本业务逻辑，补齐 README 防误触、彩色日志、zsh 入口、Homebrew 健康自检标准。
@@ -8,8 +13,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
 SCRIPT_PATH="${SCRIPT_DIR}/$(basename -- "$0")"
 SCRIPT_BASENAME="$(basename "$0" | sed 's/\.[^.]*$//')"
 LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"
-: > "$LOG_FILE"
-
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
 log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
@@ -38,12 +41,10 @@ gray_echo()      { log "\033[0;90m$1\033[0m"; }
 bold_echo()      { log "\033[1m$1\033[0m"; }
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
 underline_echo() { log "\033[4m$1\033[0m"; }
-
 # ============================= 标准工具函数 =============================
 get_cpu_arch() {
   [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
 }
-
 # 封装 abs_path 对应的独立处理逻辑。
 abs_path() {
   local p="$1"
@@ -58,7 +59,6 @@ abs_path() {
     return 1
   fi
 }
-
 # 收集并校验用户输入，决定后续执行路径。
 ask_run() {
   echo ""
@@ -68,7 +68,6 @@ ask_run() {
   IFS= read -r "input?➤ "
   [[ -n "$input" ]]
 }
-
 # 收集并校验用户输入，决定后续执行路径。
 confirm_yes() {
   echo ""
@@ -78,7 +77,6 @@ confirm_yes() {
   IFS= read -r "input?➤ "
   [[ "$input" == "YES" ]]
 }
-
 # 封装 inject_shellenv_block 对应的独立处理逻辑。
 inject_shellenv_block() {
   local profile_file="$1"
@@ -101,7 +99,6 @@ inject_shellenv_block() {
   fi
   eval "$shellenv_cmd" || true
 }
-
 # 封装 activate_homebrew_shellenv 对应的独立处理逻辑。
 activate_homebrew_shellenv() {
   local arch="$(get_cpu_arch)"
@@ -125,7 +122,6 @@ activate_homebrew_shellenv() {
   inject_shellenv_block "$profile_file" "eval \"\$(${brew_bin} shellenv)\""
   eval "$(${brew_bin} shellenv)"
 }
-
 # 执行已经拆分完成的独立业务步骤。
 run_brew_health_update() {
   info_echo "正在执行 Homebrew 健康更新..."
@@ -136,7 +132,6 @@ run_brew_health_update() {
   brew -v      || warn_echo "打印 brew 版本失败，可忽略"
   success_echo "Homebrew 健康更新完成"
 }
-
 # 执行对应的环境配置或同步处理。
 install_homebrew() {
   local arch="$(get_cpu_arch)"
@@ -164,7 +159,6 @@ install_homebrew() {
     note_echo "已跳过 Homebrew 更新"
   fi
 }
-
 # 封装 brew_install_or_upgrade 对应的独立处理逻辑。
 brew_install_or_upgrade() {
   local formula="$1"
@@ -184,10 +178,15 @@ brew_install_or_upgrade() {
     fi
   fi
 }
-
 # 展示脚本用途和影响范围，并在执行前等待用户确认。
 show_readme_and_wait() {
   clear
+  print -r -- '============================== 脚本内置自述 =============================='
+  print -r -- '脚本名称：【MacOS】⚙️自动化替换Flutter图片资源.command'
+  print -r -- '核心用途：执行“⚙️自动化替换Flutter图片资源”对应的移动端项目自动化任务。'
+  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。'
+  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。'
+  print -r -- '============================================================================'
   local readme_path="${SCRIPT_DIR}/README.md"
   if [[ -f "$readme_path" ]]; then
     highlight_echo "正在显示脚本自述文件：$readme_path"
@@ -199,7 +198,6 @@ show_readme_and_wait() {
   echo ""
   read "?👉 请先阅读上面的自述文件，按回车继续执行，或按 Ctrl+C 取消..."
 }
-
 # 执行已经拆分完成的独立业务步骤。
 run_original_logic() {
   # ============================= 原脚本业务逻辑区 =============================
@@ -233,7 +231,6 @@ run_original_logic() {
   else
     _TEE=""
   fi
-
   # 封装 _log_write 对应的独立处理逻辑。
   _log_write() {
     if [[ -n "$_TEE" ]]; then
@@ -243,7 +240,6 @@ run_original_logic() {
       printf "%b\n" "$1" >> "$LOG_FILE"
     fi
   }
-
   # 按当前输出级别记录终端信息，并同步写入脚本日志。
   log()            { _log_write "$1"; }
   # 按当前输出级别记录终端信息，并同步写入脚本日志。
@@ -262,7 +258,6 @@ run_original_logic() {
   gray_echo()      { _log_write "\033[0;90m$1\033[0m"; }
   # 按当前输出级别记录终端信息，并同步写入脚本日志。
   bold_echo()      { _log_write "\033[1m$1\033[0m"; }
-
   # =============================================================================
   # 安全读入（子壳静音 trace，从 /dev/tty 读入并输出赋值文本，父壳静默 eval）
   # 用法：safe_read 变量名
@@ -295,7 +290,6 @@ run_original_logic() {
   SRC_SPLASH="$SCRIPT_DIR/启动图"
   SRC_ICONS="$SCRIPT_DIR/App图标"
   PROJECT_ROOT=""
-
   # =============================================================================
   # 自述与配置模板
   # =============================================================================
@@ -340,7 +334,6 @@ run_original_logic() {
     bold_echo "按回车开始..."
     safe_read _
   }
-
   # =============================================================================
   # 自检资源目录
   # =============================================================================
@@ -350,7 +343,6 @@ run_original_logic() {
     [[ -d "$SRC_ICONS"  ]] && success_echo "已检测到：$SRC_ICONS"  || { error_echo "未找到：$SRC_ICONS";  ok=0; }
     (( ok )) || { error_echo "缺少资源目录，无法继续。"; return 1 }
   }
-
   # =============================================================================
   # 判断 Flutter 项目根目录
   # =============================================================================
@@ -358,7 +350,6 @@ run_original_logic() {
     local dir="$1"
     [[ -f "$dir/pubspec.yaml" && -d "$dir/lib" ]]
   }
-
   # =============================================================================
   # 询问 Flutter 项目根目录（干净无回显；q/Q 退出；空输入继续）
   # =============================================================================
@@ -401,7 +392,6 @@ run_original_logic() {
       fi
     done
   }
-
   # =============================================================================
   # 复制资源到 ./assets（覆盖模式）
   # - 先删除 assets/icon.png、assets/launch_image.png
@@ -419,7 +409,6 @@ run_original_logic() {
       fi
     done
     (( removed )) && warn_echo "已删除旧文件：$dest_assets/icon.png、$dest_assets/launch_image.png" || gray_echo "未发现旧的 icon.png / launch_image.png"
-
     # 2) 复制两个源目录的【顶层文件】到 assets 根
     copy_top_files() {
       local src="$1"
@@ -442,7 +431,6 @@ run_original_logic() {
 
     success_echo "资源已就位到：$dest_assets（icon.png / launch_image.png 已覆盖）"
   }
-
   # =============================================================================
   # 清理平台旧资源（在 pub get 之前执行）
   # iOS:   <PROJECT_ROOT>/ios/Runner/Assets.xcassets/AppIcon.appiconset/*     全部删除
@@ -498,7 +486,6 @@ run_original_logic() {
       warn_echo "未找到 Android res 目录，跳过：$android_res_dir"
     fi
   }
-
   # =============================================================================
   # 替换 iOS 的 LaunchImage.imageset 内的图片（保留 Contents.json）
   # 来源：脚本同级「启动图」目录下的图片（png/jpg/jpeg/pdf，顶层文件）
@@ -523,7 +510,6 @@ run_original_logic() {
       warn_echo "未在 $SRC_SPLASH 找到图片（png/jpg/jpeg/pdf），未替换 LaunchImage.imageset"
     fi
   }
-
   # =============================================================================
   # 执行 Flutter 构建步骤
   # =============================================================================
@@ -559,7 +545,6 @@ run_original_logic() {
 
     success_echo "构建步骤完成"
   }
-
   # =============================================================================
   # 验证生成的资源 + 自动打开目录
   # =============================================================================
@@ -576,7 +561,6 @@ run_original_logic() {
       warn_echo "未找到目录：$label（$d）"
     fi
   }
-
   # 检查当前运行条件是否满足后续流程要求。
   verify_outputs() {
     cd "$PROJECT_ROOT" || return
@@ -601,7 +585,6 @@ run_original_logic() {
 
     success_echo "验证与打开目录步骤完成"
   }
-
   # =============================================================================
   # 主流程
   # =============================================================================
@@ -628,18 +611,21 @@ run_original_logic() {
 
   # =========================== 原脚本业务逻辑区结束 ===========================
 }
-
-# 编排完整业务流程，复杂步骤继续下沉到职责明确的函数。
-run_main_flow() {
-  show_readme_and_wait
-  run_original_logic "$@"
-  success_echo "脚本执行结束。日志：$LOG_FILE"
+# 编排脚本的高层业务流程。
+# 初始化脚本运行环境，并集中承载原有的顶层执行逻辑。
+initialize_script_runtime() {
+  : > "$LOG_FILE"
 }
-
-# 统一收口脚本入口，仅委托已经拆分完成的业务流程。
+# 编排脚本的高层业务流程。
 main() {
-  # 主入口只负责委托完整业务流程，复杂逻辑统一下沉。
-  run_main_flow "$@"
+  # 展示脚本内置自述，并按运行入口完成防误触确认。
+  show_readme_and_wait
+  # 初始化 Shell 选项、日志、依赖和入口运行状态。
+  initialize_script_runtime
+  # 执行 run_original_logic 对应的核心业务步骤。
+  run_original_logic "$@"
+  # 输出脚本执行结果、摘要和日志位置。
+  success_echo "脚本执行结束。日志：$LOG_FILE"
 }
 
 main "$@"

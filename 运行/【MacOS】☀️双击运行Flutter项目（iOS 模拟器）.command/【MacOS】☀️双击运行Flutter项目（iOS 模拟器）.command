@@ -1,4 +1,9 @@
 #!/bin/zsh
+# 脚本自述：
+# - 脚本名称：【MacOS】☀️双击运行Flutter项目（iOS 模拟器）.command
+# - 核心用途：执行“☀️双击运行Flutter项目（iOS 模拟器）”对应的移动端项目自动化任务。
+# - 影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。
+# - 运行提示：运行后会先打印内置自述；终端模式按回车确认后继续，按 Ctrl+C 可取消。
 # =====================================================================
 # Jobs 标准化脚本外壳
 # 说明：保留原脚本业务逻辑，补齐 README 防误触、彩色日志、zsh 入口、Homebrew 健康自检标准。
@@ -8,8 +13,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
 SCRIPT_PATH="${SCRIPT_DIR}/$(basename -- "$0")"
 SCRIPT_BASENAME="$(basename "$0" | sed 's/\.[^.]*$//')"
 LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"
-: > "$LOG_FILE"
-
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
 log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
@@ -38,12 +41,10 @@ gray_echo()      { log "\033[0;90m$1\033[0m"; }
 bold_echo()      { log "\033[1m$1\033[0m"; }
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
 underline_echo() { log "\033[4m$1\033[0m"; }
-
 # ============================= 标准工具函数 =============================
 get_cpu_arch() {
   [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
 }
-
 # 封装 abs_path 对应的独立处理逻辑。
 abs_path() {
   local p="$1"
@@ -58,7 +59,6 @@ abs_path() {
     return 1
   fi
 }
-
 # 收集并校验用户输入，决定后续执行路径。
 ask_run() {
   echo ""
@@ -68,7 +68,6 @@ ask_run() {
   IFS= read -r "input?➤ "
   [[ -n "$input" ]]
 }
-
 # 收集并校验用户输入，决定后续执行路径。
 confirm_yes() {
   echo ""
@@ -78,7 +77,6 @@ confirm_yes() {
   IFS= read -r "input?➤ "
   [[ "$input" == "YES" ]]
 }
-
 # 封装 inject_shellenv_block 对应的独立处理逻辑。
 inject_shellenv_block() {
   local profile_file="$1"
@@ -101,7 +99,6 @@ inject_shellenv_block() {
   fi
   eval "$shellenv_cmd" || true
 }
-
 # 封装 activate_homebrew_shellenv 对应的独立处理逻辑。
 activate_homebrew_shellenv() {
   local arch="$(get_cpu_arch)"
@@ -125,7 +122,6 @@ activate_homebrew_shellenv() {
   inject_shellenv_block "$profile_file" "eval \"\$(${brew_bin} shellenv)\""
   eval "$(${brew_bin} shellenv)"
 }
-
 # 执行已经拆分完成的独立业务步骤。
 run_brew_health_update() {
   info_echo "正在执行 Homebrew 健康更新..."
@@ -136,7 +132,6 @@ run_brew_health_update() {
   brew -v      || warn_echo "打印 brew 版本失败，可忽略"
   success_echo "Homebrew 健康更新完成"
 }
-
 # 执行对应的环境配置或同步处理。
 install_homebrew() {
   local arch="$(get_cpu_arch)"
@@ -164,7 +159,6 @@ install_homebrew() {
     note_echo "已跳过 Homebrew 更新"
   fi
 }
-
 # 封装 brew_install_or_upgrade 对应的独立处理逻辑。
 brew_install_or_upgrade() {
   local formula="$1"
@@ -184,10 +178,15 @@ brew_install_or_upgrade() {
     fi
   fi
 }
-
 # 展示脚本用途和影响范围，并在执行前等待用户确认。
 show_readme_and_wait() {
   clear
+  print -r -- '============================== 脚本内置自述 =============================='
+  print -r -- '脚本名称：【MacOS】☀️双击运行Flutter项目（iOS 模拟器）.command'
+  print -r -- '核心用途：执行“☀️双击运行Flutter项目（iOS 模拟器）”对应的移动端项目自动化任务。'
+  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。'
+  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。'
+  print -r -- '============================================================================'
   local readme_path="${SCRIPT_DIR}/README.md"
   if [[ -f "$readme_path" ]]; then
     highlight_echo "正在显示脚本自述文件：$readme_path"
@@ -199,14 +198,12 @@ show_readme_and_wait() {
   echo ""
   read "?👉 请先阅读上面的自述文件，按回车继续执行，或按 Ctrl+C 取消..."
 }
-
 # 执行已经拆分完成的独立业务步骤。
 run_original_logic() {
   # ============================= 原脚本业务逻辑区 =============================
   # ✅ 彩色输出函数
   SCRIPT_BASENAME=$(basename "$0" | sed 's/\.[^.]*$//')   # 当前脚本名（去掉扩展名）
   LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"                  # 设置对应的日志文件路径
-
   # 按当前输出级别记录终端信息，并同步写入脚本日志。
   log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
   # 按当前输出级别记录终端信息，并同步写入脚本日志。
@@ -235,7 +232,6 @@ run_original_logic() {
   bold_echo()      { log "\033[1m$1\033[0m"; }           # 📝 加粗
   # 按当前输出级别记录终端信息，并同步写入脚本日志。
   underline_echo() { log "\033[4m$1\033[0m"; }           # 🔗 下划线
-
   # ✅ 路径工具函数
   abs_path() {
     local p="$1"
@@ -250,14 +246,12 @@ run_original_logic() {
       return 1
     fi
   }
-
   # 检查当前运行条件是否满足后续流程要求。
   is_flutter_project_root() {
     local p="$1"
     local abs=$(abs_path "$p") || return 1
     [[ -f "$abs/pubspec.yaml" && -d "$abs/lib" ]]
   }
-
   # 检查当前运行条件是否满足后续流程要求。
   is_dart_entry_file() {
     local f="$1"
@@ -268,7 +262,6 @@ run_original_logic() {
     fi
     return 1
   }
-
   # ✅ 自述信息
   show_banner() {
     clear
@@ -296,7 +289,6 @@ run_original_logic() {
     error_echo   "📌 如需运行断点调试，请使用 VSCode / Android Studio / Xcode 等 IDE。终端运行不支持断点。"
     echo ""
   }
-
   # ✅ 项目入口识别
   detect_entry() {
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
@@ -340,7 +332,6 @@ run_original_logic() {
     success_echo "✅ 项目路径：$flutter_root"
     success_echo "🎯 入口文件：$entry_file"
   }
-
   # ✅ 构建参数交互
   prompt_build_config() {
     echo ""
@@ -358,7 +349,6 @@ run_original_logic() {
     build_mode="${build_mode:-debug}"
     success_echo "✅ 已选择构建模式：$build_mode"
   }
-
   # ✅ FVM 检测
   detect_fvm() {
     if [[ -f "$flutter_root/.fvm/fvm_config.json" ]]; then
@@ -368,7 +358,6 @@ run_original_logic() {
       flutter_cmd=(flutter)
     fi
   }
-
   # ✅ 执行 pub get
   pub_get() {
     read '?📦 执行 flutter pub get？(回车=执行 / 任意键=跳过) ' run_get
@@ -378,7 +367,6 @@ run_original_logic() {
       warn_echo "⏭️ 跳过 pub get。"
     fi
   }
-
   # ✅  修复模拟器假后台
   fix_fake_simulator() {
     warn_echo "🕵️ 检测模拟器是否处于假后台..."
@@ -396,7 +384,6 @@ run_original_logic() {
       success_echo "✅ 模拟器状态正常，无需关闭。"
     fi
   }
-
   # ✅ 创建桌面快捷方式
   create_shortcut() {
     project_name=$(grep -m1 '^name:' "$flutter_root/pubspec.yaml" | awk '{print $2}')
@@ -421,7 +408,6 @@ run_original_logic() {
       warn_echo "⚠️ 快捷方式已存在，跳过创建。"
     fi
   }
-
   # ✅ 启动模拟器
   launch_simulator() {
     local sim_check=$(xcrun simctl list devices | grep Booted)
@@ -437,7 +423,6 @@ run_original_logic() {
       sleep 3
     fi
   }
-
   # ✅ 选择 iOS 模拟器（fzf），并启动该设备
   select_or_create_device() {
     local device_list selected_device
@@ -466,7 +451,6 @@ run_original_logic() {
       exit 1
     fi
   }
-
   # ✅ 运行 Flutter 项目
   run_flutter_app() {
     if [[ -z "$ios_device_id" ]]; then
@@ -486,7 +470,6 @@ run_original_logic() {
       "${run_cmd[@]}"
     }
   }
-
   # ✅  主流程函数
   main() {
     clear
@@ -507,18 +490,21 @@ run_original_logic() {
 
   # =========================== 原脚本业务逻辑区结束 ===========================
 }
-
-# 编排完整业务流程，复杂步骤继续下沉到职责明确的函数。
-run_main_flow() {
-  show_readme_and_wait
-  run_original_logic "$@"
-  success_echo "脚本执行结束。日志：$LOG_FILE"
+# 编排脚本的高层业务流程。
+# 初始化脚本运行环境，并集中承载原有的顶层执行逻辑。
+initialize_script_runtime() {
+  : > "$LOG_FILE"
 }
-
-# 统一收口脚本入口，仅委托已经拆分完成的业务流程。
+# 编排脚本的高层业务流程。
 main() {
-  # 主入口只负责委托完整业务流程，复杂逻辑统一下沉。
-  run_main_flow "$@"
+  # 展示脚本内置自述，并按运行入口完成防误触确认。
+  show_readme_and_wait
+  # 初始化 Shell 选项、日志、依赖和入口运行状态。
+  initialize_script_runtime
+  # 执行 run_original_logic 对应的核心业务步骤。
+  run_original_logic "$@"
+  # 输出脚本执行结果、摘要和日志位置。
+  success_echo "脚本执行结束。日志：$LOG_FILE"
 }
 
 main "$@"

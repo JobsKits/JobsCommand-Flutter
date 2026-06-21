@@ -1,4 +1,9 @@
 #!/bin/zsh
+# 脚本自述：
+# - 脚本名称：【MacOS】🛠️Android 模拟器一键检测与修复.command
+# - 核心用途：执行“🛠️Android 模拟器一键检测与修复”对应的移动端项目自动化任务。
+# - 影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。
+# - 运行提示：运行后会先打印内置自述；终端模式按回车确认后继续，按 Ctrl+C 可取消。
 # =====================================================================
 # Jobs 标准化脚本外壳
 # 说明：保留原脚本业务逻辑，补齐 README 防误触、彩色日志、zsh 入口、Homebrew 健康自检标准。
@@ -8,8 +13,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
 SCRIPT_PATH="${SCRIPT_DIR}/$(basename -- "$0")"
 SCRIPT_BASENAME="$(basename "$0" | sed 's/\.[^.]*$//')"
 LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"
-: > "$LOG_FILE"
-
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
 log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
@@ -38,12 +41,10 @@ gray_echo()      { log "\033[0;90m$1\033[0m"; }
 bold_echo()      { log "\033[1m$1\033[0m"; }
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
 underline_echo() { log "\033[4m$1\033[0m"; }
-
 # ============================= 标准工具函数 =============================
 get_cpu_arch() {
   [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
 }
-
 # 封装 abs_path 对应的独立处理逻辑。
 abs_path() {
   local p="$1"
@@ -58,7 +59,6 @@ abs_path() {
     return 1
   fi
 }
-
 # 收集并校验用户输入，决定后续执行路径。
 ask_run() {
   echo ""
@@ -68,7 +68,6 @@ ask_run() {
   IFS= read -r "input?➤ "
   [[ -n "$input" ]]
 }
-
 # 收集并校验用户输入，决定后续执行路径。
 confirm_yes() {
   echo ""
@@ -78,7 +77,6 @@ confirm_yes() {
   IFS= read -r "input?➤ "
   [[ "$input" == "YES" ]]
 }
-
 # 封装 inject_shellenv_block 对应的独立处理逻辑。
 inject_shellenv_block() {
   local profile_file="$1"
@@ -101,7 +99,6 @@ inject_shellenv_block() {
   fi
   eval "$shellenv_cmd" || true
 }
-
 # 封装 activate_homebrew_shellenv 对应的独立处理逻辑。
 activate_homebrew_shellenv() {
   local arch="$(get_cpu_arch)"
@@ -125,7 +122,6 @@ activate_homebrew_shellenv() {
   inject_shellenv_block "$profile_file" "eval \"\$(${brew_bin} shellenv)\""
   eval "$(${brew_bin} shellenv)"
 }
-
 # 执行已经拆分完成的独立业务步骤。
 run_brew_health_update() {
   info_echo "正在执行 Homebrew 健康更新..."
@@ -136,7 +132,6 @@ run_brew_health_update() {
   brew -v      || warn_echo "打印 brew 版本失败，可忽略"
   success_echo "Homebrew 健康更新完成"
 }
-
 # 执行对应的环境配置或同步处理。
 install_homebrew() {
   local arch="$(get_cpu_arch)"
@@ -164,7 +159,6 @@ install_homebrew() {
     note_echo "已跳过 Homebrew 更新"
   fi
 }
-
 # 封装 brew_install_or_upgrade 对应的独立处理逻辑。
 brew_install_or_upgrade() {
   local formula="$1"
@@ -184,10 +178,15 @@ brew_install_or_upgrade() {
     fi
   fi
 }
-
 # 展示脚本用途和影响范围，并在执行前等待用户确认。
 show_readme_and_wait() {
   clear
+  print -r -- '============================== 脚本内置自述 =============================='
+  print -r -- '脚本名称：【MacOS】🛠️Android 模拟器一键检测与修复.command'
+  print -r -- '核心用途：执行“🛠️Android 模拟器一键检测与修复”对应的移动端项目自动化任务。'
+  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。'
+  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。'
+  print -r -- '============================================================================'
   local readme_path="${SCRIPT_DIR}/README.md"
   if [[ -f "$readme_path" ]]; then
     highlight_echo "正在显示脚本自述文件：$readme_path"
@@ -199,7 +198,6 @@ show_readme_and_wait() {
   echo ""
   read "?👉 请先阅读上面的自述文件，按回车继续执行，或按 Ctrl+C 取消..."
 }
-
 # 执行已经拆分完成的独立业务步骤。
 run_original_logic() {
   # ============================= 原脚本业务逻辑区 =============================
@@ -263,7 +261,6 @@ run_original_logic() {
   # ================================== 参数解析 ==================================
   APP_ID=""
   UNINSTALL_FIRST=0
-
   # 封装 usage 对应的独立处理逻辑。
   usage() {
     cat <<EOF
@@ -274,7 +271,7 @@ run_original_logic() {
       TARGET_DATAPARTITION_SIZE=8G   # 目标扩容值（如 6G/8G/12G）
   示例：
     $SCRIPT_BASENAME --app-id com.xxx.flutter_tiyu_app --uninstall-first --yes
-  EOF
+EOF
   }
 
   while [[ $# -gt 0 ]]; do
@@ -286,7 +283,6 @@ run_original_logic() {
       *) warn_echo "未知参数：$1"; shift;;
     esac
   done
-
   # ================================== 工具检测 ==================================
   need_cmd() {
     if ! command -v "$1" >/dev/null 2>&1; then
@@ -301,7 +297,6 @@ run_original_logic() {
   else
     HAS_FZF=0
   fi
-
   # ================================== 设备选择 ==================================
   pick_device() {
     local devices
@@ -344,7 +339,6 @@ run_original_logic() {
   else
     warn_echo "未能从设备解析到 AVD 名称或 AVD 目录不存在，将跳过“自动扩容 AVD”功能。"
   fi
-
   # ================================== 恢复安装位置 ==================================
   fix_install_location() {
     local cur
@@ -358,7 +352,6 @@ run_original_logic() {
       success_echo "安装位置已是自动，无需更改。"
     fi
   }
-
   # ================================== 可选卸载旧包 ==================================
   maybe_uninstall_app() {
     if [[ -z "$APP_ID" ]]; then
@@ -374,7 +367,6 @@ run_original_logic() {
       fi
     fi
   }
-
   # ================================== 空间检测 ==================================
   get_free_mb() {
     # 解析 df -k /data 的 available 列（KB → MB）
@@ -386,7 +378,6 @@ run_original_logic() {
       echo $(( kb / 1024 ))
     fi
   }
-
   # 封装 report_space 对应的独立处理逻辑。
   report_space() {
     local free
@@ -400,14 +391,12 @@ run_original_logic() {
       return 0
     fi
   }
-
   # ================================== 清理动作 ==================================
   reset_art_cache() {
     info_echo "重置 ART/Dalvik 编译缓存..."
     adb -s "$DEVICE_ID" shell cmd package compile --reset -a || warn_echo "重置编译缓存可能未完全支持，忽略。"
     success_echo "已尝试重置 ART/Dalvik。"
   }
-
   # 风险更高：卸载一些大体积用户态 App（仅 user 0，不影响系统镜像）
   maybe_uninstall_bloat() {
     local candidates=(
@@ -424,7 +413,6 @@ run_original_logic() {
       success_echo "已尝试卸载候选 App。"
     fi
   }
-
   # ================================== 扩容 AVD data 分区 ==================================
   expand_avd_datapartition() {
     if [[ -z "$AVD_INI" || ! -f "$AVD_INI" ]]; then
@@ -465,7 +453,6 @@ run_original_logic() {
       warn_echo "未找到 emulator 命令或 AVD 名称未知，请手动从 AVD Manager 冷启动该 AVD。"
     fi
   }
-
   # ================================== 主流程 ==================================
   main() {
     highlight_echo "开始检测与修复：$DEVICE_ID"
@@ -504,18 +491,21 @@ run_original_logic() {
 
   # =========================== 原脚本业务逻辑区结束 ===========================
 }
-
-# 编排完整业务流程，复杂步骤继续下沉到职责明确的函数。
-run_main_flow() {
-  show_readme_and_wait
-  run_original_logic "$@"
-  success_echo "脚本执行结束。日志：$LOG_FILE"
+# 编排脚本的高层业务流程。
+# 初始化脚本运行环境，并集中承载原有的顶层执行逻辑。
+initialize_script_runtime() {
+  : > "$LOG_FILE"
 }
-
-# 统一收口脚本入口，仅委托已经拆分完成的业务流程。
+# 编排脚本的高层业务流程。
 main() {
-  # 主入口只负责委托完整业务流程，复杂逻辑统一下沉。
-  run_main_flow "$@"
+  # 展示脚本内置自述，并按运行入口完成防误触确认。
+  show_readme_and_wait
+  # 初始化 Shell 选项、日志、依赖和入口运行状态。
+  initialize_script_runtime
+  # 执行 run_original_logic 对应的核心业务步骤。
+  run_original_logic "$@"
+  # 输出脚本执行结果、摘要和日志位置。
+  success_echo "脚本执行结束。日志：$LOG_FILE"
 }
 
 main "$@"

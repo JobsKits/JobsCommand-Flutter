@@ -1,4 +1,9 @@
 #!/bin/zsh
+# 脚本自述：
+# - 脚本名称：【MacOS】📹双击制作Android模拟器录屏Gif.command
+# - 核心用途：执行“📹双击制作Android模拟器录屏Gif”对应的移动端项目自动化任务。
+# - 影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。
+# - 运行提示：运行后会先打印内置自述；终端模式按回车确认后继续，按 Ctrl+C 可取消。
 # =====================================================================
 # Jobs 标准化脚本外壳
 # 说明：保留原脚本业务逻辑，补齐 README 防误触、彩色日志、zsh 入口、Homebrew 健康自检标准。
@@ -8,8 +13,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
 SCRIPT_PATH="${SCRIPT_DIR}/$(basename -- "$0")"
 SCRIPT_BASENAME="$(basename "$0" | sed 's/\.[^.]*$//')"
 LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"
-: > "$LOG_FILE"
-
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
 log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
@@ -38,12 +41,10 @@ gray_echo()      { log "\033[0;90m$1\033[0m"; }
 bold_echo()      { log "\033[1m$1\033[0m"; }
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
 underline_echo() { log "\033[4m$1\033[0m"; }
-
 # ============================= 标准工具函数 =============================
 get_cpu_arch() {
   [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
 }
-
 # 封装 abs_path 对应的独立处理逻辑。
 abs_path() {
   local p="$1"
@@ -58,7 +59,6 @@ abs_path() {
     return 1
   fi
 }
-
 # 收集并校验用户输入，决定后续执行路径。
 ask_run() {
   echo ""
@@ -68,7 +68,6 @@ ask_run() {
   IFS= read -r "input?➤ "
   [[ -n "$input" ]]
 }
-
 # 收集并校验用户输入，决定后续执行路径。
 confirm_yes() {
   echo ""
@@ -78,7 +77,6 @@ confirm_yes() {
   IFS= read -r "input?➤ "
   [[ "$input" == "YES" ]]
 }
-
 # 封装 inject_shellenv_block 对应的独立处理逻辑。
 inject_shellenv_block() {
   local profile_file="$1"
@@ -101,7 +99,6 @@ inject_shellenv_block() {
   fi
   eval "$shellenv_cmd" || true
 }
-
 # 封装 activate_homebrew_shellenv 对应的独立处理逻辑。
 activate_homebrew_shellenv() {
   local arch="$(get_cpu_arch)"
@@ -125,7 +122,6 @@ activate_homebrew_shellenv() {
   inject_shellenv_block "$profile_file" "eval \"\$(${brew_bin} shellenv)\""
   eval "$(${brew_bin} shellenv)"
 }
-
 # 执行已经拆分完成的独立业务步骤。
 run_brew_health_update() {
   info_echo "正在执行 Homebrew 健康更新..."
@@ -136,7 +132,6 @@ run_brew_health_update() {
   brew -v      || warn_echo "打印 brew 版本失败，可忽略"
   success_echo "Homebrew 健康更新完成"
 }
-
 # 执行对应的环境配置或同步处理。
 install_homebrew() {
   local arch="$(get_cpu_arch)"
@@ -164,7 +159,6 @@ install_homebrew() {
     note_echo "已跳过 Homebrew 更新"
   fi
 }
-
 # 封装 brew_install_or_upgrade 对应的独立处理逻辑。
 brew_install_or_upgrade() {
   local formula="$1"
@@ -184,10 +178,15 @@ brew_install_or_upgrade() {
     fi
   fi
 }
-
 # 展示脚本用途和影响范围，并在执行前等待用户确认。
 show_readme_and_wait() {
   clear
+  print -r -- '============================== 脚本内置自述 =============================='
+  print -r -- '脚本名称：【MacOS】📹双击制作Android模拟器录屏Gif.command'
+  print -r -- '核心用途：执行“📹双击制作Android模拟器录屏Gif”对应的移动端项目自动化任务。'
+  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。'
+  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。'
+  print -r -- '============================================================================'
   local readme_path="${SCRIPT_DIR}/README.md"
   if [[ -f "$readme_path" ]]; then
     highlight_echo "正在显示脚本自述文件：$readme_path"
@@ -199,7 +198,6 @@ show_readme_and_wait() {
   echo ""
   read "?👉 请先阅读上面的自述文件，按回车继续执行，或按 Ctrl+C 取消..."
 }
-
 # 执行已经拆分完成的独立业务步骤。
 run_original_logic() {
   # ============================= 原脚本业务逻辑区 =============================
@@ -208,7 +206,6 @@ run_original_logic() {
   # ✅ 日志与输出函数（注意：这些输出走 stdout，仅用于展示，不参与命令替换）
   SCRIPT_BASENAME=$(basename "$0" | sed 's/\.[^.]*$//')
   LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"
-
   # 按当前输出级别记录终端信息，并同步写入脚本日志。
   log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
   # 按当前输出级别记录终端信息，并同步写入脚本日志。
@@ -237,7 +234,6 @@ run_original_logic() {
   bold_echo()      { log "\033[1m$1\033[0m"; }
   # 按当前输出级别记录终端信息，并同步写入脚本日志。
   underline_echo() { log "\033[4m$1\033[0m"; }
-
   # 封装 pause_enter 对应的独立处理逻辑。
   pause_enter() {
     echo -n $'\n'"按回车继续..."$'\n' | tee -a "$LOG_FILE"
@@ -258,7 +254,6 @@ run_original_logic() {
   # ✅ 运行结果（全局输出）
   typeset -ga RECORDED_FILES=()
   typeset -g  RECORD_MAIN_FILE=""
-
   # ✅ 使用说明（展示用，走 stdout）
   usage() {
     cat <<EOF
@@ -271,12 +266,10 @@ run_original_logic() {
     -S <serial>     指定设备序列号；不提供则用 fzf 选择
     -m              定时模式分段后自动用 ffmpeg 合并
     -h              显示帮助
-  EOF
+EOF
   }
-
   # ✅ 字符清洗（纯函数，stdout 仅返回值）
   strip_crlf() { printf "%s" "$1" | tr -d '\r\n'; }
-
   # ✅ 参数解析
   parse_args() {
     while getopts ":d:is:b:o:S:mh" opt; do
@@ -294,7 +287,6 @@ run_original_logic() {
       esac
     done
   }
-
   # ================================== Homebrew/依赖（为 GIF 与合并服务） ==================================
   get_cpu_arch() {
     [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
@@ -321,7 +313,6 @@ run_original_logic() {
     fi
     eval "$shellenv_cmd" || true
   }
-
   # 执行对应的环境配置或同步处理。
   install_homebrew_if_needed() {
     if command -v brew >/dev/null 2>&1; then
@@ -365,7 +356,6 @@ run_original_logic() {
 
     return 0
   }
-
   # 封装 brew_install_pkg 对应的独立处理逻辑。
   brew_install_pkg() {
     local pkg="$1"
@@ -374,7 +364,6 @@ run_original_logic() {
     brew install "$pkg" || return 1
     success_echo "✅ 已安装：$pkg"
   }
-
   # 检查当前运行条件是否满足后续流程要求。
   ensure_ffmpeg() {
     if command -v ffmpeg >/dev/null 2>&1; then
@@ -383,7 +372,6 @@ run_original_logic() {
     warn_echo "🧩 未检测到 ffmpeg，将通过 Homebrew 安装..."
     brew_install_pkg ffmpeg || { error_echo "❌ ffmpeg 安装失败"; return 1; }
   }
-
   # 检查当前运行条件是否满足后续流程要求。
   ensure_gifski() {
     if command -v gifski >/dev/null 2>&1; then
@@ -392,7 +380,6 @@ run_original_logic() {
     warn_echo "🧩 未检测到 gifski，将通过 Homebrew 安装..."
     brew_install_pkg gifski || { error_echo "❌ gifski 安装失败"; return 1; }
   }
-
   # ================================== 基础依赖检查 ==================================
   require_cmd() {
     if ! command -v "$1" >/dev/null 2>&1; then
@@ -401,7 +388,6 @@ run_original_logic() {
     fi
     return 0
   }
-
   # 检查当前运行条件是否满足后续流程要求。
   check_requirements() {
     require_cmd adb || { error_echo "请先安装 Android Platform Tools（adb）"; exit 1; }
@@ -413,7 +399,6 @@ run_original_logic() {
       ensure_ffmpeg || exit 1
     fi
   }
-
   # ✅ 设备选择（stdout 只输出 serial；其余提示走 stderr 或由外层打印）
   pick_device() {
     if [[ -n "$SERIAL" ]]; then
@@ -433,7 +418,6 @@ run_original_logic() {
     fi
     printf "%s" "$(echo "$list" | fzf --prompt="选择设备> " --height=40% --reverse)"
   }
-
   # ✅ 清理路径（stdout 只输出路径）
   sanitize_path() {
     local p="$1"
@@ -442,7 +426,6 @@ run_original_logic() {
     p=${p#\"}; p=${p%\"}
     printf "%s" "$p"
   }
-
   # ✅ 输出目录提示（提示走 stderr；stdout 只输出路径）
   prompt_output_dir() {
     if [[ -n "$OUTPUT_DIR" ]]; then
@@ -459,7 +442,6 @@ run_original_logic() {
       printf "%s" "$(sanitize_path "$input")"
     fi
   }
-
   # ✅ 自动检测分辨率（stdout 只输出尺寸）
   detect_size() {
     local s="$1"
@@ -468,10 +450,8 @@ run_original_logic() {
     [[ -z "$res" ]] && { printf "%s" "1080x1920"; return; }
     printf "%s" "$res"
   }
-
   # ✅ 向上取整（纯函数）
   ceil_div() { local a=$1 b=$2; echo $(( (a + b - 1) / b )); }
-
   # ✅ 单段录制（定时模式，用 --time-limit）
   record_one_timed() {
     local serial="$1" time_limit_raw="$2" size="$3" bitrate="$4" local_path_raw="$5"
@@ -490,7 +470,6 @@ run_original_logic() {
     adb -s "$serial" shell rm -f /sdcard/tmp_record.mp4 >/dev/null 2>&1 || true
     success_echo "保存：$local_path"
   }
-
   # ✅ 单段录制（交互模式：回车停止 + 实时计时）
   record_one_interactive() {
     local serial="$1" size="$2" bitrate="$3" local_path_raw="$4"
@@ -526,7 +505,6 @@ run_original_logic() {
     adb -s "$serial" shell rm -f /sdcard/tmp_record.mp4 >/dev/null 2>&1 || true
     success_echo "保存：$local_path"
   }
-
   # ✅ 选择时长或进入交互模式（提示走 stderr，设置全局变量，不返回）
   read_or_choose_mode() {
     if $INTERACTIVE; then
@@ -550,7 +528,6 @@ run_original_logic() {
     typeset -g INTERACTIVE=false
     typeset -g DURATION="$d"
   }
-
   # ✅ 执行录制（定时/交互 + 合并）
   do_record() {
     local serial="$1" output_dir_raw="$2" size="$3" duration_raw="$4"
@@ -627,7 +604,6 @@ run_original_logic() {
       fi
     fi
   }
-
   # ================================== GIF 转换（可选） ==================================
   pick_video_for_gif() {
     # 输入：RECORDED_FILES；输出：选择的视频路径（stdout）
@@ -650,7 +626,6 @@ run_original_logic() {
       printf "%s" "${RECORD_MAIN_FILE:-${candidates[-1]}}"
     fi
   }
-
   # 封装 convert_recording_to_gif 对应的独立处理逻辑。
   convert_recording_to_gif() {
     # 仅在用户确认后安装依赖、转换
@@ -726,14 +701,12 @@ run_original_logic() {
 
     open "$output_gif" >/dev/null 2>&1 || true
   }
-
   # 封装 open_video_file 对应的独立处理逻辑。
   open_video_file() {
     local f="$1"
     [[ -z "$f" || ! -f "$f" ]] && return 0
     open "$f" >/dev/null 2>&1 || true
   }
-
   # ================================== 主流程 ==================================
   main() {
     highlight_echo "Android 模拟器录屏 | 定时/交互 / fzf 选择 / 拖拽目录 / 分段与合并 / 可选转 GIF"
@@ -795,18 +768,21 @@ run_original_logic() {
 
   # =========================== 原脚本业务逻辑区结束 ===========================
 }
-
-# 编排完整业务流程，复杂步骤继续下沉到职责明确的函数。
-run_main_flow() {
-  show_readme_and_wait
-  run_original_logic "$@"
-  success_echo "脚本执行结束。日志：$LOG_FILE"
+# 编排脚本的高层业务流程。
+# 初始化脚本运行环境，并集中承载原有的顶层执行逻辑。
+initialize_script_runtime() {
+  : > "$LOG_FILE"
 }
-
-# 统一收口脚本入口，仅委托已经拆分完成的业务流程。
+# 编排脚本的高层业务流程。
 main() {
-  # 主入口只负责委托完整业务流程，复杂逻辑统一下沉。
-  run_main_flow "$@"
+  # 展示脚本内置自述，并按运行入口完成防误触确认。
+  show_readme_and_wait
+  # 初始化 Shell 选项、日志、依赖和入口运行状态。
+  initialize_script_runtime
+  # 执行 run_original_logic 对应的核心业务步骤。
+  run_original_logic "$@"
+  # 输出脚本执行结果、摘要和日志位置。
+  success_echo "脚本执行结束。日志：$LOG_FILE"
 }
 
 main "$@"

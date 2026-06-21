@@ -1,9 +1,13 @@
 #!/bin/zsh
+# 脚本自述：
+# - 脚本名称：【MacOS】📱双击初始化iOS模拟器.command
+# - 核心用途：执行“📱双击初始化iOS模拟器”对应的移动端项目自动化任务。
+# - 影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。
+# - 运行提示：运行后会先打印内置自述；终端模式按回车确认后继续，按 Ctrl+C 可取消。
 
 # ✅ 日志输出函数
 SCRIPT_BASENAME=$(basename "$0" | sed 's/\.[^.]*$//')   # 当前脚本名（去掉扩展名）
 LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"                  # 设置对应的日志文件路径
-
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
 log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
@@ -32,14 +36,12 @@ gray_echo()      { log "\033[0;90m$1\033[0m"; }         # ⚫ 次要信息
 bold_echo()      { log "\033[1m$1\033[0m"; }            # 📝 加粗
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
 underline_echo() { log "\033[4m$1\033[0m"; }            # 🔗 下划线
-
 # ✅ 自述信息
 print_banner() {
   highlight_echo "═════════════════════════════════════════════════════════════════════"
   highlight_echo "📱 iOS 模拟器创建器 - 使用 fzf 选择设备与系统版本"
   highlight_echo "═════════════════════════════════════════════════════════════════════"
 }
-  
 # ✅ 彻底关闭所有模拟器
 shutdown_simulators() {
   warn_echo "🛑 正在彻底关闭所有 iOS 模拟器..."
@@ -48,7 +50,6 @@ shutdown_simulators() {
   sleep 1
   pgrep -f Simulator >/dev/null && pkill -f Simulator && success_echo "已彻底关闭模拟器" || success_echo "模拟器已关闭"
 }
-
 # ✅ 单行写文件（避免重复写入）
 inject_shellenv_block() {
     local id="$1"           # 参数1：环境变量块 ID，如 "homebrew_env"
@@ -83,12 +84,10 @@ inject_shellenv_block() {
     eval "$shellenv"
     success_echo "🟢 shellenv 已在当前终端生效"
 }
-
 # ✅ 判断芯片架构（ARM64 / x86_64）
 get_cpu_arch() {
   [[ $(uname -m) == "arm64" ]] && echo "arm64" || echo "x86_64"
 }
-
 # ✅ 自检安装 🍺 Homebrew（自动架构判断）
 install_homebrew() {
   local arch="$(get_cpu_arch)"                   # 获取当前架构（arm64 或 x86_64）
@@ -146,7 +145,6 @@ install_homebrew() {
     fi
   fi
 }
-
 # ✅ 自检安装 Homebrew.fzf
 install_fzf() {
   local user_input=""
@@ -171,7 +169,6 @@ install_fzf() {
     fi
   fi
 }
-
 # 收集并校验用户输入，决定后续执行路径。
 select_device_type() {
   info_echo "📦 获取可用设备类型..."
@@ -188,7 +185,6 @@ select_device_type() {
   success_echo "✔ 你选择的设备是：$selected_device_display"
   success_echo "🔗 设备 ID：$selected_device_id"
 }
-
 # 收集并校验用户输入，决定后续执行路径。
 select_runtime() {
   info_echo "🧬 获取可用系统版本..."
@@ -245,7 +241,6 @@ select_runtime() {
   success_echo "✔ 你选择的系统版本是：$selected_runtime_display"
   success_echo "🔗 Runtime ID：$selected_runtime_id"
 }
-
 # 封装 create_and_boot_simulator 对应的独立处理逻辑。
 create_and_boot_simulator() {
   device_name="${selected_device_display#📱 }"
@@ -276,7 +271,6 @@ create_and_boot_simulator() {
     return 0
   fi
 }
-
 # ✅ 启动交互式模拟器创建循环
 interactive_simulator_creation_loop() {
   while true; do
@@ -292,20 +286,34 @@ interactive_simulator_creation_loop() {
     create_and_boot_simulator && break      # ✅ 创建成功则退出循环，否则重新选择
   done
 }
-
-# ✅ 主函数入口
-run_main_flow() {
-    print_banner                            # ✅ 自述信息
-    shutdown_simulators                     # ✅ 彻底关闭所有模拟器
-    install_homebrew                        # ✅ 自检安装 🍺 Homebrew（自动架构判断）
-    install_fzf                             # ✅ 自检安装 Homebrew.fzf
-    interactive_simulator_creation_loop     # ✅ 启动交互式模拟器创建循环
+# 打印脚本内置自述，并按运行入口决定是否等待用户确认。
+show_script_intro_and_wait() {
+  print -r -- '============================== 脚本内置自述 =============================='
+  print -r -- '脚本名称：【MacOS】📱双击初始化iOS模拟器.command'
+  print -r -- '核心用途：执行“📱双击初始化iOS模拟器”对应的移动端项目自动化任务。'
+  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。'
+  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。'
+  print -r -- '============================================================================'
+  if [[ ! -t 0 ]]; then
+    print -u2 -r -- '当前没有可交互输入，请在终端中重新运行。'
+    return 1
+  fi
+  read -r "?👉 已了解脚本用途与影响，按回车继续；按 Ctrl+C 取消：" _
 }
-
-# 统一收口脚本入口，仅委托已经拆分完成的业务流程。
+# 编排脚本的高层业务流程。
 main() {
-  # 主入口只负责委托完整业务流程，复杂逻辑统一下沉。
-  run_main_flow "$@"
+  # 展示脚本内置自述，并按运行入口完成防误触确认。
+  show_script_intro_and_wait
+  # 执行 print_banner 对应的独立业务步骤。
+  print_banner
+  # 执行 shutdown_simulators 对应的独立业务步骤。
+  shutdown_simulators
+  # 执行 install_homebrew 对应的核心业务步骤。
+  install_homebrew
+  # 执行 install_fzf 对应的核心业务步骤。
+  install_fzf
+  # 执行 interactive_simulator_creation_loop 对应的独立业务步骤。
+  interactive_simulator_creation_loop
 }
 
 main "$@"

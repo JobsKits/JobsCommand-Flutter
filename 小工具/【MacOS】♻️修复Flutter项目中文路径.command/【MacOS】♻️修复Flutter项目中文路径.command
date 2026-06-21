@@ -1,4 +1,9 @@
 #!/bin/zsh
+# 脚本自述：
+# - 脚本名称：【MacOS】♻️修复Flutter项目中文路径.command
+# - 核心用途：执行“♻️修复Flutter项目中文路径”对应的移动端项目自动化任务。
+# - 影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。
+# - 运行提示：运行后会先打印内置自述；终端模式按回车确认后继续，按 Ctrl+C 可取消。
 # =====================================================================
 # Jobs 标准化脚本外壳
 # 说明：保留原脚本业务逻辑，补齐 README 防误触、彩色日志、zsh 入口、Homebrew 健康自检标准。
@@ -8,8 +13,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
 SCRIPT_PATH="${SCRIPT_DIR}/$(basename -- "$0")"
 SCRIPT_BASENAME="$(basename "$0" | sed 's/\.[^.]*$//')"
 LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"
-: > "$LOG_FILE"
-
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
 log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
@@ -38,12 +41,10 @@ gray_echo()      { log "\033[0;90m$1\033[0m"; }
 bold_echo()      { log "\033[1m$1\033[0m"; }
 # 按当前输出级别记录终端信息，并同步写入脚本日志。
 underline_echo() { log "\033[4m$1\033[0m"; }
-
 # ============================= 标准工具函数 =============================
 get_cpu_arch() {
   [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
 }
-
 # 封装 abs_path 对应的独立处理逻辑。
 abs_path() {
   local p="$1"
@@ -58,7 +59,6 @@ abs_path() {
     return 1
   fi
 }
-
 # 收集并校验用户输入，决定后续执行路径。
 ask_run() {
   echo ""
@@ -68,7 +68,6 @@ ask_run() {
   IFS= read -r "input?➤ "
   [[ -n "$input" ]]
 }
-
 # 收集并校验用户输入，决定后续执行路径。
 confirm_yes() {
   echo ""
@@ -78,7 +77,6 @@ confirm_yes() {
   IFS= read -r "input?➤ "
   [[ "$input" == "YES" ]]
 }
-
 # 封装 inject_shellenv_block 对应的独立处理逻辑。
 inject_shellenv_block() {
   local profile_file="$1"
@@ -101,7 +99,6 @@ inject_shellenv_block() {
   fi
   eval "$shellenv_cmd" || true
 }
-
 # 封装 activate_homebrew_shellenv 对应的独立处理逻辑。
 activate_homebrew_shellenv() {
   local arch="$(get_cpu_arch)"
@@ -125,7 +122,6 @@ activate_homebrew_shellenv() {
   inject_shellenv_block "$profile_file" "eval \"\$(${brew_bin} shellenv)\""
   eval "$(${brew_bin} shellenv)"
 }
-
 # 执行已经拆分完成的独立业务步骤。
 run_brew_health_update() {
   info_echo "正在执行 Homebrew 健康更新..."
@@ -136,7 +132,6 @@ run_brew_health_update() {
   brew -v      || warn_echo "打印 brew 版本失败，可忽略"
   success_echo "Homebrew 健康更新完成"
 }
-
 # 执行对应的环境配置或同步处理。
 install_homebrew() {
   local arch="$(get_cpu_arch)"
@@ -164,7 +159,6 @@ install_homebrew() {
     note_echo "已跳过 Homebrew 更新"
   fi
 }
-
 # 封装 brew_install_or_upgrade 对应的独立处理逻辑。
 brew_install_or_upgrade() {
   local formula="$1"
@@ -184,10 +178,15 @@ brew_install_or_upgrade() {
     fi
   fi
 }
-
 # 展示脚本用途和影响范围，并在执行前等待用户确认。
 show_readme_and_wait() {
   clear
+  print -r -- '============================== 脚本内置自述 =============================='
+  print -r -- '脚本名称：【MacOS】♻️修复Flutter项目中文路径.command'
+  print -r -- '核心用途：执行“♻️修复Flutter项目中文路径”对应的移动端项目自动化任务。'
+  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。'
+  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。'
+  print -r -- '============================================================================'
   local readme_path="${SCRIPT_DIR}/README.md"
   if [[ -f "$readme_path" ]]; then
     highlight_echo "正在显示脚本自述文件：$readme_path"
@@ -199,14 +198,12 @@ show_readme_and_wait() {
   echo ""
   read "?👉 请先阅读上面的自述文件，按回车继续执行，或按 Ctrl+C 取消..."
 }
-
 # 执行已经拆分完成的独立业务步骤。
 run_original_logic() {
   # ============================= 原脚本业务逻辑区 =============================
   # ✅ 彩色输出函数
   SCRIPT_BASENAME=$(basename "$0" | sed 's/\.[^.]*$//')   # 当前脚本名（去掉扩展名）
   LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"                  # 设置对应的日志文件路径
-
   # 按当前输出级别记录终端信息，并同步写入脚本日志。
   log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
   # 按当前输出级别记录终端信息，并同步写入脚本日志。
@@ -235,12 +232,10 @@ run_original_logic() {
   bold_echo()      { log "\033[1m$1\033[0m"; }           # 📝 加粗
   # 按当前输出级别记录终端信息，并同步写入脚本日志。
   underline_echo() { log "\033[4m$1\033[0m"; }           # 🔗 下划线
-
   # ✅ 判断当前目录是否为Flutter项目根目录
   _is_flutter_project_root() {
     [[ -f "$1/pubspec.yaml" && -d "$1/lib" ]]
   }
-
   # ✅ 项目路径与环境初始化
   resolve_flutter_root() {
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
@@ -351,7 +346,6 @@ run_original_logic() {
       note_echo "已跳过 Homebrew 更新"
     fi
   }
-
   # ✅ 自述信息
   print_banner() {
     echo ""
@@ -373,12 +367,10 @@ run_original_logic() {
     echo ""
     read "?🔑 按下回车开始执行..."
   }
-
   # ✅ 检查 Flutter 项目根目录
   is_flutter_project_root() {
     [[ -f "pubspec.yaml" && -d "lib" ]]
   }
-
   # 检查当前运行条件是否满足后续流程要求。
   check_flutter_project_root() {
     until is_flutter_project_root; do
@@ -390,7 +382,6 @@ run_original_logic() {
       }
     done
   }
-
   # ✅ Flutter 命令识别
   detect_flutter_command() {
     if command -v fvm &>/dev/null && [[ -x ".fvm/flutter_sdk/bin/flutter" ]]; then
@@ -401,12 +392,10 @@ run_original_logic() {
       info_echo "🧭 使用全局 flutter"
     fi
   }
-
   # ✅ 判断芯片架构（ARM64 / x86_64）
   get_cpu_arch() {
     [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
   }
-
   # ✅ 单行写文件（避免重复写入）
   inject_shellenv_block() {
     local profile_file="$1"
@@ -429,7 +418,6 @@ run_original_logic() {
     fi
     eval "$shellenv_cmd" || true
   }
-
   # ✅ 安装 Homebrew（芯片架构兼容、含环境注入）
   install_homebrew() {
     local arch="$(get_cpu_arch)"                    # 获取当前架构（arm64 或 x86_64）
@@ -474,7 +462,6 @@ run_original_logic() {
       success_echo "✅ Homebrew 已更新"
     fi
   }
-
   # 检查当前运行条件是否满足后续流程要求。
   ensure_perl_installed() {
     if ! brew list perl &>/dev/null; then
@@ -488,7 +475,6 @@ run_original_logic() {
       ask_run "升级 perl？" && brew upgrade perl
     fi
   }
-
   # 检查当前运行条件是否满足后续流程要求。
   ensure_uri_escape_installed() {
     if ! perl -MURI::Escape -e 1 &>/dev/null; then
@@ -499,7 +485,6 @@ run_original_logic() {
       }
     fi
   }
-
   # ✅ 替换 import 路径
   replace_uri_imports() {
     echo ""
@@ -518,26 +503,23 @@ run_original_logic() {
     cat > "$BACKUP_DIR/README.txt" <<EOF
   该目录包含被替换前的 Dart 文件备份。
   路径替换时间：$(date)
-  EOF
+EOF
 
     success_echo "✅ 所有 import 路径修复完成"
     info_echo "📦 备份文件位置：$(pwd)/$BACKUP_DIR"
   }
-
   # ✅ 后续操作：分析与升级
   ask_flutter_analyze() {
     echo ""
     read "?🔍 是否运行 $FLUTTER_CMD analyze？（回车跳过，输入任意字符执行，Ctrl+C 跳过）"
     $FLUTTER_CMD analyze
   }
-
   # 收集并校验用户输入，决定后续执行路径。
   ask_flutter_upgrade() {
     echo ""
     read "?⬆️ 是否执行 $FLUTTER_CMD upgrade？（回车跳过，输入任意字符执行，Ctrl+C 跳过）"
     $FLUTTER_CMD upgrade
   }
-
   # ✅ 主流程入口
   main() {
     clear
@@ -557,18 +539,21 @@ run_original_logic() {
 
   # =========================== 原脚本业务逻辑区结束 ===========================
 }
-
-# 编排完整业务流程，复杂步骤继续下沉到职责明确的函数。
-run_main_flow() {
-  show_readme_and_wait
-  run_original_logic "$@"
-  success_echo "脚本执行结束。日志：$LOG_FILE"
+# 编排脚本的高层业务流程。
+# 初始化脚本运行环境，并集中承载原有的顶层执行逻辑。
+initialize_script_runtime() {
+  : > "$LOG_FILE"
 }
-
-# 统一收口脚本入口，仅委托已经拆分完成的业务流程。
+# 编排脚本的高层业务流程。
 main() {
-  # 主入口只负责委托完整业务流程，复杂逻辑统一下沉。
-  run_main_flow "$@"
+  # 展示脚本内置自述，并按运行入口完成防误触确认。
+  show_readme_and_wait
+  # 初始化 Shell 选项、日志、依赖和入口运行状态。
+  initialize_script_runtime
+  # 执行 run_original_logic 对应的核心业务步骤。
+  run_original_logic "$@"
+  # 输出脚本执行结果、摘要和日志位置。
+  success_echo "脚本执行结束。日志：$LOG_FILE"
 }
 
 main "$@"
