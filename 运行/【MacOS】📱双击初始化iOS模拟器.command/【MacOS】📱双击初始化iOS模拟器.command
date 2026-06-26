@@ -1,55 +1,128 @@
 #!/bin/zsh
 # 脚本自述：
 # - 脚本名称：【MacOS】📱双击初始化iOS模拟器.command
-# - 核心用途：执行“📱双击初始化iOS模拟器”对应的移动端项目自动化任务。
-# - 影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。
-# - 运行提示：运行后会先打印内置自述；终端模式按回车确认后继续，按 Ctrl+C 可取消。
+# - 核心用途：交互选择 iPhone 设备型号和 iOS Runtime，创建并启动一个新的 iOS 模拟器。
+# - 影响范围：会读取 Xcode 模拟器环境；默认只温和处理疑似假后台 Simulator，不会无差别关闭已启动模拟器。
+# - 运行提示：运行后会先打印内置自述；确认后继续，强制关闭模拟器必须输入 YES。
 
 # ✅ 日志输出函数
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
+SCRIPT_PATH="${SCRIPT_DIR}/$(basename -- "$0")"
 SCRIPT_BASENAME=$(basename "$0" | sed 's/\.[^.]*$//')   # 当前脚本名（去掉扩展名）
 LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"                  # 设置对应的日志文件路径
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
+
 log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
 color_echo()     { log "\033[1;32m$1\033[0m"; }         # ✅ 正常绿色输出
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
 info_echo()      { log "\033[1;34mℹ $1\033[0m"; }       # ℹ 信息
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
 success_echo()   { log "\033[1;32m✔ $1\033[0m"; }       # ✔ 成功
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
 warn_echo()      { log "\033[1;33m⚠ $1\033[0m"; }       # ⚠ 警告
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
 warm_echo()      { log "\033[1;33m$1\033[0m"; }         # 🟡 温馨提示（无图标）
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
 note_echo()      { log "\033[1;35m➤ $1\033[0m"; }       # ➤ 说明
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
 error_echo()     { log "\033[1;31m✖ $1\033[0m"; }       # ✖ 错误
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
 err_echo()       { log "\033[1;31m$1\033[0m"; }         # 🔴 错误纯文本
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
 debug_echo()     { log "\033[1;35m🐞 $1\033[0m"; }      # 🐞 调试
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
 highlight_echo() { log "\033[1;36m🔹 $1\033[0m"; }      # 🔹 高亮
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
 gray_echo()      { log "\033[0;90m$1\033[0m"; }         # ⚫ 次要信息
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
 bold_echo()      { log "\033[1m$1\033[0m"; }            # 📝 加粗
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
 underline_echo() { log "\033[4m$1\033[0m"; }            # 🔗 下划线
-# ✅ 自述信息
-print_banner() {
+
+# ✅ 打印脚本内置自述，并等待用户确认后继续。
+show_script_intro_and_wait() {
+  : > "$LOG_FILE"
+  clear
+  highlight_echo "══════════════════════════════ 脚本自述 ══════════════════════════════"
+  note_echo "当前脚本：${SCRIPT_PATH}"
+  note_echo "核心用途：使用 fzf 选择 iPhone 设备与 iOS 系统版本，创建并启动新模拟器。"
+  warn_echo "影响范围：会探测 Xcode 构建状态和已启动模拟器；默认不关闭正在使用的模拟器。"
+  warn_echo "清理策略：仅在无 Booted 设备但 Simulator 残留时，温和退出 Simulator.app。"
+  warn_echo "强制清场：只有输入 YES 才会执行 shutdown all / quit / pkill。"
+  gray_echo "日志位置：${LOG_FILE}"
+  gray_echo "取消方式：按 Ctrl+C 终止，不会继续执行后续业务。"
   highlight_echo "═════════════════════════════════════════════════════════════════════"
-  highlight_echo "📱 iOS 模拟器创建器 - 使用 fzf 选择设备与系统版本"
-  highlight_echo "═════════════════════════════════════════════════════════════════════"
+  echo ""
+  read -r "?👉 已了解脚本用途与影响，按回车继续；按 Ctrl+C 取消：" _
 }
-# ✅ 彻底关闭所有模拟器
-shutdown_simulators() {
-  warn_echo "🛑 正在彻底关闭所有 iOS 模拟器..."
+
+# ✅ 初始化 Shell 运行选项。
+configure_shell_runtime() {
+  setopt NO_NOMATCH
+}
+
+# ✅ 判断当前是否存在 Xcode / xcodebuild 构建相关进程。
+is_xcode_build_active() {
+  pgrep -f "xcodebuild" >/dev/null 2>&1 && return 0
+  pgrep -f "XCBBuildService" >/dev/null 2>&1 && return 0
+  return 1
+}
+
+# ✅ 输出当前已启动的模拟器设备列表。
+get_booted_simulators() {
+  xcrun simctl list devices booted 2>/dev/null | grep -E "\\(Booted\\)" || true
+}
+
+# ✅ 判断 Simulator.app 是否仍有进程残留。
+is_simulator_app_running() {
+  pgrep -x "Simulator" >/dev/null 2>&1
+}
+
+# ✅ 危险操作必须输入 YES 才允许继续。
+confirm_yes() {
+  echo ""
+  warn_echo "$1"
+  gray_echo "危险操作必须输入 YES 后回车；其它输入一律取消。"
+  local input=""
+  IFS= read -r "input?➤ "
+  [[ "$input" == "YES" ]]
+}
+
+# ✅ 强制关闭所有模拟器和 Simulator 残留进程。
+force_shutdown_simulators() {
+  warn_echo "🛑 正在强制关闭所有 iOS 模拟器..."
   xcrun simctl shutdown all >/dev/null 2>&1
   osascript -e 'quit app "Simulator"' >/dev/null 2>&1
   sleep 1
-  pgrep -f Simulator >/dev/null && pkill -f Simulator && success_echo "已彻底关闭模拟器" || success_echo "模拟器已关闭"
+  if pgrep -x "Simulator" >/dev/null 2>&1; then
+    pkill -x "Simulator" >/dev/null 2>&1
+  fi
+  success_echo "✅ 已执行强制模拟器清场"
 }
+
+# ✅ 按风险分级清理疑似假后台 Simulator，避免影响 Xcode 编译。
+cleanup_simulator_background_safely() {
+  local booted_simulators=""
+  booted_simulators="$(get_booted_simulators)"
+
+  if is_xcode_build_active; then
+    warn_echo "⚠️ 检测到 Xcode / xcodebuild 构建相关进程，默认跳过模拟器清理，避免中断编译。"
+    if confirm_yes "如果你确认要强制关闭所有模拟器，请输入 YES。"; then
+      force_shutdown_simulators
+    else
+      warn_echo "⏭️ 已跳过模拟器清理"
+    fi
+    return 0
+  fi
+
+  if [[ -n "$booted_simulators" ]]; then
+    warn_echo "⚠️ 检测到当前已有 Booted 模拟器，默认认为它正在被使用，不执行 shutdown all。"
+    gray_echo "$booted_simulators"
+    if confirm_yes "如果你确认要强制关闭所有 Booted 模拟器，请输入 YES。"; then
+      force_shutdown_simulators
+    else
+      warn_echo "⏭️ 已保留当前已启动模拟器"
+    fi
+    return 0
+  fi
+
+  if is_simulator_app_running; then
+    warn_echo "🧹 检测到 Simulator.app 进程残留，但没有 Booted 模拟器；按疑似假后台温和退出。"
+    osascript -e 'quit app "Simulator"' >/dev/null 2>&1
+    sleep 1
+    success_echo "✅ 已温和退出疑似假后台 Simulator.app"
+  else
+    success_echo "✅ 未发现需要清理的模拟器后台残留"
+  fi
+}
+
 # ✅ 单行写文件（避免重复写入）
 inject_shellenv_block() {
     local id="$1"           # 参数1：环境变量块 ID，如 "homebrew_env"
@@ -84,10 +157,12 @@ inject_shellenv_block() {
     eval "$shellenv"
     success_echo "🟢 shellenv 已在当前终端生效"
 }
+
 # ✅ 判断芯片架构（ARM64 / x86_64）
 get_cpu_arch() {
   [[ $(uname -m) == "arm64" ]] && echo "arm64" || echo "x86_64"
 }
+
 # ✅ 自检安装 🍺 Homebrew（自动架构判断）
 install_homebrew() {
   local arch="$(get_cpu_arch)"                   # 获取当前架构（arm64 或 x86_64）
@@ -145,6 +220,7 @@ install_homebrew() {
     fi
   fi
 }
+
 # ✅ 自检安装 Homebrew.fzf
 install_fzf() {
   local user_input=""
@@ -169,7 +245,8 @@ install_fzf() {
     fi
   fi
 }
-# 收集并校验用户输入，决定后续执行路径。
+
+# ✅ 选择要创建的 iPhone 设备型号。
 select_device_type() {
   info_echo "📦 获取可用设备类型..."
   device_options=("${(@f)$(xcrun simctl list devicetypes | grep '^iPhone' | sed -E 's/^(.+) \((.+)\)$/📱 \1|\2/')}")
@@ -185,7 +262,8 @@ select_device_type() {
   success_echo "✔ 你选择的设备是：$selected_device_display"
   success_echo "🔗 设备 ID：$selected_device_id"
 }
-# 收集并校验用户输入，决定后续执行路径。
+
+# ✅ 选择要创建的 iOS Runtime 系统版本。
 select_runtime() {
   info_echo "🧬 获取可用系统版本..."
 
@@ -241,7 +319,8 @@ select_runtime() {
   success_echo "✔ 你选择的系统版本是：$selected_runtime_display"
   success_echo "🔗 Runtime ID：$selected_runtime_id"
 }
-# 封装 create_and_boot_simulator 对应的独立处理逻辑。
+
+# ✅ 创建并启动选择好的 iOS 模拟器。
 create_and_boot_simulator() {
   device_name="${selected_device_display#📱 }"
   datetime=$(date "+%Y.%m.%d %H:%M:%S")
@@ -271,6 +350,7 @@ create_and_boot_simulator() {
     return 0
   fi
 }
+
 # ✅ 启动交互式模拟器创建循环
 interactive_simulator_creation_loop() {
   while true; do
@@ -286,34 +366,14 @@ interactive_simulator_creation_loop() {
     create_and_boot_simulator && break      # ✅ 创建成功则退出循环，否则重新选择
   done
 }
-# 打印脚本内置自述，并按运行入口决定是否等待用户确认。
-show_script_intro_and_wait() {
-  print -r -- '============================== 脚本内置自述 =============================='
-  print -r -- '脚本名称：【MacOS】📱双击初始化iOS模拟器.command'
-  print -r -- '核心用途：执行“📱双击初始化iOS模拟器”对应的移动端项目自动化任务。'
-  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。'
-  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。'
-  print -r -- '============================================================================'
-  if [[ ! -t 0 ]]; then
-    print -u2 -r -- '当前没有可交互输入，请在终端中重新运行。'
-    return 1
-  fi
-  read -r "?👉 已了解脚本用途与影响，按回车继续；按 Ctrl+C 取消：" _
-}
-# 编排脚本的高层业务流程。
+
 main() {
-  # 展示脚本内置自述，并按运行入口完成防误触确认。
-  show_script_intro_and_wait
-  # 执行 print_banner 对应的独立业务步骤。
-  print_banner
-  # 执行 shutdown_simulators 对应的独立业务步骤。
-  shutdown_simulators
-  # 执行 install_homebrew 对应的核心业务步骤。
-  install_homebrew
-  # 执行 install_fzf 对应的核心业务步骤。
-  install_fzf
-  # 执行 interactive_simulator_creation_loop 对应的独立业务步骤。
-  interactive_simulator_creation_loop
+    show_script_intro_and_wait              # ✅ 打印脚本内置自述并等待用户确认
+    configure_shell_runtime                 # ✅ 初始化 Shell 运行选项
+    cleanup_simulator_background_safely     # ✅ 分级清理疑似假后台 Simulator
+    install_homebrew                        # ✅ 自检安装 🍺 Homebrew（自动架构判断）
+    install_fzf                             # ✅ 自检安装 Homebrew.fzf
+    interactive_simulator_creation_loop     # ✅ 启动交互式模拟器创建循环
 }
 
 main "$@"
