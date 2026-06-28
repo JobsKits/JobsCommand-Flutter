@@ -110,18 +110,10 @@ parse_arguments() {
   done
 }
 
-# 展示同目录 README，并等待用户确认后执行。
-show_readme_and_wait() {
-  local readme_path="${SCRIPT_DIR}/README.md"
+# 展示脚本内置自述，并等待用户确认后执行。
+show_script_intro_and_wait() {
   [[ -t 1 && -n "${TERM:-}" && "${TERM:-}" != "dumb" ]] && clear
 
-  if [[ -f "$readme_path" ]]; then
-    highlight_echo "============================== README.md =============================="
-    cat "$readme_path" | tee -a "$LOG_FILE"
-    highlight_echo "======================================================================="
-  else
-    fail "未找到配套 README.md：${readme_path}"
-  fi
   echo ""
 
   if [[ -t 0 ]]; then
@@ -509,7 +501,7 @@ run_main_flow() {
   # 解析运行参数，确定选择模式、pub get 策略和可选工程路径。
   parse_arguments "$@"
   # 展示配套 README，确保用户理解脚本用途和影响范围后再继续。
-  show_readme_and_wait
+  show_script_intro_and_wait
   # 定位包含 pubspec.yaml 的 Flutter / Dart 工程根目录。
   resolve_project_root
   # 初始化工程名称、依赖配置路径并检查工程类型。

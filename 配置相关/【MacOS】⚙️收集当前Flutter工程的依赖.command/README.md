@@ -55,7 +55,7 @@
 ### 4.2、终端运行
 
 ```shell
-cd "/Users/jobs/Downloads/【MacOS】⚙️收集当前Flutter工程的依赖.command"
+cd "~/Downloads/【MacOS】⚙️收集当前Flutter工程的依赖.command"
 ./【MacOS】⚙️收集当前Flutter工程的依赖.command
 ```
 
@@ -63,7 +63,7 @@ cd "/Users/jobs/Downloads/【MacOS】⚙️收集当前Flutter工程的依赖.co
 
 | 参数 | 作用 |
 | --- | --- |
-| `/path/to/app` | 指定 Flutter / Dart 工程根目录 |
+| `<path-to>/app` | 指定 Flutter / Dart 工程根目录 |
 | `-s`、`--select` | 使用 `fzf` 多选 Dart / Flutter 依赖 |
 | `--no-pub-get` | 不询问执行 `flutter pub get`，直接使用现有解析文件 |
 | `-h`、`--help` | 显示命令行帮助 |
@@ -71,9 +71,9 @@ cd "/Users/jobs/Downloads/【MacOS】⚙️收集当前Flutter工程的依赖.co
 示例：
 
 ```shell
-./【MacOS】⚙️收集当前Flutter工程的依赖.command "/path/to/flutter_app"
-./【MacOS】⚙️收集当前Flutter工程的依赖.command --select "/path/to/flutter_app"
-./【MacOS】⚙️收集当前Flutter工程的依赖.command --no-pub-get "/path/to/flutter_app"
+./【MacOS】⚙️收集当前Flutter工程的依赖.command "<flutter-root>_app"
+./【MacOS】⚙️收集当前Flutter工程的依赖.command --select "<flutter-root>_app"
+./【MacOS】⚙️收集当前Flutter工程的依赖.command --no-pub-get "<flutter-root>_app"
 ```
 
 ## 五、执行流程
@@ -115,7 +115,7 @@ flowchart TD
 - `flutter pub get` 可能更新 `.dart_tool` 和依赖解析结果，因此不会默认执行：直接回车跳过，输入任意字符后回车才执行。
 - 如果跳过 `flutter pub get`，工程必须已经存在 `.dart_tool/package_config.json`，否则脚本会停止并给出提示。
 - 脚本可能复制大量依赖文件，压缩耗时和结果体积取决于工程规模及现有 `Pods`、SwiftPM 输出。
-- 临时目录仅创建在 `/tmp` 下，脚本退出时只清理本次创建的临时目录。
+- 临时目录仅创建在 `$TMPDIR` 下，脚本退出时只清理本次创建的临时目录。
 - 不执行 `pod install`，不复制整个 Gradle 缓存，不修改依赖源码。
 
 ## 八、日志文件
@@ -123,7 +123,7 @@ flowchart TD
 终端输出会同步写入：
 
 ```text
-/tmp/pack_flutter_deps_macos.log
+$TMPDIR/pack_flutter_deps_macos.log
 ```
 
 脚本每次启动都会清空旧日志。失败时优先查看日志中的 `✖` 错误信息和对应路径。
