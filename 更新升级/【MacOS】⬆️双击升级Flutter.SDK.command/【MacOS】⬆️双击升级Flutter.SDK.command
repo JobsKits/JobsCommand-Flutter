@@ -188,7 +188,7 @@ show_script_intro_and_wait() {
   print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。'
   print -r -- '============================================================================'
   echo ""
-  read -r "?👉 已了解脚本用途与影响，按回车继续；按 Ctrl+C 取消：" _
+  read -r "?👉 已了解脚本用途与影响，按回车继续；按 Ctrl+C 取消：" _ || exit 1
 }
 # 执行 run original logic 对应的独立业务步骤。
 run_original_logic() {
@@ -294,17 +294,17 @@ run_original_logic() {
   }
   # 解析并返回 get sdk path from system 所需信息。
   get_sdk_path_from_system() {
-    local path
-    path=$(flutter --version --verbose 2>/dev/null \
+    local target_path
+    target_path=$(flutter --version --verbose 2>/dev/null \
       | /usr/bin/grep "Flutter root" \
       | /usr/bin/awk -F'at ' '{print $2}' \
       | /usr/bin/xargs || true)
-    if [[ -z "$path" ]]; then
+    if [[ -z "$target_path" ]]; then
       for p in /opt/homebrew/Caskroom/flutter/*/flutter /usr/local/Caskroom/flutter/*/flutter; do
-        [[ -x "$p/bin/flutter" ]] && path="$p" && break
+        [[ -x "$p/bin/flutter" ]] && target_path="$p" && break
       done
     fi
-    echo "$path"
+    echo "$target_path"
   }
   # 检查 check sdk git changes 所需条件，不满足时阻止继续执行。
   check_sdk_git_changes() {
@@ -425,14 +425,10 @@ initialize_script_runtime() {
 }
 # 编排脚本的高层业务流程。
 main() {
-  # 展示脚本内置自述，并按运行入口完成防误触确认。
-  show_script_intro_and_wait
-  # 初始化 Shell 选项、日志、依赖和入口运行状态。
-  initialize_script_runtime
-  # 执行 run_original_logic 对应的核心业务步骤。
-  run_original_logic "$@"
-  # 输出脚本执行结果、摘要和日志位置。
-  success_echo "脚本执行结束。日志：$LOG_FILE"
+  show_script_intro_and_wait # 展示脚本内置自述，并按运行入口完成防误触确认。
+  initialize_script_runtime # 初始化 Shell 选项、日志、依赖和入口运行状态。
+  run_original_logic "$@" # 执行 run_original_logic 对应的核心业务步骤。
+  success_echo "脚本执行结束。日志：$LOG_FILE" # 输出脚本执行结果、摘要和日志位置。
 }
 
 main "$@"
