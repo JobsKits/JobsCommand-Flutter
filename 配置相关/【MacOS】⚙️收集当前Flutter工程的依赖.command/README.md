@@ -19,7 +19,7 @@
 - 排查离线环境、依赖版本或本地路径包问题。
 - 使用 [**fzf**](https://formulae.brew.sh/formula/fzf) 从依赖清单中多选部分 Dart / Flutter 包。
 
-## 二、目录结构
+## 二、目录结构 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 
 ```text
 【MacOS】⚙️收集当前Flutter工程的依赖.command/
@@ -29,7 +29,7 @@
 
 脚本与 `README.md` 必须保持在同一目录。双击脚本后会先展示本文件，按回车才会继续，按 `Ctrl+C` 可以取消。
 
-## 三、执行前检查
+## 三、执行前检查 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 
 - 系统必须是 MacOS，并可使用系统命令 `zsh`、`rsync` 和 `ditto`。
 - 工程根目录必须存在 `pubspec.yaml`。
@@ -46,20 +46,20 @@
   brew install fzf
   ```
 
-## 四、运行方式
+## 四、运行方式 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 
-### 4.1、双击运行
+### 4.1、双击运行 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 
 在 Finder 中双击 `【MacOS】⚙️收集当前Flutter工程的依赖.command`。脚本会从自身目录向上查找 `pubspec.yaml`；如果没有找到，会提示输入或拖入 Flutter 工程根目录。
 
-### 4.2、终端运行
+### 4.2、终端运行 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 
 ```shell
 cd "~/Downloads/【MacOS】⚙️收集当前Flutter工程的依赖.command"
 ./【MacOS】⚙️收集当前Flutter工程的依赖.command
 ```
 
-### 4.3、参数说明
+### 4.3、参数说明 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 
 | 参数 | 作用 |
 | --- | --- |
@@ -76,7 +76,7 @@ cd "~/Downloads/【MacOS】⚙️收集当前Flutter工程的依赖.command"
 ./【MacOS】⚙️收集当前Flutter工程的依赖.command --no-pub-get "<flutter-root>_app"
 ```
 
-## 五、执行流程
+## 五、执行流程 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 
 ```mermaid
 flowchart TD
@@ -95,7 +95,7 @@ flowchart TD
     K --> L[使用 ditto 生成桌面 Zip]
 ```
 
-## 六、压缩包内容
+## 六、压缩包内容 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 
 | 目录 | 内容 |
 | --- | --- |
@@ -110,7 +110,7 @@ flowchart TD
 ~/Desktop/工程名_flutter_deps_时间戳.zip
 ```
 
-## 七、交互与风险说明
+## 七、交互与风险说明 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 
 - `flutter pub get` 可能更新 `.dart_tool` 和依赖解析结果，因此不会默认执行：直接回车跳过，输入任意字符后回车才执行。
 - 如果跳过 `flutter pub get`，工程必须已经存在 `.dart_tool/package_config.json`，否则脚本会停止并给出提示。
@@ -118,7 +118,7 @@ flowchart TD
 - 临时目录仅创建在 `$TMPDIR` 下，脚本退出时只清理本次创建的临时目录。
 - 不执行 `pod install`，不复制整个 Gradle 缓存，不修改依赖源码。
 
-## 八、日志文件
+## 八、日志文件 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 
 终端输出会同步写入：
 
@@ -128,9 +128,9 @@ $TMPDIR/pack_flutter_deps_macos.log
 
 脚本每次启动都会清空旧日志。失败时优先查看日志中的 `✖` 错误信息和对应路径。
 
-## 九、常见问题
+## 九、常见问题 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 
-### 9.1、提示未找到 Flutter
+### 9.1、提示未找到 Flutter <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 
 确认工程内 FVM SDK、系统 `fvm` 或全局 `flutter` 至少有一种可用：
 
@@ -139,7 +139,7 @@ flutter --version
 fvm flutter --version
 ```
 
-### 9.2、提示缺少 package_config.json
+### 9.2、提示缺少 package_config.json <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 
 重新运行脚本，在询问 `flutter pub get` 时输入任意字符后回车执行；也可以先在工程目录手动运行：
 
@@ -147,7 +147,7 @@ fvm flutter --version
 flutter pub get
 ```
 
-### 9.3、`--select` 无法使用
+### 9.3、`--select` 无法使用 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 
 确认 `fzf` 已安装并能被当前终端找到：
 
@@ -155,7 +155,7 @@ flutter pub get
 command -v fzf
 ```
 
-## 十、验证边界
+## 十、验证边界 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 
 脚本可以通过 `zsh -n` 做静态语法检查；依赖复制和压缩结果仍应在目标 Flutter 工程中实际运行后确认。本说明不代表已经对任意具体工程执行过真实打包。
 
