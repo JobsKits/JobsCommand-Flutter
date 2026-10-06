@@ -9,6 +9,29 @@
 # 说明：保留原脚本业务逻辑，补齐 README 防误触、彩色日志、zsh 入口、Homebrew 健康自检标准。
 # =====================================================================
 
+# 仅渲染自述：标题红色加粗，编号正文蓝色常规字重；非彩色终端输出纯文本。
+jobs_intro_style() {
+  local intro_color=0
+  if [ -t 1 ] && [ -n "${TERM:-}" ] && [ "${TERM:-}" != dumb ] &&
+     [ -z "${NO_COLOR+x}" ] && [ "${PLAIN_OUTPUT:-0}" != 1 ] &&
+     [ "${IS_SOURCETREE_RUNTIME:-0}" != 1 ]; then
+    intro_color=1
+  fi
+  /usr/bin/awk -v color="$intro_color" -v role="${1:-body}" '
+    BEGIN { esc = sprintf("%c", 27) }
+    {
+      gsub(esc "\\[[0-9;]*m", "")
+      gsub(/\\(033|e|x1[bB])\[[0-9;]*m/, "")
+      if (!color || $0 ~ /^[[:space:]]*$/) { print; next }
+      numbered = ($0 ~ /^[[:space:]➤ℹ🔹✔⚠]*([0-9]+[、.)）]|[0-9]+️⃣|[-•])/)
+      heading = ($0 ~ /^[[:space:]]*#{1,6}[[:space:]]/ || $0 ~ /[：:][[:space:]]*$/ || $0 ~ /^[[:space:]]*[=━─-]{3}/)
+      title = (!numbered && (role == "title" || heading))
+      if (role == "auto" && !seen && !numbered) title = 1
+      if ($0 !~ /^[[:space:]]*[=━─-]+[[:space:]]*$/) seen = 1
+      printf "%s%s%s\n", esc (title ? "[1;31m" : "[0;34m"), $0, esc "[0m"
+    }
+  '
+}
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
 SCRIPT_PATH="${SCRIPT_DIR}/$(basename -- "$0")"
 SCRIPT_BASENAME="$(basename "$0" | sed 's/\.[^.]*$//')"
@@ -181,13 +204,13 @@ brew_install_or_upgrade() {
 # 展示脚本用途和影响范围，并在执行前等待用户确认。
 show_script_intro_and_wait() {
   clear
-  print -r -- '============================== 脚本内置自述 =============================='
-  print -r -- '脚本名称：【MacOS】☀️双击运行Flutter项目（iOS 模拟器）.command'
-  print -r -- '核心用途：执行“☀️双击运行Flutter项目（iOS 模拟器）”对应的移动端项目自动化任务。'
-  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。'
-  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。'
-  print -r -- '============================================================================'
-  echo ""
+  print -r -- '============================== 脚本内置自述 ==============================' | jobs_intro_style title
+  print -r -- '脚本名称：【MacOS】☀️双击运行Flutter项目（iOS 模拟器）.command' | jobs_intro_style title
+  print -r -- '核心用途：执行“☀️双击运行Flutter项目（iOS 模拟器）”对应的移动端项目自动化任务。' | jobs_intro_style body
+  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。' | jobs_intro_style body
+  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。' | jobs_intro_style body
+  print -r -- '============================================================================' | jobs_intro_style title
+  echo "" | jobs_intro_style body
   read -r "?👉 已了解脚本用途与影响，按回车继续；按 Ctrl+C 取消：" _
 }
 # 执行已经拆分完成的独立业务步骤。
@@ -257,29 +280,29 @@ run_original_logic() {
   # ✅ 自述信息
   show_banner() {
     clear
-    highlight_echo '                                                                                       '
-    highlight_echo '88888888888 88         88        88 888888888888 888888888888 88888888888 88888888ba   '
-    highlight_echo '88          88         88        88      88           88      88          88      "8b  '
-    highlight_echo '88          88         88        88      88           88      88          88      ,8P  '
-    highlight_echo '88aaaaa     88         88        88      88           88      88aaaaa     88aaaaaa8P''  '
-    highlight_echo '88""""""     88         88        88      88           88      88""""""     88""""""88''  '
-    highlight_echo '88          88         88        88      88           88      88          88     `8b   '
-    highlight_echo '88          88         Y8a.    .a8P      88           88      88          88      8b   '
-    highlight_echo '88          88888888888 `"Y8888Y"`       88           88      88888888888 88      `8b  '
-    warn_echo    "                        🛠️ FLUTTER iOS 模拟器 启动脚本"
-    echo ""
-    success_echo "🛠️ 本脚本用于将 Dart 或 Flutter 项目运行到 iOS 模拟器"
-    success_echo "===================================================================="
-    success_echo "👉 支持："
-    success_echo "   1. 拖入 Flutter 项目根目录（含 pubspec.yaml 和 lib/main.dart）或 Dart 单文件（含 void main）"
-    success_echo "   2. 自动识别 FVM、构建模式、flavor 参数"
-    success_echo "   3. 自动启动 iOS 模拟器，处理假后台问题"
-    success_echo "   4. 支持 fzf 模拟器选择与创建（设备 + 系统组合）"
-    success_echo "   5. flutter run 日志异常时自动修复 CocoaPods"
-    success_echo "   6. 自动创建桌面 .command 快捷方式"
-    success_echo "===================================================================="
+    highlight_echo '                                                                                       ' | jobs_intro_style title
+    highlight_echo '88888888888 88         88        88 888888888888 888888888888 88888888888 88888888ba   ' | jobs_intro_style title
+    highlight_echo '88          88         88        88      88           88      88          88      "8b  ' | jobs_intro_style title
+    highlight_echo '88          88         88        88      88           88      88          88      ,8P  ' | jobs_intro_style title
+    highlight_echo '88aaaaa     88         88        88      88           88      88aaaaa     88aaaaaa8P''  ' | jobs_intro_style title
+    highlight_echo '88""""""     88         88        88      88           88      88""""""     88""""""88''  ' | jobs_intro_style title
+    highlight_echo '88          88         88        88      88           88      88          88     `8b   ' | jobs_intro_style title
+    highlight_echo '88          88         Y8a.    .a8P      88           88      88          88      8b   ' | jobs_intro_style title
+    highlight_echo '88          88888888888 `"Y8888Y"`       88           88      88888888888 88      `8b  ' | jobs_intro_style title
+    warn_echo    "                        🛠️ FLUTTER iOS 模拟器 启动脚本" | jobs_intro_style body
+    echo "" | jobs_intro_style body
+    success_echo "🛠️ 本脚本用于将 Dart 或 Flutter 项目运行到 iOS 模拟器" | jobs_intro_style body
+    success_echo "====================================================================" | jobs_intro_style title
+    success_echo "👉 支持：" | jobs_intro_style title
+    success_echo "   1. 拖入 Flutter 项目根目录（含 pubspec.yaml 和 lib/main.dart）或 Dart 单文件（含 void main）" | jobs_intro_style body
+    success_echo "   2. 自动识别 FVM、构建模式、flavor 参数" | jobs_intro_style body
+    success_echo "   3. 自动启动 iOS 模拟器，处理假后台问题" | jobs_intro_style body
+    success_echo "   4. 支持 fzf 模拟器选择与创建（设备 + 系统组合）" | jobs_intro_style body
+    success_echo "   5. flutter run 日志异常时自动修复 CocoaPods" | jobs_intro_style body
+    success_echo "   6. 自动创建桌面 .command 快捷方式" | jobs_intro_style body
+    success_echo "====================================================================" | jobs_intro_style title
     error_echo   "📌 如需运行断点调试，请使用 VSCode / Android Studio / Xcode 等 IDE。终端运行不支持断点。"
-    echo ""
+    echo "" | jobs_intro_style body
   }
   # ✅ 项目入口识别
   detect_entry() {

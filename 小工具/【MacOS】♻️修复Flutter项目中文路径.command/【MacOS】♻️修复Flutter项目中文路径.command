@@ -9,6 +9,29 @@
 # 说明：保留原脚本业务逻辑，补齐 README 防误触、彩色日志、zsh 入口、Homebrew 健康自检标准。
 # =====================================================================
 
+# 仅渲染自述：标题红色加粗，编号正文蓝色常规字重；非彩色终端输出纯文本。
+jobs_intro_style() {
+  local intro_color=0
+  if [ -t 1 ] && [ -n "${TERM:-}" ] && [ "${TERM:-}" != dumb ] &&
+     [ -z "${NO_COLOR+x}" ] && [ "${PLAIN_OUTPUT:-0}" != 1 ] &&
+     [ "${IS_SOURCETREE_RUNTIME:-0}" != 1 ]; then
+    intro_color=1
+  fi
+  /usr/bin/awk -v color="$intro_color" -v role="${1:-body}" '
+    BEGIN { esc = sprintf("%c", 27) }
+    {
+      gsub(esc "\\[[0-9;]*m", "")
+      gsub(/\\(033|e|x1[bB])\[[0-9;]*m/, "")
+      if (!color || $0 ~ /^[[:space:]]*$/) { print; next }
+      numbered = ($0 ~ /^[[:space:]➤ℹ🔹✔⚠]*([0-9]+[、.)）]|[0-9]+️⃣|[-•])/)
+      heading = ($0 ~ /^[[:space:]]*#{1,6}[[:space:]]/ || $0 ~ /[：:][[:space:]]*$/ || $0 ~ /^[[:space:]]*[=━─-]{3}/)
+      title = (!numbered && (role == "title" || heading))
+      if (role == "auto" && !seen && !numbered) title = 1
+      if ($0 !~ /^[[:space:]]*[=━─-]+[[:space:]]*$/) seen = 1
+      printf "%s%s%s\n", esc (title ? "[1;31m" : "[0;34m"), $0, esc "[0m"
+    }
+  '
+}
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
 SCRIPT_PATH="${SCRIPT_DIR}/$(basename -- "$0")"
 SCRIPT_BASENAME="$(basename "$0" | sed 's/\.[^.]*$//')"
@@ -181,13 +204,13 @@ brew_install_or_upgrade() {
 # 展示脚本用途和影响范围，并在执行前等待用户确认。
 show_script_intro_and_wait() {
   clear
-  print -r -- '============================== 脚本内置自述 =============================='
-  print -r -- '脚本名称：【MacOS】♻️修复Flutter项目中文路径.command'
-  print -r -- '核心用途：执行“♻️修复Flutter项目中文路径”对应的移动端项目自动化任务。'
-  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。'
-  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。'
-  print -r -- '============================================================================'
-  echo ""
+  print -r -- '============================== 脚本内置自述 ==============================' | jobs_intro_style title
+  print -r -- '脚本名称：【MacOS】♻️修复Flutter项目中文路径.command' | jobs_intro_style title
+  print -r -- '核心用途：执行“♻️修复Flutter项目中文路径”对应的移动端项目自动化任务。' | jobs_intro_style body
+  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。' | jobs_intro_style body
+  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。' | jobs_intro_style body
+  print -r -- '============================================================================' | jobs_intro_style title
+  echo "" | jobs_intro_style body
   read -r "?👉 已了解脚本用途与影响，按回车继续；按 Ctrl+C 取消：" _
 }
 # 执行已经拆分完成的独立业务步骤。
@@ -340,23 +363,23 @@ run_original_logic() {
   }
   # ✅ 自述信息
   print_banner() {
-    echo ""
-    highlight_echo "📦 脚本用途：修复 Flutter 项目中 import 语句中被 URI 编码的中文路径"
-    echo ""
-    info_echo "📁 判断 Flutter 项目根目录的依据："
-    info_echo "   ✅ 当前目录下存在 pubspec.yaml"
-    info_echo "   ✅ 当前目录下存在 lib/ 文件夹"
-    echo ""
-    info_echo "🔧 本脚本将自动执行以下步骤："
-    info_echo "1️⃣ 检测 Flutter 项目根目录"
-    info_echo "2️⃣ 自动识别 Flutter 命令（FVM 优先）"
-    info_echo "3️⃣ 安装/升级工具（brew、perl、URI::Escape）"
-    info_echo "4️⃣ 替换所有 Dart 文件中 URI 编码路径为中文路径"
-    info_echo "5️⃣ 所有修改文件备份至 .import_backup/"
-    info_echo "6️⃣ 自动生成说明文件"
-    info_echo "7️⃣ 询问是否执行 flutter analyze"
-    info_echo "8️⃣ 询问是否执行 flutter upgrade"
-    echo ""
+    echo "" | jobs_intro_style body
+    highlight_echo "📦 脚本用途：修复 Flutter 项目中 import 语句中被 URI 编码的中文路径" | jobs_intro_style title
+    echo "" | jobs_intro_style body
+    info_echo "📁 判断 Flutter 项目根目录的依据：" | jobs_intro_style title
+    info_echo "   ✅ 当前目录下存在 pubspec.yaml" | jobs_intro_style body
+    info_echo "   ✅ 当前目录下存在 lib/ 文件夹" | jobs_intro_style body
+    echo "" | jobs_intro_style body
+    info_echo "🔧 本脚本将自动执行以下步骤：" | jobs_intro_style title
+    info_echo "1️⃣ 检测 Flutter 项目根目录" | jobs_intro_style body
+    info_echo "2️⃣ 自动识别 Flutter 命令（FVM 优先）" | jobs_intro_style body
+    info_echo "3️⃣ 安装/升级工具（brew、perl、URI::Escape）" | jobs_intro_style body
+    info_echo "4️⃣ 替换所有 Dart 文件中 URI 编码路径为中文路径" | jobs_intro_style body
+    info_echo "5️⃣ 所有修改文件备份至 .import_backup/" | jobs_intro_style body
+    info_echo "6️⃣ 自动生成说明文件" | jobs_intro_style body
+    info_echo "7️⃣ 询问是否执行 flutter analyze" | jobs_intro_style body
+    info_echo "8️⃣ 询问是否执行 flutter upgrade" | jobs_intro_style body
+    echo "" | jobs_intro_style body
     read "?🔑 按下回车开始执行..."
   }
   # ✅ 检查 Flutter 项目根目录

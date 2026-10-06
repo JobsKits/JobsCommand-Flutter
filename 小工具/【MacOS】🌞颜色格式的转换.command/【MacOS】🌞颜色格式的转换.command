@@ -5,13 +5,36 @@
 # - 影响范围：可能修改当前项目、用户环境或脚本指定的目标。
 # - 运行提示：运行后会先打印内置自述；终端模式按回车确认后继续，按 Ctrl+C 可取消。
 # 打印脚本内置自述，并按运行入口决定是否等待用户确认。
+# 仅渲染自述：标题红色加粗，编号正文蓝色常规字重；非彩色终端输出纯文本。
+jobs_intro_style() {
+  local intro_color=0
+  if [ -t 1 ] && [ -n "${TERM:-}" ] && [ "${TERM:-}" != dumb ] &&
+     [ -z "${NO_COLOR+x}" ] && [ "${PLAIN_OUTPUT:-0}" != 1 ] &&
+     [ "${IS_SOURCETREE_RUNTIME:-0}" != 1 ]; then
+    intro_color=1
+  fi
+  /usr/bin/awk -v color="$intro_color" -v role="${1:-body}" '
+    BEGIN { esc = sprintf("%c", 27) }
+    {
+      gsub(esc "\\[[0-9;]*m", "")
+      gsub(/\\(033|e|x1[bB])\[[0-9;]*m/, "")
+      if (!color || $0 ~ /^[[:space:]]*$/) { print; next }
+      numbered = ($0 ~ /^[[:space:]➤ℹ🔹✔⚠]*([0-9]+[、.)）]|[0-9]+️⃣|[-•])/)
+      heading = ($0 ~ /^[[:space:]]*#{1,6}[[:space:]]/ || $0 ~ /[：:][[:space:]]*$/ || $0 ~ /^[[:space:]]*[=━─-]{3}/)
+      title = (!numbered && (role == "title" || heading))
+      if (role == "auto" && !seen && !numbered) title = 1
+      if ($0 !~ /^[[:space:]]*[=━─-]+[[:space:]]*$/) seen = 1
+      printf "%s%s%s\n", esc (title ? "[1;31m" : "[0;34m"), $0, esc "[0m"
+    }
+  '
+}
 show_script_intro_and_wait() {
-  print -r -- '============================== 脚本内置自述 =============================='
-  print -r -- '脚本名称：【MacOS】🌞颜色格式的转换.command'
-  print -r -- '核心用途：执行“🌞颜色格式的转换”对应的自动化任务。'
-  print -r -- '影响范围：可能修改当前项目、用户环境或脚本指定的目标。'
-  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。'
-  print -r -- '============================================================================'
+  print -r -- '============================== 脚本内置自述 ==============================' | jobs_intro_style title
+  print -r -- '脚本名称：【MacOS】🌞颜色格式的转换.command' | jobs_intro_style title
+  print -r -- '核心用途：执行“🌞颜色格式的转换”对应的自动化任务。' | jobs_intro_style body
+  print -r -- '影响范围：可能修改当前项目、用户环境或脚本指定的目标。' | jobs_intro_style body
+  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。' | jobs_intro_style body
+  print -r -- '============================================================================' | jobs_intro_style title
   if [[ ! -t 0 ]]; then
     print -u2 -r -- '当前没有可交互输入，请在终端中重新运行。'
     return 1
@@ -64,7 +87,7 @@ jobs_cor_show_readme_and_wait() {
   # 执行当前流程中的独立业务步骤：clear。
   clear 2>/dev/null || true
   # 执行当前流程中的独立业务步骤：cat。
-  cat <<'EOFREADME' | tee -a "$LOG_FILE"
+  cat <<'EOFREADME' | tee -a "$LOG_FILE" | jobs_intro_style auto
 ============================================================
 cor - 颜色转换 / 终端色块预览
 ============================================================
@@ -94,9 +117,9 @@ EOFREADME
   # 根据当前条件选择对应的执行分支。
   if [[ -t 0 && "${JOBS_MAC_ENV_SKIP_README:-}" != "1" ]]; then
     # 执行当前流程中的独立业务步骤：log。
-    log ""
+    log "" | jobs_intro_style body
     # 执行当前流程中的独立业务步骤：warm_echo。
-    warm_echo "按回车继续执行 cor..."
+    warm_echo "按回车继续执行 cor..." | jobs_intro_style body
     # 初始化当前流程后续步骤需要使用的变量。
     local _answer=""
     # 初始化当前流程后续步骤需要使用的变量。

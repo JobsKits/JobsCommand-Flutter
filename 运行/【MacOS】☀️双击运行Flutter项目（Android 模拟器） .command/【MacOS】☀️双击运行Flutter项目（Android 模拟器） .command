@@ -9,6 +9,29 @@
 # 说明：保留原脚本业务逻辑，补齐 README 防误触、彩色日志、zsh 入口、Homebrew 健康自检标准。
 # =====================================================================
 
+# 仅渲染自述：标题红色加粗，编号正文蓝色常规字重；非彩色终端输出纯文本。
+jobs_intro_style() {
+  local intro_color=0
+  if [ -t 1 ] && [ -n "${TERM:-}" ] && [ "${TERM:-}" != dumb ] &&
+     [ -z "${NO_COLOR+x}" ] && [ "${PLAIN_OUTPUT:-0}" != 1 ] &&
+     [ "${IS_SOURCETREE_RUNTIME:-0}" != 1 ]; then
+    intro_color=1
+  fi
+  /usr/bin/awk -v color="$intro_color" -v role="${1:-body}" '
+    BEGIN { esc = sprintf("%c", 27) }
+    {
+      gsub(esc "\\[[0-9;]*m", "")
+      gsub(/\\(033|e|x1[bB])\[[0-9;]*m/, "")
+      if (!color || $0 ~ /^[[:space:]]*$/) { print; next }
+      numbered = ($0 ~ /^[[:space:]➤ℹ🔹✔⚠]*([0-9]+[、.)）]|[0-9]+️⃣|[-•])/)
+      heading = ($0 ~ /^[[:space:]]*#{1,6}[[:space:]]/ || $0 ~ /[：:][[:space:]]*$/ || $0 ~ /^[[:space:]]*[=━─-]{3}/)
+      title = (!numbered && (role == "title" || heading))
+      if (role == "auto" && !seen && !numbered) title = 1
+      if ($0 !~ /^[[:space:]]*[=━─-]+[[:space:]]*$/) seen = 1
+      printf "%s%s%s\n", esc (title ? "[1;31m" : "[0;34m"), $0, esc "[0m"
+    }
+  '
+}
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
 SCRIPT_PATH="${SCRIPT_DIR}/$(basename -- "$0")"
 SCRIPT_BASENAME="$(basename "$0" | sed 's/\.[^.]*$//')"
@@ -185,13 +208,13 @@ brew_install_or_upgrade() {
 # 展示脚本用途和影响范围，并在执行前等待用户确认。
 show_script_intro_and_wait() {
   clear
-  print -r -- '============================== 脚本内置自述 =============================='
-  print -r -- '脚本名称：【MacOS】☀️双击运行Flutter项目（Android 模拟器） .command'
-  print -r -- '核心用途：执行“☀️双击运行Flutter项目（Android 模拟器）”对应的移动端项目自动化任务。'
-  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。'
-  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。'
-  print -r -- '============================================================================'
-  echo ""
+  print -r -- '============================== 脚本内置自述 ==============================' | jobs_intro_style title
+  print -r -- '脚本名称：【MacOS】☀️双击运行Flutter项目（Android 模拟器） .command' | jobs_intro_style title
+  print -r -- '核心用途：执行“☀️双击运行Flutter项目（Android 模拟器）”对应的移动端项目自动化任务。' | jobs_intro_style body
+  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。' | jobs_intro_style body
+  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。' | jobs_intro_style body
+  print -r -- '============================================================================' | jobs_intro_style title
+  echo "" | jobs_intro_style body
   read -r "?👉 已了解脚本用途与影响，按回车继续；按 Ctrl+C 取消：" _
 }
 # 执行已经拆分完成的独立业务步骤。
@@ -239,24 +262,24 @@ run_original_logic() {
   underline_echo() { log "\033[4m$1\033[0m"; }            # 🔗 下划线
   # ✅ 自述信息
   show_intro() {
-    echo ""
-    bold_echo "===================================================================="
-    note_echo "🛠️ 脚本功能说明："
-    bold_echo "===================================================================="
-    note_echo "📌 脚本用途："
-    note_echo "将 Dart 文件运行到 Android 模拟器"
-    echo ""
-    note_echo "📦 功能列表："
-    success_echo " ✅ 拖入 Dart 文件或 Flutter 项目目录（含 lib/main.dart）"
-    success_echo " ✅ 自动判断是否使用 FVM"
-    success_echo " ✅ 自动检测和安装 Android SDK 工具"
-    success_echo " ✅ 自动创建和启动 AVD（支持 fzf 多选 + arm64 优化）"
-    success_echo " ✅ 支持构建模式（debug/release/profile）与 --flavor"
-    success_echo " ✅ 自动修复 adb / sdkmanager / namespace 等问题"
-    echo ""
-    warm_echo "🔁 可选步骤：[任意键=执行, 回车=跳过]"
-    bold_echo "===================================================================="
-    echo ""
+    echo "" | jobs_intro_style body
+    bold_echo "====================================================================" | jobs_intro_style title
+    note_echo "🛠️ 脚本功能说明：" | jobs_intro_style title
+    bold_echo "====================================================================" | jobs_intro_style title
+    note_echo "📌 脚本用途：" | jobs_intro_style title
+    note_echo "将 Dart 文件运行到 Android 模拟器" | jobs_intro_style body
+    echo "" | jobs_intro_style body
+    note_echo "📦 功能列表：" | jobs_intro_style title
+    success_echo " ✅ 拖入 Dart 文件或 Flutter 项目目录（含 lib/main.dart）" | jobs_intro_style body
+    success_echo " ✅ 自动判断是否使用 FVM" | jobs_intro_style body
+    success_echo " ✅ 自动检测和安装 Android SDK 工具" | jobs_intro_style body
+    success_echo " ✅ 自动创建和启动 AVD（支持 fzf 多选 + arm64 优化）" | jobs_intro_style body
+    success_echo " ✅ 支持构建模式（debug/release/profile）与 --flavor" | jobs_intro_style body
+    success_echo " ✅ 自动修复 adb / sdkmanager / namespace 等问题" | jobs_intro_style body
+    echo "" | jobs_intro_style body
+    warm_echo "🔁 可选步骤：[任意键=执行, 回车=跳过]" | jobs_intro_style body
+    bold_echo "====================================================================" | jobs_intro_style title
+    echo "" | jobs_intro_style body
 
     # ✅ 等待用户输入，回车跳过，其他继续
     print -n "⚙️  现在是否执行可选操作？（回车跳过 / 任意键执行）："

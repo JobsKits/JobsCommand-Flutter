@@ -9,6 +9,29 @@
 # 说明：保留原脚本业务逻辑，补齐 README 防误触、彩色日志、zsh 入口、Homebrew 健康自检标准。
 # =====================================================================
 
+# 仅渲染自述：标题红色加粗，编号正文蓝色常规字重；非彩色终端输出纯文本。
+jobs_intro_style() {
+  local intro_color=0
+  if [ -t 1 ] && [ -n "${TERM:-}" ] && [ "${TERM:-}" != dumb ] &&
+     [ -z "${NO_COLOR+x}" ] && [ "${PLAIN_OUTPUT:-0}" != 1 ] &&
+     [ "${IS_SOURCETREE_RUNTIME:-0}" != 1 ]; then
+    intro_color=1
+  fi
+  /usr/bin/awk -v color="$intro_color" -v role="${1:-body}" '
+    BEGIN { esc = sprintf("%c", 27) }
+    {
+      gsub(esc "\\[[0-9;]*m", "")
+      gsub(/\\(033|e|x1[bB])\[[0-9;]*m/, "")
+      if (!color || $0 ~ /^[[:space:]]*$/) { print; next }
+      numbered = ($0 ~ /^[[:space:]➤ℹ🔹✔⚠]*([0-9]+[、.)）]|[0-9]+️⃣|[-•])/)
+      heading = ($0 ~ /^[[:space:]]*#{1,6}[[:space:]]/ || $0 ~ /[：:][[:space:]]*$/ || $0 ~ /^[[:space:]]*[=━─-]{3}/)
+      title = (!numbered && (role == "title" || heading))
+      if (role == "auto" && !seen && !numbered) title = 1
+      if ($0 !~ /^[[:space:]]*[=━─-]+[[:space:]]*$/) seen = 1
+      printf "%s%s%s\n", esc (title ? "[1;31m" : "[0;34m"), $0, esc "[0m"
+    }
+  '
+}
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
 SCRIPT_PATH="${SCRIPT_DIR}/$(basename -- "$0")"
 SCRIPT_BASENAME="$(basename "$0" | sed 's/\.[^.]*$//')"
@@ -181,13 +204,13 @@ brew_install_or_upgrade() {
 # 展示脚本用途和影响范围，并在执行前等待用户确认。
 show_script_intro_and_wait() {
   clear
-  print -r -- '============================== 脚本内置自述 =============================='
-  print -r -- '脚本名称：【MacOS】⚙️Flutter 项目组件预下载.command'
-  print -r -- '核心用途：执行“⚙️Flutter 项目组件预下载”对应的移动端项目自动化任务。'
-  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。'
-  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。'
-  print -r -- '============================================================================'
-  echo ""
+  print -r -- '============================== 脚本内置自述 ==============================' | jobs_intro_style title
+  print -r -- '脚本名称：【MacOS】⚙️Flutter 项目组件预下载.command' | jobs_intro_style title
+  print -r -- '核心用途：执行“⚙️Flutter 项目组件预下载”对应的移动端项目自动化任务。' | jobs_intro_style body
+  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。' | jobs_intro_style body
+  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。' | jobs_intro_style body
+  print -r -- '============================================================================' | jobs_intro_style title
+  echo "" | jobs_intro_style body
   read -r "?👉 已了解脚本用途与影响，按回车继续；按 Ctrl+C 取消：" _
 }
 # 执行已经拆分完成的独立业务步骤。
@@ -227,13 +250,13 @@ run_original_logic() {
   # ✅ 自述信息
   print_intro() {
     clear
-    success_echo "📦 Flutter 项目组件预下载脚本"
-    bold_echo "==================================================================="
-    success_echo "该脚本将帮助你一次性或分类预下载 Flutter 的所有支持平台工具"
-    success_echo "包括：Android 所有架构、iOS、macOS、Windows、Linux、Web、Dart SDK"
-    success_echo "支持离线缓存功能，预备无法联网时直接恢复"
-    success_echo "请在 Flutter 项目根目录（含 pubspec.yaml 和 lib/）中运行此脚本"
-    bold_echo "==================================================================="
+    success_echo "📦 Flutter 项目组件预下载脚本" | jobs_intro_style body
+    bold_echo "===================================================================" | jobs_intro_style title
+    success_echo "该脚本将帮助你一次性或分类预下载 Flutter 的所有支持平台工具" | jobs_intro_style body
+    success_echo "包括：Android 所有架构、iOS、macOS、Windows、Linux、Web、Dart SDK" | jobs_intro_style body
+    success_echo "支持离线缓存功能，预备无法联网时直接恢复" | jobs_intro_style body
+    success_echo "请在 Flutter 项目根目录（含 pubspec.yaml 和 lib/）中运行此脚本" | jobs_intro_style body
+    bold_echo "===================================================================" | jobs_intro_style title
     read "?📎 按回车继续（或 Ctrl+C 退出）："
   }
   # ✅ 单行写文件（避免重复写入）

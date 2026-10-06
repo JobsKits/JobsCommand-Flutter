@@ -9,6 +9,29 @@
 # 说明：保留原脚本业务逻辑，补齐 README 防误触、彩色日志、zsh 入口、Homebrew 健康自检标准。
 # =====================================================================
 
+# 仅渲染自述：标题红色加粗，编号正文蓝色常规字重；非彩色终端输出纯文本。
+jobs_intro_style() {
+  local intro_color=0
+  if [ -t 1 ] && [ -n "${TERM:-}" ] && [ "${TERM:-}" != dumb ] &&
+     [ -z "${NO_COLOR+x}" ] && [ "${PLAIN_OUTPUT:-0}" != 1 ] &&
+     [ "${IS_SOURCETREE_RUNTIME:-0}" != 1 ]; then
+    intro_color=1
+  fi
+  /usr/bin/awk -v color="$intro_color" -v role="${1:-body}" '
+    BEGIN { esc = sprintf("%c", 27) }
+    {
+      gsub(esc "\\[[0-9;]*m", "")
+      gsub(/\\(033|e|x1[bB])\[[0-9;]*m/, "")
+      if (!color || $0 ~ /^[[:space:]]*$/) { print; next }
+      numbered = ($0 ~ /^[[:space:]➤ℹ🔹✔⚠]*([0-9]+[、.)）]|[0-9]+️⃣|[-•])/)
+      heading = ($0 ~ /^[[:space:]]*#{1,6}[[:space:]]/ || $0 ~ /[：:][[:space:]]*$/ || $0 ~ /^[[:space:]]*[=━─-]{3}/)
+      title = (!numbered && (role == "title" || heading))
+      if (role == "auto" && !seen && !numbered) title = 1
+      if ($0 !~ /^[[:space:]]*[=━─-]+[[:space:]]*$/) seen = 1
+      printf "%s%s%s\n", esc (title ? "[1;31m" : "[0;34m"), $0, esc "[0m"
+    }
+  '
+}
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
 SCRIPT_PATH="${SCRIPT_DIR}/$(basename -- "$0")"
 SCRIPT_BASENAME="$(basename "$0" | sed 's/\.[^.]*$//')"
@@ -181,13 +204,13 @@ brew_install_or_upgrade() {
 # 展示脚本用途和影响范围，并在执行前等待用户确认。
 show_script_intro_and_wait() {
   clear
-  print -r -- '============================== 脚本内置自述 =============================='
-  print -r -- '脚本名称：【MacOS】⚙️自动化替换Flutter图片资源.command'
-  print -r -- '核心用途：执行“⚙️自动化替换Flutter图片资源”对应的移动端项目自动化任务。'
-  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。'
-  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。'
-  print -r -- '============================================================================'
-  echo ""
+  print -r -- '============================== 脚本内置自述 ==============================' | jobs_intro_style title
+  print -r -- '脚本名称：【MacOS】⚙️自动化替换Flutter图片资源.command' | jobs_intro_style title
+  print -r -- '核心用途：执行“⚙️自动化替换Flutter图片资源”对应的移动端项目自动化任务。' | jobs_intro_style body
+  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。' | jobs_intro_style body
+  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。' | jobs_intro_style body
+  print -r -- '============================================================================' | jobs_intro_style title
+  echo "" | jobs_intro_style body
   read -r "?👉 已了解脚本用途与影响，按回车继续；按 Ctrl+C 取消：" _ || exit 1
 }
 # 执行已经拆分完成的独立业务步骤。
@@ -287,22 +310,22 @@ run_original_logic() {
   # =============================================================================
   print_intro() {
     echo "" > "$LOG_FILE"
-    log ""
-    bold_echo "══════════════════════════════════════════════════════════════════"
-    bold_echo "  Flutter 启动图 / App 图标自动替换（macOS / Zsh）"
-    bold_echo "══════════════════════════════════════════════════════════════════"
-    log ""
-    note_echo "本脚本会执行："
-    log "  1) 覆盖 ./assets：删除 icon.png / launch_image.png → 复制脚本同级「App图标」「启动图」顶层文件"
-    log "  2) flutter clean（清理构建缓存）"
-    log "  3) 清理平台旧资源：iOS AppIcon.appiconset/* 与 Android res/*"
-    log "  4) 替换 iOS LaunchImage.imageset 内的图片（保留 Contents.json）"
-    log "  5) flutter pub get（下载依赖并生成 .dart_tool 配置）"
-    log "  6) flutter pub run flutter_launcher_icons（若配置了，生成 App 图标）"
-    log "  7) dart/flutter pub run flutter_native_splash（若配置了，生成启动图）"
-    log "  8) 验证并自动打开 iOS / Android 资源目录"
-    log ""
-    note_echo "请确保 pubspec.yaml 至少包含如下配置："
+    log "" | jobs_intro_style body
+    bold_echo "══════════════════════════════════════════════════════════════════" | jobs_intro_style title
+    bold_echo "  Flutter 启动图 / App 图标自动替换（macOS / Zsh）" | jobs_intro_style title
+    bold_echo "══════════════════════════════════════════════════════════════════" | jobs_intro_style title
+    log "" | jobs_intro_style body
+    note_echo "本脚本会执行：" | jobs_intro_style title
+    log "  1) 覆盖 ./assets：删除 icon.png / launch_image.png → 复制脚本同级「App图标」「启动图」顶层文件" | jobs_intro_style body
+    log "  2) flutter clean（清理构建缓存）" | jobs_intro_style body
+    log "  3) 清理平台旧资源：iOS AppIcon.appiconset/* 与 Android res/*" | jobs_intro_style body
+    log "  4) 替换 iOS LaunchImage.imageset 内的图片（保留 Contents.json）" | jobs_intro_style body
+    log "  5) flutter pub get（下载依赖并生成 .dart_tool 配置）" | jobs_intro_style body
+    log "  6) flutter pub run flutter_launcher_icons（若配置了，生成 App 图标）" | jobs_intro_style body
+    log "  7) dart/flutter pub run flutter_native_splash（若配置了，生成启动图）" | jobs_intro_style body
+    log "  8) 验证并自动打开 iOS / Android 资源目录" | jobs_intro_style body
+    log "" | jobs_intro_style body
+    note_echo "请确保 pubspec.yaml 至少包含如下配置：" | jobs_intro_style title
     gray_echo '
   dev_dependencies:
     flutter_launcher_icons: any
@@ -320,10 +343,10 @@ run_original_logic() {
     uses-material-design: true
     assets:
       - assets/launch_image.png
-  '
-    highlight_echo "在线取色器：https://photokit.com/colors/color-picker/?lang=zh"
-    log ""
-    bold_echo "按回车开始..."
+  ' | jobs_intro_style body
+    highlight_echo "在线取色器：https://photokit.com/colors/color-picker/?lang=zh" | jobs_intro_style title
+    log "" | jobs_intro_style body
+    bold_echo "按回车开始..." | jobs_intro_style body
     safe_read _
   }
   # =============================================================================
