@@ -2,11 +2,79 @@
 
 ![Jobs出品，必属精品](https://picsum.photos/1500/400)
 
-[toc]
+<!-- jobs-toc:start -->
+<!-- jobs-toc:source {"v":2,"token":"[toc]"} -->
+<details>
+<summary>📚 目录（点击展开 / 收起）</summary>
+
+- [🔥 前言](#jobs-toc-heading-1)
+- [一、目录结构](#repository-layout)
+- [二、脚本执行流程](#script-workflows)
+  - [【MacOS】⚙️Pod\_Install.command](#jobs-toc-heading-4)
+  - [【MacOS】⚙️双击安装Cocoapods.command](#jobs-toc-heading-5)
+  - [【MacOS】⚙️双击更换Cocoapods源\[-\]CDN\[+\]Github.command](#jobs-toc-heading-6)
+  - [【MacOS】⚙️双击禁用沙盒保证Cocoapods构建流程.command](#jobs-toc-heading-7)
+  - [【MacOS】♻️双击Git（识别子Git） 提交回退.command](#jobs-toc-heading-8)
+  - [【MacOS】🔍Git依据提交日志关键字查找.command](#jobs-toc-heading-9)
+  - [【MacOS】🔍Git寻找分支最近的一次原始切点.command](#jobs-toc-heading-10)
+  - [【MacOS】⚙️Git拉取Flutter项目到本地以后的必要配置.command](#jobs-toc-heading-11)
+  - [【MacOS】♻️修复Flutter项目中文路径.command](#jobs-toc-heading-12)
+  - [【MacOS】♻️双击修复：找不到 Android SDK 或 platforms 目录为空.command](#jobs-toc-heading-13)
+  - [【MacOS】♻️当前脚本所在目录的快捷方式放到桌面.command](#jobs-toc-heading-14)
+  - [【MacOS】⚙️import =\>package💣.command](#jobs-toc-heading-15)
+  - [【MacOS】⚙️保存系统环境配置（运行后输入jobs）.command](#jobs-toc-heading-16)
+  - [【MacOS】⚙️双击任何来源安装.command](#jobs-toc-heading-17)
+  - [【MacOS】⚙️双击卸载Homebrew.command](#jobs-toc-heading-18)
+  - [【MacOS】⚙️双击显示隐藏文件.command](#jobs-toc-heading-19)
+  - [【MacOS】⚙️自动化替换Flutter图片资源.command](#jobs-toc-heading-20)
+  - [【MacOS】⚙️运行授权.command](#jobs-toc-heading-21)
+  - [【MacOS】🌞颜色格式的转换.command](#jobs-toc-heading-22)
+  - [【MacOS】🎈切换Shell.command](#jobs-toc-heading-23)
+  - [【MacOS】🎈双击打开当前路径终端.command](#jobs-toc-heading-24)
+  - [【MacOS】🏥双击自检Flutter.command](#jobs-toc-heading-25)
+  - [【MacOS】🐦Flutter自动化生产代码.command](#jobs-toc-heading-26)
+  - [【MacOS】🔍查询Flutter依赖版本.command](#jobs-toc-heading-27)
+  - [【MacOS】🛠️Android 模拟器一键检测与修复.command](#jobs-toc-heading-28)
+  - [【MacOS】🛠️Flutter 插件 namespace 修复工具".command](#jobs-toc-heading-29)
+  - [【MacOS】🧹Flutter清理维护工具.command](#jobs-toc-heading-30)
+  - [【MacOS】📹双击制作Android模拟器录屏Gif.command](#jobs-toc-heading-31)
+  - [【MacOS】📹双击制作iOS模拟器录屏Gif.command](#jobs-toc-heading-32)
+  - [【MacOS】📦双击打包Flutter.Android.command](#jobs-toc-heading-33)
+  - [【MacOS】📦双击打包Flutter.iOS.command](#jobs-toc-heading-34)
+  - [【MacOS】⬆️Pod\_Update.command](#jobs-toc-heading-35)
+  - [【MacOS】⬆️双击升级Cocoapods.command](#jobs-toc-heading-36)
+  - [【MacOS】⬆️双击升级Flutter.SDK.command](#jobs-toc-heading-37)
+  - [【MacOS】⬆️双击更新CocoaPods本地仓库.command](#jobs-toc-heading-38)
+  - [【MacOS】⬆️双击更新Flutter依赖.command](#jobs-toc-heading-39)
+  - [【MacOS】☀️双击运行Flutter项目（Android 模拟器） .command](#jobs-toc-heading-40)
+  - [【MacOS】☀️双击运行Flutter项目（iOS 模拟器）.command](#jobs-toc-heading-41)
+  - [【MacOS】🎈双击真机运行项目.command](#jobs-toc-heading-42)
+  - [【MacOS】📱双击初始化iOS模拟器.command](#jobs-toc-heading-43)
+  - [【MacOS】📱双击打开已实例化的iOS模拟器.command](#jobs-toc-heading-44)
+  - [【MacOS】🚀双击启动Android模拟器.command](#jobs-toc-heading-45)
+  - [【MacOS】⏬双击配置VSCode.command](#jobs-toc-heading-46)
+  - [【MacOS】💉VSCode配置注入@全局.command](#jobs-toc-heading-47)
+  - [【MacOS】💉VSCode配置注入@当前Flutter项目.command](#jobs-toc-heading-48)
+  - [【MacOS】⏬下载配置系统环境变量.command](#jobs-toc-heading-49)
+  - [【MacOS】⏬双击下载SourceTree效率脚本.command](#jobs-toc-heading-50)
+  - [【MacOS】⏬双击配置VSCode.command](#jobs-toc-heading-51)
+  - [【MacOS】⚙️Flutter 项目组件预下载.command](#jobs-toc-heading-52)
+  - [【MacOS】⚙️一键配置Flutter项目至运行.command](#jobs-toc-heading-53)
+  - [【MacOS】⚙️下载配置系统环境变量.command](#jobs-toc-heading-54)
+  - [【MacOS】⚙️双击安装Cocoapods.command](#jobs-toc-heading-55)
+  - [【MacOS】⚙️双击安装FVM.command](#jobs-toc-heading-56)
+  - [【MacOS】⚙️双击安装Flutter.SDK.command](#jobs-toc-heading-57)
+  - [【MacOS】⚙️双击安装（升级）Homebrew.command](#jobs-toc-heading-58)
+  - [【MacOS】⚙️收集当前Flutter工程的依赖.command](#jobs-toc-heading-59)
+  - [【MacOS】⚙️配置Android Studio.command](#jobs-toc-heading-60)
+  - [【MacOS】🎈双击打开系统配置文件.command](#jobs-toc-heading-61)
+
+</details>
+<!-- jobs-toc:end -->
 
 ---
 
-## 🔥 <font id=前言>前言</font>
+## <span id="jobs-toc-heading-1" data-jobs-toc="v2">🔥 <font id=前言>前言</font></span><!-- jobs-toc:heading-end -->
 
 [**Flutter**](https://flutter.dev/) 工程的安装、运行、打包和维护入口。 每个独立脚本按其内置自述和源码定位目标；先阅读流程，确认路径后再运行。
 
@@ -48,7 +116,7 @@ JobsCommand@Flutter/
 
 本仓共有 58 个用户入口。这里只列本仓维护的主入口；独立子 Git、测试、函数库及打包资源模板不作为用户运行入口。步骤来自静态源码与配套说明，未执行安装、清理、构建或 Git 写操作。
 
-### [【MacOS】⚙️Pod_Install.command](./Cocoapods/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8FPod_Install.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8FPod_Install.command)
+### <span id="jobs-toc-heading-4" data-jobs-toc="v2">[【MacOS】⚙️Pod_Install.command](./Cocoapods/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8FPod_Install.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8FPod_Install.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 根据原生或 [**Flutter**](https://flutter.dev/) 项目结构安装 Pod 依赖。
 
@@ -57,7 +125,7 @@ JobsCommand@Flutter/
 - 执行对应 pod install 流程，输出完成状态与日志。
 
 
-### [【MacOS】⚙️双击安装Cocoapods.command](./Cocoapods/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85Cocoapods.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85Cocoapods.command)
+### <span id="jobs-toc-heading-5" data-jobs-toc="v2">[【MacOS】⚙️双击安装Cocoapods.command](./Cocoapods/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85Cocoapods.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85Cocoapods.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 准备 [**Ruby**](https://www.ruby-lang.org/) 环境并安装 [**CocoaPods**](https://cocoapods.org/)。
 
@@ -66,7 +134,7 @@ JobsCommand@Flutter/
 - 安装并校验 pod 命令，按提示决定是否初始化本地 Specs 仓库。
 
 
-### [【MacOS】⚙️双击更换Cocoapods源[-]CDN[+]Github.command](./Cocoapods/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E6%9B%B4%E6%8D%A2Cocoapods%E6%BA%90%5B-%5DCDN%5B%2B%5DGithub.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E6%9B%B4%E6%8D%A2Cocoapods%E6%BA%90%5B-%5DCDN%5B%2B%5DGithub.command)
+### <span id="jobs-toc-heading-6" data-jobs-toc="v2">[【MacOS】⚙️双击更换Cocoapods源[-]CDN[+]Github.command](./Cocoapods/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E6%9B%B4%E6%8D%A2Cocoapods%E6%BA%90%5B-%5DCDN%5B%2B%5DGithub.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E6%9B%B4%E6%8D%A2Cocoapods%E6%BA%90%5B-%5DCDN%5B%2B%5DGithub.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 将 CocoaPods 的 CDN Specs 源切换为 [**Git**](https://git-scm.com/) 源。
 
@@ -75,7 +143,7 @@ JobsCommand@Flutter/
 - 添加 Git Specs 源并输出源配置结果。
 
 
-### [【MacOS】⚙️双击禁用沙盒保证Cocoapods构建流程.command](./Cocoapods/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E7%A6%81%E7%94%A8%E6%B2%99%E7%9B%92%E4%BF%9D%E8%AF%81Cocoapods%E6%9E%84%E5%BB%BA%E6%B5%81%E7%A8%8B.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E7%A6%81%E7%94%A8%E6%B2%99%E7%9B%92%E4%BF%9D%E8%AF%81Cocoapods%E6%9E%84%E5%BB%BA%E6%B5%81%E7%A8%8B.command)
+### <span id="jobs-toc-heading-7" data-jobs-toc="v2">[【MacOS】⚙️双击禁用沙盒保证Cocoapods构建流程.command](./Cocoapods/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E7%A6%81%E7%94%A8%E6%B2%99%E7%9B%92%E4%BF%9D%E8%AF%81Cocoapods%E6%9E%84%E5%BB%BA%E6%B5%81%E7%A8%8B.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E7%A6%81%E7%94%A8%E6%B2%99%E7%9B%92%E4%BF%9D%E8%AF%81Cocoapods%E6%9E%84%E5%BB%BA%E6%B5%81%E7%A8%8B.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 修改目标 [**Xcode**](https://developer.apple.com/xcode/) 工程的用户脚本沙盒设置。
 
@@ -84,7 +152,7 @@ JobsCommand@Flutter/
 - 将对应设置改为禁用并报告结果；构建仍需在项目中验证。
 
 
-### [【MacOS】♻️双击Git（识别子Git） 提交回退.command](./Git%E6%93%8D%E4%BD%9C/%E3%80%90MacOS%E3%80%91%E2%99%BB%EF%B8%8F%E5%8F%8C%E5%87%BBGit%EF%BC%88%E8%AF%86%E5%88%AB%E5%AD%90Git%EF%BC%89%20%E6%8F%90%E4%BA%A4%E5%9B%9E%E9%80%80.command/%E3%80%90MacOS%E3%80%91%E2%99%BB%EF%B8%8F%E5%8F%8C%E5%87%BBGit%EF%BC%88%E8%AF%86%E5%88%AB%E5%AD%90Git%EF%BC%89%20%E6%8F%90%E4%BA%A4%E5%9B%9E%E9%80%80.command)
+### <span id="jobs-toc-heading-8" data-jobs-toc="v2">[【MacOS】♻️双击Git（识别子Git） 提交回退.command](./Git%E6%93%8D%E4%BD%9C/%E3%80%90MacOS%E3%80%91%E2%99%BB%EF%B8%8F%E5%8F%8C%E5%87%BBGit%EF%BC%88%E8%AF%86%E5%88%AB%E5%AD%90Git%EF%BC%89%20%E6%8F%90%E4%BA%A4%E5%9B%9E%E9%80%80.command/%E3%80%90MacOS%E3%80%91%E2%99%BB%EF%B8%8F%E5%8F%8C%E5%87%BBGit%EF%BC%88%E8%AF%86%E5%88%AB%E5%AD%90Git%EF%BC%89%20%E6%8F%90%E4%BA%A4%E5%9B%9E%E9%80%80.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 为选中的 Git 仓库选择历史目标并执行回退。
 
@@ -94,7 +162,7 @@ JobsCommand@Flutter/
   - 如果选择 hard，工作区修改可能丢失；先核对备份和确认提示。
 
 
-### [【MacOS】🔍Git依据提交日志关键字查找.command](./Git%E6%93%8D%E4%BD%9C/%E3%80%90MacOS%E3%80%91%F0%9F%94%8DGit%E4%BE%9D%E6%8D%AE%E6%8F%90%E4%BA%A4%E6%97%A5%E5%BF%97%E5%85%B3%E9%94%AE%E5%AD%97%E6%9F%A5%E6%89%BE.command/%E3%80%90MacOS%E3%80%91%F0%9F%94%8DGit%E4%BE%9D%E6%8D%AE%E6%8F%90%E4%BA%A4%E6%97%A5%E5%BF%97%E5%85%B3%E9%94%AE%E5%AD%97%E6%9F%A5%E6%89%BE.command)
+### <span id="jobs-toc-heading-9" data-jobs-toc="v2">[【MacOS】🔍Git依据提交日志关键字查找.command](./Git%E6%93%8D%E4%BD%9C/%E3%80%90MacOS%E3%80%91%F0%9F%94%8DGit%E4%BE%9D%E6%8D%AE%E6%8F%90%E4%BA%A4%E6%97%A5%E5%BF%97%E5%85%B3%E9%94%AE%E5%AD%97%E6%9F%A5%E6%89%BE.command/%E3%80%90MacOS%E3%80%91%F0%9F%94%8DGit%E4%BE%9D%E6%8D%AE%E6%8F%90%E4%BA%A4%E6%97%A5%E5%BF%97%E5%85%B3%E9%94%AE%E5%AD%97%E6%9F%A5%E6%89%BE.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 按提交说明关键词定位历史记录。
 
@@ -103,7 +171,7 @@ JobsCommand@Flutter/
 - 显示提交号、作者、时间与标题，按提示继续查询。
 
 
-### [【MacOS】🔍Git寻找分支最近的一次原始切点.command](./Git%E6%93%8D%E4%BD%9C/%E3%80%90MacOS%E3%80%91%F0%9F%94%8DGit%E5%AF%BB%E6%89%BE%E5%88%86%E6%94%AF%E6%9C%80%E8%BF%91%E7%9A%84%E4%B8%80%E6%AC%A1%E5%8E%9F%E5%A7%8B%E5%88%87%E7%82%B9.command/%E3%80%90MacOS%E3%80%91%F0%9F%94%8DGit%E5%AF%BB%E6%89%BE%E5%88%86%E6%94%AF%E6%9C%80%E8%BF%91%E7%9A%84%E4%B8%80%E6%AC%A1%E5%8E%9F%E5%A7%8B%E5%88%87%E7%82%B9.command)
+### <span id="jobs-toc-heading-10" data-jobs-toc="v2">[【MacOS】🔍Git寻找分支最近的一次原始切点.command](./Git%E6%93%8D%E4%BD%9C/%E3%80%90MacOS%E3%80%91%F0%9F%94%8DGit%E5%AF%BB%E6%89%BE%E5%88%86%E6%94%AF%E6%9C%80%E8%BF%91%E7%9A%84%E4%B8%80%E6%AC%A1%E5%8E%9F%E5%A7%8B%E5%88%87%E7%82%B9.command/%E3%80%90MacOS%E3%80%91%F0%9F%94%8DGit%E5%AF%BB%E6%89%BE%E5%88%86%E6%94%AF%E6%9C%80%E8%BF%91%E7%9A%84%E4%B8%80%E6%AC%A1%E5%8E%9F%E5%A7%8B%E5%88%87%E7%82%B9.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 找出两条分支最近的共同历史起点。
 
@@ -112,7 +180,7 @@ JobsCommand@Flutter/
 - 输出提交信息，并按提示继续下一轮比较。
 
 
-### [【MacOS】⚙️Git拉取Flutter项目到本地以后的必要配置.command](./%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8FGit%E6%8B%89%E5%8F%96Flutter%E9%A1%B9%E7%9B%AE%E5%88%B0%E6%9C%AC%E5%9C%B0%E4%BB%A5%E5%90%8E%E7%9A%84%E5%BF%85%E8%A6%81%E9%85%8D%E7%BD%AE.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8FGit%E6%8B%89%E5%8F%96Flutter%E9%A1%B9%E7%9B%AE%E5%88%B0%E6%9C%AC%E5%9C%B0%E4%BB%A5%E5%90%8E%E7%9A%84%E5%BF%85%E8%A6%81%E9%85%8D%E7%BD%AE.command)
+### <span id="jobs-toc-heading-11" data-jobs-toc="v2">[【MacOS】⚙️Git拉取Flutter项目到本地以后的必要配置.command](./%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8FGit%E6%8B%89%E5%8F%96Flutter%E9%A1%B9%E7%9B%AE%E5%88%B0%E6%9C%AC%E5%9C%B0%E4%BB%A5%E5%90%8E%E7%9A%84%E5%BF%85%E8%A6%81%E9%85%8D%E7%BD%AE.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8FGit%E6%8B%89%E5%8F%96Flutter%E9%A1%B9%E7%9B%AE%E5%88%B0%E6%9C%AC%E5%9C%B0%E4%BB%A5%E5%90%8E%E7%9A%84%E5%BF%85%E8%A6%81%E9%85%8D%E7%BD%AE.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 在新拉取的 Flutter 工程中补齐运行前配置。
 
@@ -121,7 +189,7 @@ JobsCommand@Flutter/
 - 依次执行选定准备动作，并输出运行或排错提示。
 
 
-### [【MacOS】♻️修复Flutter项目中文路径.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%99%BB%EF%B8%8F%E4%BF%AE%E5%A4%8DFlutter%E9%A1%B9%E7%9B%AE%E4%B8%AD%E6%96%87%E8%B7%AF%E5%BE%84.command/%E3%80%90MacOS%E3%80%91%E2%99%BB%EF%B8%8F%E4%BF%AE%E5%A4%8DFlutter%E9%A1%B9%E7%9B%AE%E4%B8%AD%E6%96%87%E8%B7%AF%E5%BE%84.command)
+### <span id="jobs-toc-heading-12" data-jobs-toc="v2">[【MacOS】♻️修复Flutter项目中文路径.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%99%BB%EF%B8%8F%E4%BF%AE%E5%A4%8DFlutter%E9%A1%B9%E7%9B%AE%E4%B8%AD%E6%96%87%E8%B7%AF%E5%BE%84.command/%E3%80%90MacOS%E3%80%91%E2%99%BB%EF%B8%8F%E4%BF%AE%E5%A4%8DFlutter%E9%A1%B9%E7%9B%AE%E4%B8%AD%E6%96%87%E8%B7%AF%E5%BE%84.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 将 Dart package 路径中的 URI 编码中文还原为正常字符。
 
@@ -130,7 +198,7 @@ JobsCommand@Flutter/
 - 输出变更数量，按提示决定是否继续分析或升级。
 
 
-### [【MacOS】♻️双击修复：找不到 Android SDK 或 platforms 目录为空.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%99%BB%EF%B8%8F%E5%8F%8C%E5%87%BB%E4%BF%AE%E5%A4%8D%EF%BC%9A%E6%89%BE%E4%B8%8D%E5%88%B0%20Android%20SDK%20%E6%88%96%20platforms%20%E7%9B%AE%E5%BD%95%E4%B8%BA%E7%A9%BA.command/%E3%80%90MacOS%E3%80%91%E2%99%BB%EF%B8%8F%E5%8F%8C%E5%87%BB%E4%BF%AE%E5%A4%8D%EF%BC%9A%E6%89%BE%E4%B8%8D%E5%88%B0%20Android%20SDK%20%E6%88%96%20platforms%20%E7%9B%AE%E5%BD%95%E4%B8%BA%E7%A9%BA.command)
+### <span id="jobs-toc-heading-13" data-jobs-toc="v2">[【MacOS】♻️双击修复：找不到 Android SDK 或 platforms 目录为空.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%99%BB%EF%B8%8F%E5%8F%8C%E5%87%BB%E4%BF%AE%E5%A4%8D%EF%BC%9A%E6%89%BE%E4%B8%8D%E5%88%B0%20Android%20SDK%20%E6%88%96%20platforms%20%E7%9B%AE%E5%BD%95%E4%B8%BA%E7%A9%BA.command/%E3%80%90MacOS%E3%80%91%E2%99%BB%EF%B8%8F%E5%8F%8C%E5%87%BB%E4%BF%AE%E5%A4%8D%EF%BC%9A%E6%89%BE%E4%B8%8D%E5%88%B0%20Android%20SDK%20%E6%88%96%20platforms%20%E7%9B%AE%E5%BD%95%E4%B8%BA%E7%A9%BA.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 补齐 Android SDK 命令行工具和核心组件。
 
@@ -139,7 +207,7 @@ JobsCommand@Flutter/
 - 配置 Flutter 的 Android SDK 路径，运行 doctor 并按提示决定是否 pub get。
 
 
-### [【MacOS】♻️当前脚本所在目录的快捷方式放到桌面.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%99%BB%EF%B8%8F%E5%BD%93%E5%89%8D%E8%84%9A%E6%9C%AC%E6%89%80%E5%9C%A8%E7%9B%AE%E5%BD%95%E7%9A%84%E5%BF%AB%E6%8D%B7%E6%96%B9%E5%BC%8F%E6%94%BE%E5%88%B0%E6%A1%8C%E9%9D%A2.command/%E3%80%90MacOS%E3%80%91%E2%99%BB%EF%B8%8F%E5%BD%93%E5%89%8D%E8%84%9A%E6%9C%AC%E6%89%80%E5%9C%A8%E7%9B%AE%E5%BD%95%E7%9A%84%E5%BF%AB%E6%8D%B7%E6%96%B9%E5%BC%8F%E6%94%BE%E5%88%B0%E6%A1%8C%E9%9D%A2.command)
+### <span id="jobs-toc-heading-14" data-jobs-toc="v2">[【MacOS】♻️当前脚本所在目录的快捷方式放到桌面.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%99%BB%EF%B8%8F%E5%BD%93%E5%89%8D%E8%84%9A%E6%9C%AC%E6%89%80%E5%9C%A8%E7%9B%AE%E5%BD%95%E7%9A%84%E5%BF%AB%E6%8D%B7%E6%96%B9%E5%BC%8F%E6%94%BE%E5%88%B0%E6%A1%8C%E9%9D%A2.command/%E3%80%90MacOS%E3%80%91%E2%99%BB%EF%B8%8F%E5%BD%93%E5%89%8D%E8%84%9A%E6%9C%AC%E6%89%80%E5%9C%A8%E7%9B%AE%E5%BD%95%E7%9A%84%E5%BF%AB%E6%8D%B7%E6%96%B9%E5%BC%8F%E6%94%BE%E5%88%B0%E6%A1%8C%E9%9D%A2.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 在桌面建立脚本当前目录的快捷入口。
 
@@ -148,7 +216,7 @@ JobsCommand@Flutter/
 - 检查桌面目标是否指向预期目录。
 
 
-### [【MacOS】⚙️import =>package💣.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8Fimport%20%3D%3Epackage%F0%9F%92%A3.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8Fimport%20%3D%3Epackage%F0%9F%92%A3.command)
+### <span id="jobs-toc-heading-15" data-jobs-toc="v2">[【MacOS】⚙️import =>package💣.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8Fimport%20%3D%3Epackage%F0%9F%92%A3.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8Fimport%20%3D%3Epackage%F0%9F%92%A3.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 将工程内 Dart 相对 import 改为 package 引用。
 
@@ -157,7 +225,7 @@ JobsCommand@Flutter/
 - 按包内路径替换匹配引用，输出处理结果。
 
 
-### [【MacOS】⚙️保存系统环境配置（运行后输入jobs）.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E4%BF%9D%E5%AD%98%E7%B3%BB%E7%BB%9F%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE%EF%BC%88%E8%BF%90%E8%A1%8C%E5%90%8E%E8%BE%93%E5%85%A5jobs%EF%BC%89.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E4%BF%9D%E5%AD%98%E7%B3%BB%E7%BB%9F%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE%EF%BC%88%E8%BF%90%E8%A1%8C%E5%90%8E%E8%BE%93%E5%85%A5jobs%EF%BC%89.command)
+### <span id="jobs-toc-heading-16" data-jobs-toc="v2">[【MacOS】⚙️保存系统环境配置（运行后输入jobs）.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E4%BF%9D%E5%AD%98%E7%B3%BB%E7%BB%9F%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE%EF%BC%88%E8%BF%90%E8%A1%8C%E5%90%8E%E8%BE%93%E5%85%A5jobs%EF%BC%89.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E4%BF%9D%E5%AD%98%E7%B3%BB%E7%BB%9F%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE%EF%BC%88%E8%BF%90%E8%A1%8C%E5%90%8E%E8%BE%93%E5%85%A5jobs%EF%BC%89.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 注册 jobs 便捷命令并加载现有 Shell 配置。
 
@@ -166,7 +234,7 @@ JobsCommand@Flutter/
 - 输出配置路径；之后可在终端输入 jobs。
 
 
-### [【MacOS】⚙️双击任何来源安装.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E4%BB%BB%E4%BD%95%E6%9D%A5%E6%BA%90%E5%AE%89%E8%A3%85.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E4%BB%BB%E4%BD%95%E6%9D%A5%E6%BA%90%E5%AE%89%E8%A3%85.command)
+### <span id="jobs-toc-heading-17" data-jobs-toc="v2">[【MacOS】⚙️双击任何来源安装.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E4%BB%BB%E4%BD%95%E6%9D%A5%E6%BA%90%E5%AE%89%E8%A3%85.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E4%BB%BB%E4%BD%95%E6%9D%A5%E6%BA%90%E5%AE%89%E8%A3%85.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 调整 macOS 应用来源限制并打开安全设置。
 
@@ -175,7 +243,7 @@ JobsCommand@Flutter/
 - 打开系统设置，人工核对“任何来源”是否可用。
 
 
-### [【MacOS】⚙️双击卸载Homebrew.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%8D%B8%E8%BD%BDHomebrew.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%8D%B8%E8%BD%BDHomebrew.command)
+### <span id="jobs-toc-heading-18" data-jobs-toc="v2">[【MacOS】⚙️双击卸载Homebrew.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%8D%B8%E8%BD%BDHomebrew.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%8D%B8%E8%BD%BDHomebrew.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 卸载 Homebrew 并处理脚本列出的残留目录。
 
@@ -184,7 +252,7 @@ JobsCommand@Flutter/
 - 核对终端结果；依赖 Homebrew 的工具可能随之不可用。
 
 
-### [【MacOS】⚙️双击显示隐藏文件.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E6%98%BE%E7%A4%BA%E9%9A%90%E8%97%8F%E6%96%87%E4%BB%B6.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E6%98%BE%E7%A4%BA%E9%9A%90%E8%97%8F%E6%96%87%E4%BB%B6.command)
+### <span id="jobs-toc-heading-19" data-jobs-toc="v2">[【MacOS】⚙️双击显示隐藏文件.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E6%98%BE%E7%A4%BA%E9%9A%90%E8%97%8F%E6%96%87%E4%BB%B6.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E6%98%BE%E7%A4%BA%E9%9A%90%E8%97%8F%E6%96%87%E4%BB%B6.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 切换 Finder 的隐藏文件显示状态。
 
@@ -193,7 +261,7 @@ JobsCommand@Flutter/
 - 重启 Finder，使新显示状态生效。
 
 
-### [【MacOS】⚙️自动化替换Flutter图片资源.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E8%87%AA%E5%8A%A8%E5%8C%96%E6%9B%BF%E6%8D%A2Flutter%E5%9B%BE%E7%89%87%E8%B5%84%E6%BA%90.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E8%87%AA%E5%8A%A8%E5%8C%96%E6%9B%BF%E6%8D%A2Flutter%E5%9B%BE%E7%89%87%E8%B5%84%E6%BA%90.command)
+### <span id="jobs-toc-heading-20" data-jobs-toc="v2">[【MacOS】⚙️自动化替换Flutter图片资源.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E8%87%AA%E5%8A%A8%E5%8C%96%E6%9B%BF%E6%8D%A2Flutter%E5%9B%BE%E7%89%87%E8%B5%84%E6%BA%90.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E8%87%AA%E5%8A%A8%E5%8C%96%E6%9B%BF%E6%8D%A2Flutter%E5%9B%BE%E7%89%87%E8%B5%84%E6%BA%90.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 替换工程图标与启动图并重新生成资源。
 
@@ -202,7 +270,7 @@ JobsCommand@Flutter/
 - 执行依赖拉取及图标、启动图生成，打开结果目录。
 
 
-### [【MacOS】⚙️运行授权.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E8%BF%90%E8%A1%8C%E6%8E%88%E6%9D%83.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E8%BF%90%E8%A1%8C%E6%8E%88%E6%9D%83.command)
+### <span id="jobs-toc-heading-21" data-jobs-toc="v2">[【MacOS】⚙️运行授权.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E8%BF%90%E8%A1%8C%E6%8E%88%E6%9D%83.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E8%BF%90%E8%A1%8C%E6%8E%88%E6%9D%83.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 为指定脚本或目录中的入口补执行权限。
 
@@ -212,7 +280,7 @@ JobsCommand@Flutter/
 - 输出成功与失败结果，按提示继续或退出。
 
 
-### [【MacOS】🌞颜色格式的转换.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%F0%9F%8C%9E%E9%A2%9C%E8%89%B2%E6%A0%BC%E5%BC%8F%E7%9A%84%E8%BD%AC%E6%8D%A2.command/%E3%80%90MacOS%E3%80%91%F0%9F%8C%9E%E9%A2%9C%E8%89%B2%E6%A0%BC%E5%BC%8F%E7%9A%84%E8%BD%AC%E6%8D%A2.command)
+### <span id="jobs-toc-heading-22" data-jobs-toc="v2">[【MacOS】🌞颜色格式的转换.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%F0%9F%8C%9E%E9%A2%9C%E8%89%B2%E6%A0%BC%E5%BC%8F%E7%9A%84%E8%BD%AC%E6%8D%A2.command/%E3%80%90MacOS%E3%80%91%F0%9F%8C%9E%E9%A2%9C%E8%89%B2%E6%A0%BC%E5%BC%8F%E7%9A%84%E8%BD%AC%E6%8D%A2.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 在常见颜色数值表示之间转换。
 
@@ -221,7 +289,7 @@ JobsCommand@Flutter/
 - 输出转换结果，继续输入或按退出指令结束。
 
 
-### [【MacOS】🎈切换Shell.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%F0%9F%8E%88%E5%88%87%E6%8D%A2Shell.command/%E3%80%90MacOS%E3%80%91%F0%9F%8E%88%E5%88%87%E6%8D%A2Shell.command)
+### <span id="jobs-toc-heading-23" data-jobs-toc="v2">[【MacOS】🎈切换Shell.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%F0%9F%8E%88%E5%88%87%E6%8D%A2Shell.command/%E3%80%90MacOS%E3%80%91%F0%9F%8E%88%E5%88%87%E6%8D%A2Shell.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 从系统允许的 Shell 中选择并切换登录 Shell。
 
@@ -230,7 +298,7 @@ JobsCommand@Flutter/
 - 执行切换并显示结果；新终端会使用新的登录 Shell。
 
 
-### [【MacOS】🎈双击打开当前路径终端.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%F0%9F%8E%88%E5%8F%8C%E5%87%BB%E6%89%93%E5%BC%80%E5%BD%93%E5%89%8D%E8%B7%AF%E5%BE%84%E7%BB%88%E7%AB%AF.command/%E3%80%90MacOS%E3%80%91%F0%9F%8E%88%E5%8F%8C%E5%87%BB%E6%89%93%E5%BC%80%E5%BD%93%E5%89%8D%E8%B7%AF%E5%BE%84%E7%BB%88%E7%AB%AF.command)
+### <span id="jobs-toc-heading-24" data-jobs-toc="v2">[【MacOS】🎈双击打开当前路径终端.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%F0%9F%8E%88%E5%8F%8C%E5%87%BB%E6%89%93%E5%BC%80%E5%BD%93%E5%89%8D%E8%B7%AF%E5%BE%84%E7%BB%88%E7%AB%AF.command/%E3%80%90MacOS%E3%80%91%F0%9F%8E%88%E5%8F%8C%E5%87%BB%E6%89%93%E5%BC%80%E5%BD%93%E5%89%8D%E8%B7%AF%E5%BE%84%E7%BB%88%E7%AB%AF.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 在脚本对应目录打开系统终端。
 
@@ -239,7 +307,7 @@ JobsCommand@Flutter/
 - 在新终端继续操作；以脚本中实际窗口处理逻辑为准。
 
 
-### [【MacOS】🏥双击自检Flutter.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%F0%9F%8F%A5%E5%8F%8C%E5%87%BB%E8%87%AA%E6%A3%80Flutter.command/%E3%80%90MacOS%E3%80%91%F0%9F%8F%A5%E5%8F%8C%E5%87%BB%E8%87%AA%E6%A3%80Flutter.command)
+### <span id="jobs-toc-heading-25" data-jobs-toc="v2">[【MacOS】🏥双击自检Flutter.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%F0%9F%8F%A5%E5%8F%8C%E5%87%BB%E8%87%AA%E6%A3%80Flutter.command/%E3%80%90MacOS%E3%80%91%F0%9F%8F%A5%E5%8F%8C%E5%87%BB%E8%87%AA%E6%A3%80Flutter.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 检查 Flutter、Dart、Xcode 和 Android 开发环境。
 
@@ -248,7 +316,7 @@ JobsCommand@Flutter/
 - 运行 doctor 和工程分析，输出环境诊断结果。
 
 
-### [【MacOS】🐦Flutter自动化生产代码.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%F0%9F%90%A6Flutter%E8%87%AA%E5%8A%A8%E5%8C%96%E7%94%9F%E4%BA%A7%E4%BB%A3%E7%A0%81.command/%E3%80%90MacOS%E3%80%91%F0%9F%90%A6Flutter%E8%87%AA%E5%8A%A8%E5%8C%96%E7%94%9F%E4%BA%A7%E4%BB%A3%E7%A0%81.command)
+### <span id="jobs-toc-heading-26" data-jobs-toc="v2">[【MacOS】🐦Flutter自动化生产代码.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%F0%9F%90%A6Flutter%E8%87%AA%E5%8A%A8%E5%8C%96%E7%94%9F%E4%BA%A7%E4%BB%A3%E7%A0%81.command/%E3%80%90MacOS%E3%80%91%F0%9F%90%A6Flutter%E8%87%AA%E5%8A%A8%E5%8C%96%E7%94%9F%E4%BA%A7%E4%BB%A3%E7%A0%81.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 按工程配置生成 Flutter 代码与资源。
 
@@ -257,7 +325,7 @@ JobsCommand@Flutter/
 - 显示生成结果；涉及生成源码与资源时需审查工作区差异。
 
 
-### [【MacOS】🔍查询Flutter依赖版本.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%F0%9F%94%8D%E6%9F%A5%E8%AF%A2Flutter%E4%BE%9D%E8%B5%96%E7%89%88%E6%9C%AC.command/%E3%80%90MacOS%E3%80%91%F0%9F%94%8D%E6%9F%A5%E8%AF%A2Flutter%E4%BE%9D%E8%B5%96%E7%89%88%E6%9C%AC.command)
+### <span id="jobs-toc-heading-27" data-jobs-toc="v2">[【MacOS】🔍查询Flutter依赖版本.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%F0%9F%94%8D%E6%9F%A5%E8%AF%A2Flutter%E4%BE%9D%E8%B5%96%E7%89%88%E6%9C%AC.command/%E3%80%90MacOS%E3%80%91%F0%9F%94%8D%E6%9F%A5%E8%AF%A2Flutter%E4%BE%9D%E8%B5%96%E7%89%88%E6%9C%AC.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 查询 Flutter 工程依赖的版本信息。
 
@@ -266,7 +334,7 @@ JobsCommand@Flutter/
 - 显示结果并继续查询，按提示退出。
 
 
-### [【MacOS】🛠️Android 模拟器一键检测与修复.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%F0%9F%9B%A0%EF%B8%8FAndroid%20%E6%A8%A1%E6%8B%9F%E5%99%A8%E4%B8%80%E9%94%AE%E6%A3%80%E6%B5%8B%E4%B8%8E%E4%BF%AE%E5%A4%8D.command/%E3%80%90MacOS%E3%80%91%F0%9F%9B%A0%EF%B8%8FAndroid%20%E6%A8%A1%E6%8B%9F%E5%99%A8%E4%B8%80%E9%94%AE%E6%A3%80%E6%B5%8B%E4%B8%8E%E4%BF%AE%E5%A4%8D.command)
+### <span id="jobs-toc-heading-28" data-jobs-toc="v2">[【MacOS】🛠️Android 模拟器一键检测与修复.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%F0%9F%9B%A0%EF%B8%8FAndroid%20%E6%A8%A1%E6%8B%9F%E5%99%A8%E4%B8%80%E9%94%AE%E6%A3%80%E6%B5%8B%E4%B8%8E%E4%BF%AE%E5%A4%8D.command/%E3%80%90MacOS%E3%80%91%F0%9F%9B%A0%EF%B8%8FAndroid%20%E6%A8%A1%E6%8B%9F%E5%99%A8%E4%B8%80%E9%94%AE%E6%A3%80%E6%B5%8B%E4%B8%8E%E4%BF%AE%E5%A4%8D.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 检查 Android 模拟器安装失败、存储或设备状态问题。
 
@@ -275,7 +343,7 @@ JobsCommand@Flutter/
 - 执行选定动作并给出重试 flutter run 的提示。
 
 
-### [【MacOS】🛠️Flutter 插件 namespace 修复工具".command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%F0%9F%9B%A0%EF%B8%8FFlutter%20%E6%8F%92%E4%BB%B6%20namespace%20%E4%BF%AE%E5%A4%8D%E5%B7%A5%E5%85%B7%22.command/%E3%80%90MacOS%E3%80%91%F0%9F%9B%A0%EF%B8%8FFlutter%20%E6%8F%92%E4%BB%B6%20namespace%20%E4%BF%AE%E5%A4%8D%E5%B7%A5%E5%85%B7%22.command)
+### <span id="jobs-toc-heading-29" data-jobs-toc="v2">[【MacOS】🛠️Flutter 插件 namespace 修复工具".command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%F0%9F%9B%A0%EF%B8%8FFlutter%20%E6%8F%92%E4%BB%B6%20namespace%20%E4%BF%AE%E5%A4%8D%E5%B7%A5%E5%85%B7%22.command/%E3%80%90MacOS%E3%80%91%F0%9F%9B%A0%EF%B8%8FFlutter%20%E6%8F%92%E4%BB%B6%20namespace%20%E4%BF%AE%E5%A4%8D%E5%B7%A5%E5%85%B7%22.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 补齐缓存中 Flutter 插件的 Android namespace。
 
@@ -284,7 +352,7 @@ JobsCommand@Flutter/
 - 写入修复并输出结果；这些缓存修改可能被后续依赖下载替换。
 
 
-### [【MacOS】🧹Flutter清理维护工具.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%F0%9F%A7%B9Flutter%E6%B8%85%E7%90%86%E7%BB%B4%E6%8A%A4%E5%B7%A5%E5%85%B7.command/%E3%80%90MacOS%E3%80%91%F0%9F%A7%B9Flutter%E6%B8%85%E7%90%86%E7%BB%B4%E6%8A%A4%E5%B7%A5%E5%85%B7.command)
+### <span id="jobs-toc-heading-30" data-jobs-toc="v2">[【MacOS】🧹Flutter清理维护工具.command](./%E5%B0%8F%E5%B7%A5%E5%85%B7/%E3%80%90MacOS%E3%80%91%F0%9F%A7%B9Flutter%E6%B8%85%E7%90%86%E7%BB%B4%E6%8A%A4%E5%B7%A5%E5%85%B7.command/%E3%80%90MacOS%E3%80%91%F0%9F%A7%B9Flutter%E6%B8%85%E7%90%86%E7%BB%B4%E6%8A%A4%E5%B7%A5%E5%85%B7.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 按菜单刷新 Flutter 依赖或清理不同层级缓存。
 
@@ -294,7 +362,7 @@ JobsCommand@Flutter/
   - 如果删除 lock、Pods 或全局 DerivedData，依赖解析与其它工程缓存也可能受影响。
 
 
-### [【MacOS】📹双击制作Android模拟器录屏Gif.command](./%E5%B1%8F%E5%B9%95%E5%BD%95%E5%88%B6/%E3%80%90MacOS%E3%80%91%F0%9F%93%B9%E5%8F%8C%E5%87%BB%E5%88%B6%E4%BD%9CAndroid%E6%A8%A1%E6%8B%9F%E5%99%A8%E5%BD%95%E5%B1%8FGif.command/%E3%80%90MacOS%E3%80%91%F0%9F%93%B9%E5%8F%8C%E5%87%BB%E5%88%B6%E4%BD%9CAndroid%E6%A8%A1%E6%8B%9F%E5%99%A8%E5%BD%95%E5%B1%8FGif.command)
+### <span id="jobs-toc-heading-31" data-jobs-toc="v2">[【MacOS】📹双击制作Android模拟器录屏Gif.command](./%E5%B1%8F%E5%B9%95%E5%BD%95%E5%88%B6/%E3%80%90MacOS%E3%80%91%F0%9F%93%B9%E5%8F%8C%E5%87%BB%E5%88%B6%E4%BD%9CAndroid%E6%A8%A1%E6%8B%9F%E5%99%A8%E5%BD%95%E5%B1%8FGif.command/%E3%80%90MacOS%E3%80%91%F0%9F%93%B9%E5%8F%8C%E5%87%BB%E5%88%B6%E4%BD%9CAndroid%E6%A8%A1%E6%8B%9F%E5%99%A8%E5%BD%95%E5%B1%8FGif.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 录制 Android 设备画面并可合并视频、生成 GIF。
 
@@ -303,7 +371,7 @@ JobsCommand@Flutter/
 - 按提示选择合并、GIF 尺寸帧率和临时帧清理，打开产物。
 
 
-### [【MacOS】📹双击制作iOS模拟器录屏Gif.command](./%E5%B1%8F%E5%B9%95%E5%BD%95%E5%88%B6/%E3%80%90MacOS%E3%80%91%F0%9F%93%B9%E5%8F%8C%E5%87%BB%E5%88%B6%E4%BD%9CiOS%E6%A8%A1%E6%8B%9F%E5%99%A8%E5%BD%95%E5%B1%8FGif.command/%E3%80%90MacOS%E3%80%91%F0%9F%93%B9%E5%8F%8C%E5%87%BB%E5%88%B6%E4%BD%9CiOS%E6%A8%A1%E6%8B%9F%E5%99%A8%E5%BD%95%E5%B1%8FGif.command)
+### <span id="jobs-toc-heading-32" data-jobs-toc="v2">[【MacOS】📹双击制作iOS模拟器录屏Gif.command](./%E5%B1%8F%E5%B9%95%E5%BD%95%E5%88%B6/%E3%80%90MacOS%E3%80%91%F0%9F%93%B9%E5%8F%8C%E5%87%BB%E5%88%B6%E4%BD%9CiOS%E6%A8%A1%E6%8B%9F%E5%99%A8%E5%BD%95%E5%B1%8FGif.command/%E3%80%90MacOS%E3%80%91%F0%9F%93%B9%E5%8F%8C%E5%87%BB%E5%88%B6%E4%BD%9CiOS%E6%A8%A1%E6%8B%9F%E5%99%A8%E5%BD%95%E5%B1%8FGif.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 录制选定 iOS 模拟器并按需生成 GIF。
 
@@ -314,7 +382,7 @@ JobsCommand@Flutter/
 - 打开录制或转换产物。
 
 
-### [【MacOS】📦双击打包Flutter.Android.command](./%E6%89%93%E5%8C%85%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%F0%9F%93%A6%E5%8F%8C%E5%87%BB%E6%89%93%E5%8C%85Flutter.Android.command/%E3%80%90MacOS%E3%80%91%F0%9F%93%A6%E5%8F%8C%E5%87%BB%E6%89%93%E5%8C%85Flutter.Android.command)
+### <span id="jobs-toc-heading-33" data-jobs-toc="v2">[【MacOS】📦双击打包Flutter.Android.command](./%E6%89%93%E5%8C%85%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%F0%9F%93%A6%E5%8F%8C%E5%87%BB%E6%89%93%E5%8C%85Flutter.Android.command/%E3%80%90MacOS%E3%80%91%F0%9F%93%A6%E5%8F%8C%E5%87%BB%E6%89%93%E5%8C%85Flutter.Android.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 为选定 Flutter 工程构建 Android 产物。
 
@@ -323,7 +391,7 @@ JobsCommand@Flutter/
 - 选择构建模式与 APK / AAB 后执行构建，打开产物目录。
 
 
-### [【MacOS】📦双击打包Flutter.iOS.command](./%E6%89%93%E5%8C%85%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%F0%9F%93%A6%E5%8F%8C%E5%87%BB%E6%89%93%E5%8C%85Flutter.iOS.command/%E3%80%90MacOS%E3%80%91%F0%9F%93%A6%E5%8F%8C%E5%87%BB%E6%89%93%E5%8C%85Flutter.iOS.command)
+### <span id="jobs-toc-heading-34" data-jobs-toc="v2">[【MacOS】📦双击打包Flutter.iOS.command](./%E6%89%93%E5%8C%85%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%F0%9F%93%A6%E5%8F%8C%E5%87%BB%E6%89%93%E5%8C%85Flutter.iOS.command/%E3%80%90MacOS%E3%80%91%F0%9F%93%A6%E5%8F%8C%E5%87%BB%E6%89%93%E5%8C%85Flutter.iOS.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 构建 Flutter 的 iOS 归档与 IPA。
 
@@ -332,7 +400,7 @@ JobsCommand@Flutter/
 - 核验 IPA 输出，打开目录并显示耗时。
 
 
-### [【MacOS】⬆️Pod_Update.command](./%E6%9B%B4%E6%96%B0%E5%8D%87%E7%BA%A7/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8FPod_Update.command/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8FPod_Update.command)
+### <span id="jobs-toc-heading-35" data-jobs-toc="v2">[【MacOS】⬆️Pod_Update.command](./%E6%9B%B4%E6%96%B0%E5%8D%87%E7%BA%A7/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8FPod_Update.command/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8FPod_Update.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 更新目标工程的 Pod 依赖。
 
@@ -341,7 +409,7 @@ JobsCommand@Flutter/
 - 执行 pod update 并显示结果；Podfile.lock 和解析版本可能改变。
 
 
-### [【MacOS】⬆️双击升级Cocoapods.command](./%E6%9B%B4%E6%96%B0%E5%8D%87%E7%BA%A7/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%8D%87%E7%BA%A7Cocoapods.command/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%8D%87%E7%BA%A7Cocoapods.command)
+### <span id="jobs-toc-heading-36" data-jobs-toc="v2">[【MacOS】⬆️双击升级Cocoapods.command](./%E6%9B%B4%E6%96%B0%E5%8D%87%E7%BA%A7/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%8D%87%E7%BA%A7Cocoapods.command/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%8D%87%E7%BA%A7Cocoapods.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 比较并升级 CocoaPods 版本。
 
@@ -350,7 +418,7 @@ JobsCommand@Flutter/
 - 按确认执行升级，再显示版本与命令位置。
 
 
-### [【MacOS】⬆️双击升级Flutter.SDK.command](./%E6%9B%B4%E6%96%B0%E5%8D%87%E7%BA%A7/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%8D%87%E7%BA%A7Flutter.SDK.command/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%8D%87%E7%BA%A7Flutter.SDK.command)
+### <span id="jobs-toc-heading-37" data-jobs-toc="v2">[【MacOS】⬆️双击升级Flutter.SDK.command](./%E6%9B%B4%E6%96%B0%E5%8D%87%E7%BA%A7/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%8D%87%E7%BA%A7Flutter.SDK.command/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%8D%87%E7%BA%A7Flutter.SDK.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 升级全局或工程关联的 Flutter SDK。
 
@@ -359,7 +427,7 @@ JobsCommand@Flutter/
 - 执行更新并显示版本或 doctor 结果；工程依赖兼容性需再验证。
 
 
-### [【MacOS】⬆️双击更新CocoaPods本地仓库.command](./%E6%9B%B4%E6%96%B0%E5%8D%87%E7%BA%A7/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8F%E5%8F%8C%E5%87%BB%E6%9B%B4%E6%96%B0CocoaPods%E6%9C%AC%E5%9C%B0%E4%BB%93%E5%BA%93.command/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8F%E5%8F%8C%E5%87%BB%E6%9B%B4%E6%96%B0CocoaPods%E6%9C%AC%E5%9C%B0%E4%BB%93%E5%BA%93.command)
+### <span id="jobs-toc-heading-38" data-jobs-toc="v2">[【MacOS】⬆️双击更新CocoaPods本地仓库.command](./%E6%9B%B4%E6%96%B0%E5%8D%87%E7%BA%A7/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8F%E5%8F%8C%E5%87%BB%E6%9B%B4%E6%96%B0CocoaPods%E6%9C%AC%E5%9C%B0%E4%BB%93%E5%BA%93.command/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8F%E5%8F%8C%E5%87%BB%E6%9B%B4%E6%96%B0CocoaPods%E6%9C%AC%E5%9C%B0%E4%BB%93%E5%BA%93.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 刷新 CocoaPods 本地仓库并安装工程依赖。
 
@@ -368,7 +436,7 @@ JobsCommand@Flutter/
 - 执行对应 pod install 流程，检查日志中的更新与安装结果。
 
 
-### [【MacOS】⬆️双击更新Flutter依赖.command](./%E6%9B%B4%E6%96%B0%E5%8D%87%E7%BA%A7/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8F%E5%8F%8C%E5%87%BB%E6%9B%B4%E6%96%B0Flutter%E4%BE%9D%E8%B5%96.command/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8F%E5%8F%8C%E5%87%BB%E6%9B%B4%E6%96%B0Flutter%E4%BE%9D%E8%B5%96.command)
+### <span id="jobs-toc-heading-39" data-jobs-toc="v2">[【MacOS】⬆️双击更新Flutter依赖.command](./%E6%9B%B4%E6%96%B0%E5%8D%87%E7%BA%A7/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8F%E5%8F%8C%E5%87%BB%E6%9B%B4%E6%96%B0Flutter%E4%BE%9D%E8%B5%96.command/%E3%80%90MacOS%E3%80%91%E2%AC%86%EF%B8%8F%E5%8F%8C%E5%87%BB%E6%9B%B4%E6%96%B0Flutter%E4%BE%9D%E8%B5%96.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 更新工程依赖并处理依赖文件检查。
 
@@ -377,7 +445,7 @@ JobsCommand@Flutter/
 - 执行依赖拉取或升级，核对 pubspec.lock 与分析输出。
 
 
-### [【MacOS】☀️双击运行Flutter项目（Android 模拟器） .command](./%E8%BF%90%E8%A1%8C/%E3%80%90MacOS%E3%80%91%E2%98%80%EF%B8%8F%E5%8F%8C%E5%87%BB%E8%BF%90%E8%A1%8CFlutter%E9%A1%B9%E7%9B%AE%EF%BC%88Android%20%E6%A8%A1%E6%8B%9F%E5%99%A8%EF%BC%89%20.command/%E3%80%90MacOS%E3%80%91%E2%98%80%EF%B8%8F%E5%8F%8C%E5%87%BB%E8%BF%90%E8%A1%8CFlutter%E9%A1%B9%E7%9B%AE%EF%BC%88Android%20%E6%A8%A1%E6%8B%9F%E5%99%A8%EF%BC%89%20.command)
+### <span id="jobs-toc-heading-40" data-jobs-toc="v2">[【MacOS】☀️双击运行Flutter项目（Android 模拟器） .command](./%E8%BF%90%E8%A1%8C/%E3%80%90MacOS%E3%80%91%E2%98%80%EF%B8%8F%E5%8F%8C%E5%87%BB%E8%BF%90%E8%A1%8CFlutter%E9%A1%B9%E7%9B%AE%EF%BC%88Android%20%E6%A8%A1%E6%8B%9F%E5%99%A8%EF%BC%89%20.command/%E3%80%90MacOS%E3%80%91%E2%98%80%EF%B8%8F%E5%8F%8C%E5%87%BB%E8%BF%90%E8%A1%8CFlutter%E9%A1%B9%E7%9B%AE%EF%BC%88Android%20%E6%A8%A1%E6%8B%9F%E5%99%A8%EF%BC%89%20.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 启动 Android 模拟器并运行 Flutter 工程。
 
@@ -386,7 +454,7 @@ JobsCommand@Flutter/
 - 准备依赖后执行 flutter run，查看终端日志。
 
 
-### [【MacOS】☀️双击运行Flutter项目（iOS 模拟器）.command](./%E8%BF%90%E8%A1%8C/%E3%80%90MacOS%E3%80%91%E2%98%80%EF%B8%8F%E5%8F%8C%E5%87%BB%E8%BF%90%E8%A1%8CFlutter%E9%A1%B9%E7%9B%AE%EF%BC%88iOS%20%E6%A8%A1%E6%8B%9F%E5%99%A8%EF%BC%89.command/%E3%80%90MacOS%E3%80%91%E2%98%80%EF%B8%8F%E5%8F%8C%E5%87%BB%E8%BF%90%E8%A1%8CFlutter%E9%A1%B9%E7%9B%AE%EF%BC%88iOS%20%E6%A8%A1%E6%8B%9F%E5%99%A8%EF%BC%89.command)
+### <span id="jobs-toc-heading-41" data-jobs-toc="v2">[【MacOS】☀️双击运行Flutter项目（iOS 模拟器）.command](./%E8%BF%90%E8%A1%8C/%E3%80%90MacOS%E3%80%91%E2%98%80%EF%B8%8F%E5%8F%8C%E5%87%BB%E8%BF%90%E8%A1%8CFlutter%E9%A1%B9%E7%9B%AE%EF%BC%88iOS%20%E6%A8%A1%E6%8B%9F%E5%99%A8%EF%BC%89.command/%E3%80%90MacOS%E3%80%91%E2%98%80%EF%B8%8F%E5%8F%8C%E5%87%BB%E8%BF%90%E8%A1%8CFlutter%E9%A1%B9%E7%9B%AE%EF%BC%88iOS%20%E6%A8%A1%E6%8B%9F%E5%99%A8%EF%BC%89.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 启动 iOS 模拟器并运行 Flutter 工程。
 
@@ -395,7 +463,7 @@ JobsCommand@Flutter/
 - 执行 flutter run，并按脚本规则建立桌面快捷入口。
 
 
-### [【MacOS】🎈双击真机运行项目.command](./%E8%BF%90%E8%A1%8C/%E3%80%90MacOS%E3%80%91%F0%9F%8E%88%E5%8F%8C%E5%87%BB%E7%9C%9F%E6%9C%BA%E8%BF%90%E8%A1%8C%E9%A1%B9%E7%9B%AE.command/%E3%80%90MacOS%E3%80%91%F0%9F%8E%88%E5%8F%8C%E5%87%BB%E7%9C%9F%E6%9C%BA%E8%BF%90%E8%A1%8C%E9%A1%B9%E7%9B%AE.command)
+### <span id="jobs-toc-heading-42" data-jobs-toc="v2">[【MacOS】🎈双击真机运行项目.command](./%E8%BF%90%E8%A1%8C/%E3%80%90MacOS%E3%80%91%F0%9F%8E%88%E5%8F%8C%E5%87%BB%E7%9C%9F%E6%9C%BA%E8%BF%90%E8%A1%8C%E9%A1%B9%E7%9B%AE.command/%E3%80%90MacOS%E3%80%91%F0%9F%8E%88%E5%8F%8C%E5%87%BB%E7%9C%9F%E6%9C%BA%E8%BF%90%E8%A1%8C%E9%A1%B9%E7%9B%AE.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 在选定真实设备上运行 Flutter 工程。
 
@@ -404,7 +472,7 @@ JobsCommand@Flutter/
 - 执行 flutter run，保留运行日志供交互调试。
 
 
-### [【MacOS】📱双击初始化iOS模拟器.command](./%E8%BF%90%E8%A1%8C/%E3%80%90MacOS%E3%80%91%F0%9F%93%B1%E5%8F%8C%E5%87%BB%E5%88%9D%E5%A7%8B%E5%8C%96iOS%E6%A8%A1%E6%8B%9F%E5%99%A8.command/%E3%80%90MacOS%E3%80%91%F0%9F%93%B1%E5%8F%8C%E5%87%BB%E5%88%9D%E5%A7%8B%E5%8C%96iOS%E6%A8%A1%E6%8B%9F%E5%99%A8.command)
+### <span id="jobs-toc-heading-43" data-jobs-toc="v2">[【MacOS】📱双击初始化iOS模拟器.command](./%E8%BF%90%E8%A1%8C/%E3%80%90MacOS%E3%80%91%F0%9F%93%B1%E5%8F%8C%E5%87%BB%E5%88%9D%E5%A7%8B%E5%8C%96iOS%E6%A8%A1%E6%8B%9F%E5%99%A8.command/%E3%80%90MacOS%E3%80%91%F0%9F%93%B1%E5%8F%8C%E5%87%BB%E5%88%9D%E5%A7%8B%E5%8C%96iOS%E6%A8%A1%E6%8B%9F%E5%99%A8.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 选择系统运行时并创建可用的 iOS 模拟器。
 
@@ -413,7 +481,7 @@ JobsCommand@Flutter/
 - 创建并启动模拟器，等待就绪后按提示继续创建或退出。
 
 
-### [【MacOS】📱双击打开已实例化的iOS模拟器.command](./%E8%BF%90%E8%A1%8C/%E3%80%90MacOS%E3%80%91%F0%9F%93%B1%E5%8F%8C%E5%87%BB%E6%89%93%E5%BC%80%E5%B7%B2%E5%AE%9E%E4%BE%8B%E5%8C%96%E7%9A%84iOS%E6%A8%A1%E6%8B%9F%E5%99%A8.command/%E3%80%90MacOS%E3%80%91%F0%9F%93%B1%E5%8F%8C%E5%87%BB%E6%89%93%E5%BC%80%E5%B7%B2%E5%AE%9E%E4%BE%8B%E5%8C%96%E7%9A%84iOS%E6%A8%A1%E6%8B%9F%E5%99%A8.command)
+### <span id="jobs-toc-heading-44" data-jobs-toc="v2">[【MacOS】📱双击打开已实例化的iOS模拟器.command](./%E8%BF%90%E8%A1%8C/%E3%80%90MacOS%E3%80%91%F0%9F%93%B1%E5%8F%8C%E5%87%BB%E6%89%93%E5%BC%80%E5%B7%B2%E5%AE%9E%E4%BE%8B%E5%8C%96%E7%9A%84iOS%E6%A8%A1%E6%8B%9F%E5%99%A8.command/%E3%80%90MacOS%E3%80%91%F0%9F%93%B1%E5%8F%8C%E5%87%BB%E6%89%93%E5%BC%80%E5%B7%B2%E5%AE%9E%E4%BE%8B%E5%8C%96%E7%9A%84iOS%E6%A8%A1%E6%8B%9F%E5%99%A8.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 打开已有的 iOS 模拟器应用。
 
@@ -422,7 +490,7 @@ JobsCommand@Flutter/
 - 在模拟器中选择或使用已经存在的设备。
 
 
-### [【MacOS】🚀双击启动Android模拟器.command](./%E8%BF%90%E8%A1%8C/%E3%80%90MacOS%E3%80%91%F0%9F%9A%80%E5%8F%8C%E5%87%BB%E5%90%AF%E5%8A%A8Android%E6%A8%A1%E6%8B%9F%E5%99%A8.command/%E3%80%90MacOS%E3%80%91%F0%9F%9A%80%E5%8F%8C%E5%87%BB%E5%90%AF%E5%8A%A8Android%E6%A8%A1%E6%8B%9F%E5%99%A8.command)
+### <span id="jobs-toc-heading-45" data-jobs-toc="v2">[【MacOS】🚀双击启动Android模拟器.command](./%E8%BF%90%E8%A1%8C/%E3%80%90MacOS%E3%80%91%F0%9F%9A%80%E5%8F%8C%E5%87%BB%E5%90%AF%E5%8A%A8Android%E6%A8%A1%E6%8B%9F%E5%99%A8.command/%E3%80%90MacOS%E3%80%91%F0%9F%9A%80%E5%8F%8C%E5%87%BB%E5%90%AF%E5%8A%A8Android%E6%A8%A1%E6%8B%9F%E5%99%A8.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 选择或创建 Android AVD 并启动。
 
@@ -431,7 +499,7 @@ JobsCommand@Flutter/
 - 启动模拟器并等待设备可用。
 
 
-### [【MacOS】⏬双击配置VSCode.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91VSCode.command/%E3%80%90MacOS%E3%80%91%E2%8F%AC%E5%8F%8C%E5%87%BB%E9%85%8D%E7%BD%AEVSCode.command/%E3%80%90MacOS%E3%80%91%E2%8F%AC%E5%8F%8C%E5%87%BB%E9%85%8D%E7%BD%AEVSCode.command)
+### <span id="jobs-toc-heading-46" data-jobs-toc="v2">[【MacOS】⏬双击配置VSCode.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91VSCode.command/%E3%80%90MacOS%E3%80%91%E2%8F%AC%E5%8F%8C%E5%87%BB%E9%85%8D%E7%BD%AEVSCode.command/%E3%80%90MacOS%E3%80%91%E2%8F%AC%E5%8F%8C%E5%87%BB%E9%85%8D%E7%BD%AEVSCode.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 下载并配置 [**VS Code**](https://code.visualstudio.com/) 设置与扩展。
 
@@ -440,7 +508,7 @@ JobsCommand@Flutter/
 - 复制配置与处理扩展，打开结果或 VS Code。
 
 
-### [【MacOS】💉VSCode配置注入@全局.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91VSCode.command/%E3%80%90MacOS%E3%80%91%F0%9F%92%89VSCode%E9%85%8D%E7%BD%AE%E6%B3%A8%E5%85%A5@%E5%85%A8%E5%B1%80.command/%E3%80%90MacOS%E3%80%91%F0%9F%92%89VSCode%E9%85%8D%E7%BD%AE%E6%B3%A8%E5%85%A5@%E5%85%A8%E5%B1%80.command)
+### <span id="jobs-toc-heading-47" data-jobs-toc="v2">[【MacOS】💉VSCode配置注入@全局.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91VSCode.command/%E3%80%90MacOS%E3%80%91%F0%9F%92%89VSCode%E9%85%8D%E7%BD%AE%E6%B3%A8%E5%85%A5@%E5%85%A8%E5%B1%80.command/%E3%80%90MacOS%E3%80%91%F0%9F%92%89VSCode%E9%85%8D%E7%BD%AE%E6%B3%A8%E5%85%A5@%E5%85%A8%E5%B1%80.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 将仓库配置写入 VS Code 的用户设置目录。
 
@@ -449,7 +517,7 @@ JobsCommand@Flutter/
 - 打开配置位置并重启 VS Code；原用户设置会受替换影响。
 
 
-### [【MacOS】💉VSCode配置注入@当前Flutter项目.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91VSCode.command/%E3%80%90MacOS%E3%80%91%F0%9F%92%89VSCode%E9%85%8D%E7%BD%AE%E6%B3%A8%E5%85%A5@%E5%BD%93%E5%89%8DFlutter%E9%A1%B9%E7%9B%AE.command/%E3%80%90MacOS%E3%80%91%F0%9F%92%89VSCode%E9%85%8D%E7%BD%AE%E6%B3%A8%E5%85%A5@%E5%BD%93%E5%89%8DFlutter%E9%A1%B9%E7%9B%AE.command)
+### <span id="jobs-toc-heading-48" data-jobs-toc="v2">[【MacOS】💉VSCode配置注入@当前Flutter项目.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91VSCode.command/%E3%80%90MacOS%E3%80%91%F0%9F%92%89VSCode%E9%85%8D%E7%BD%AE%E6%B3%A8%E5%85%A5@%E5%BD%93%E5%89%8DFlutter%E9%A1%B9%E7%9B%AE.command/%E3%80%90MacOS%E3%80%91%F0%9F%92%89VSCode%E9%85%8D%E7%BD%AE%E6%B3%A8%E5%85%A5@%E5%BD%93%E5%89%8DFlutter%E9%A1%B9%E7%9B%AE.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 将仓库配置写入当前 Flutter 项目的 .vscode。
 
@@ -458,7 +526,7 @@ JobsCommand@Flutter/
 - 清理临时内容并报告结果；运行前保留已有自定义设置。
 
 
-### [【MacOS】⏬下载配置系统环境变量.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%8F%AC%E4%B8%8B%E8%BD%BD%E9%85%8D%E7%BD%AE%E7%B3%BB%E7%BB%9F%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F.command/%E3%80%90MacOS%E3%80%91%E2%8F%AC%E4%B8%8B%E8%BD%BD%E9%85%8D%E7%BD%AE%E7%B3%BB%E7%BB%9F%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F.command)
+### <span id="jobs-toc-heading-49" data-jobs-toc="v2">[【MacOS】⏬下载配置系统环境变量.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%8F%AC%E4%B8%8B%E8%BD%BD%E9%85%8D%E7%BD%AE%E7%B3%BB%E7%BB%9F%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F.command/%E3%80%90MacOS%E3%80%91%E2%8F%AC%E4%B8%8B%E8%BD%BD%E9%85%8D%E7%BD%AE%E7%B3%BB%E7%BB%9F%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 下载脚本指定的系统环境配置仓库。
 
@@ -468,7 +536,7 @@ JobsCommand@Flutter/
 - 克隆配置仓库并输出后续配置位置。
 
 
-### [【MacOS】⏬双击下载SourceTree效率脚本.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%8F%AC%E5%8F%8C%E5%87%BB%E4%B8%8B%E8%BD%BDSourceTree%E6%95%88%E7%8E%87%E8%84%9A%E6%9C%AC.command/%E3%80%90MacOS%E3%80%91%E2%8F%AC%E5%8F%8C%E5%87%BB%E4%B8%8B%E8%BD%BDSourceTree%E6%95%88%E7%8E%87%E8%84%9A%E6%9C%AC.command)
+### <span id="jobs-toc-heading-50" data-jobs-toc="v2">[【MacOS】⏬双击下载SourceTree效率脚本.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%8F%AC%E5%8F%8C%E5%87%BB%E4%B8%8B%E8%BD%BDSourceTree%E6%95%88%E7%8E%87%E8%84%9A%E6%9C%AC.command/%E3%80%90MacOS%E3%80%91%E2%8F%AC%E5%8F%8C%E5%87%BB%E4%B8%8B%E8%BD%BDSourceTree%E6%95%88%E7%8E%87%E8%84%9A%E6%9C%AC.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 取得可本地运行的 [**Sourcetree**](https://www.sourcetreeapp.com/) 脚本库。
 
@@ -477,7 +545,7 @@ JobsCommand@Flutter/
 - 给下载入口补执行权限并打开输出目录。
 
 
-### [【MacOS】⏬双击配置VSCode.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%8F%AC%E5%8F%8C%E5%87%BB%E9%85%8D%E7%BD%AEVSCode.command/%E3%80%90MacOS%E3%80%91%E2%8F%AC%E5%8F%8C%E5%87%BB%E9%85%8D%E7%BD%AEVSCode.command)
+### <span id="jobs-toc-heading-51" data-jobs-toc="v2">[【MacOS】⏬双击配置VSCode.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%8F%AC%E5%8F%8C%E5%87%BB%E9%85%8D%E7%BD%AEVSCode.command/%E3%80%90MacOS%E3%80%91%E2%8F%AC%E5%8F%8C%E5%87%BB%E9%85%8D%E7%BD%AEVSCode.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 下载并配置 VS Code 设置与扩展。
 
@@ -486,7 +554,7 @@ JobsCommand@Flutter/
 - 复制配置与处理扩展，打开结果或 VS Code。
 
 
-### [【MacOS】⚙️Flutter 项目组件预下载.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8FFlutter%20%E9%A1%B9%E7%9B%AE%E7%BB%84%E4%BB%B6%E9%A2%84%E4%B8%8B%E8%BD%BD.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8FFlutter%20%E9%A1%B9%E7%9B%AE%E7%BB%84%E4%BB%B6%E9%A2%84%E4%B8%8B%E8%BD%BD.command)
+### <span id="jobs-toc-heading-52" data-jobs-toc="v2">[【MacOS】⚙️Flutter 项目组件预下载.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8FFlutter%20%E9%A1%B9%E7%9B%AE%E7%BB%84%E4%BB%B6%E9%A2%84%E4%B8%8B%E8%BD%BD.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8FFlutter%20%E9%A1%B9%E7%9B%AE%E7%BB%84%E4%BB%B6%E9%A2%84%E4%B8%8B%E8%BD%BD.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 预先下载工程需要的 Flutter 平台构建组件。
 
@@ -495,7 +563,7 @@ JobsCommand@Flutter/
 - 执行 precache，显示并可打开缓存目录。
 
 
-### [【MacOS】⚙️一键配置Flutter项目至运行.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E4%B8%80%E9%94%AE%E9%85%8D%E7%BD%AEFlutter%E9%A1%B9%E7%9B%AE%E8%87%B3%E8%BF%90%E8%A1%8C.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E4%B8%80%E9%94%AE%E9%85%8D%E7%BD%AEFlutter%E9%A1%B9%E7%9B%AE%E8%87%B3%E8%BF%90%E8%A1%8C.command)
+### <span id="jobs-toc-heading-53" data-jobs-toc="v2">[【MacOS】⚙️一键配置Flutter项目至运行.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E4%B8%80%E9%94%AE%E9%85%8D%E7%BD%AEFlutter%E9%A1%B9%E7%9B%AE%E8%87%B3%E8%BF%90%E8%A1%8C.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E4%B8%80%E9%94%AE%E9%85%8D%E7%BD%AEFlutter%E9%A1%B9%E7%9B%AE%E8%87%B3%E8%BF%90%E8%A1%8C.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 为 Apple Silicon 工程准备 FVM 与 VS Code 的直接运行配置。
 
@@ -504,7 +572,7 @@ JobsCommand@Flutter/
 - 备份并写入 VS Code settings / launch 配置，提示重载编辑器后按 F5；脚本本身不启动 App。
 
 
-### [【MacOS】⚙️下载配置系统环境变量.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E4%B8%8B%E8%BD%BD%E9%85%8D%E7%BD%AE%E7%B3%BB%E7%BB%9F%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E4%B8%8B%E8%BD%BD%E9%85%8D%E7%BD%AE%E7%B3%BB%E7%BB%9F%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F.command)
+### <span id="jobs-toc-heading-54" data-jobs-toc="v2">[【MacOS】⚙️下载配置系统环境变量.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E4%B8%8B%E8%BD%BD%E9%85%8D%E7%BD%AE%E7%B3%BB%E7%BB%9F%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E4%B8%8B%E8%BD%BD%E9%85%8D%E7%BD%AE%E7%B3%BB%E7%BB%9F%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 下载脚本指定的系统环境配置仓库。
 
@@ -514,7 +582,7 @@ JobsCommand@Flutter/
 - 克隆配置仓库并输出后续配置位置。
 
 
-### [【MacOS】⚙️双击安装Cocoapods.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85Cocoapods.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85Cocoapods.command)
+### <span id="jobs-toc-heading-55" data-jobs-toc="v2">[【MacOS】⚙️双击安装Cocoapods.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85Cocoapods.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85Cocoapods.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 准备 Ruby 环境并安装 CocoaPods。
 
@@ -523,7 +591,7 @@ JobsCommand@Flutter/
 - 安装并校验 pod 命令，按提示决定是否初始化本地 Specs 仓库。
 
 
-### [【MacOS】⚙️双击安装FVM.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85FVM.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85FVM.command)
+### <span id="jobs-toc-heading-56" data-jobs-toc="v2">[【MacOS】⚙️双击安装FVM.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85FVM.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85FVM.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 安装 FVM 并为工程选择 Flutter 版本。
 
@@ -532,7 +600,7 @@ JobsCommand@Flutter/
 - 检查工程状态与重复依赖，按选择执行 clean、get、doctor 或 analyze。
 
 
-### [【MacOS】⚙️双击安装Flutter.SDK.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85Flutter.SDK.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85Flutter.SDK.command)
+### <span id="jobs-toc-heading-57" data-jobs-toc="v2">[【MacOS】⚙️双击安装Flutter.SDK.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85Flutter.SDK.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85Flutter.SDK.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 选择官方包、Homebrew 或 FVM 安装 Flutter SDK。
 
@@ -541,7 +609,7 @@ JobsCommand@Flutter/
 - 补充必要环境配置，运行 doctor 并展示安装目录。
 
 
-### [【MacOS】⚙️双击安装（升级）Homebrew.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85%EF%BC%88%E5%8D%87%E7%BA%A7%EF%BC%89Homebrew.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85%EF%BC%88%E5%8D%87%E7%BA%A7%EF%BC%89Homebrew.command)
+### <span id="jobs-toc-heading-58" data-jobs-toc="v2">[【MacOS】⚙️双击安装（升级）Homebrew.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85%EF%BC%88%E5%8D%87%E7%BA%A7%EF%BC%89Homebrew.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E5%8F%8C%E5%87%BB%E5%AE%89%E8%A3%85%EF%BC%88%E5%8D%87%E7%BA%A7%EF%BC%89Homebrew.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 准备 Homebrew 并按选择安装开发工具。
 
@@ -550,7 +618,7 @@ JobsCommand@Flutter/
 - 依次处理源码列出的工具安装项并输出结果。
 
 
-### [【MacOS】⚙️收集当前Flutter工程的依赖.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E6%94%B6%E9%9B%86%E5%BD%93%E5%89%8DFlutter%E5%B7%A5%E7%A8%8B%E7%9A%84%E4%BE%9D%E8%B5%96.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E6%94%B6%E9%9B%86%E5%BD%93%E5%89%8DFlutter%E5%B7%A5%E7%A8%8B%E7%9A%84%E4%BE%9D%E8%B5%96.command)
+### <span id="jobs-toc-heading-59" data-jobs-toc="v2">[【MacOS】⚙️收集当前Flutter工程的依赖.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E6%94%B6%E9%9B%86%E5%BD%93%E5%89%8DFlutter%E5%B7%A5%E7%A8%8B%E7%9A%84%E4%BE%9D%E8%B5%96.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E6%94%B6%E9%9B%86%E5%BD%93%E5%89%8DFlutter%E5%B7%A5%E7%A8%8B%E7%9A%84%E4%BE%9D%E8%B5%96.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 将工程实际解析的 Flutter 和原生依赖整理为可追溯压缩包。
 
@@ -559,7 +627,7 @@ JobsCommand@Flutter/
 - 写入收集说明并生成桌面 Zip，显示输出位置。
 
 
-### [【MacOS】⚙️配置Android Studio.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E9%85%8D%E7%BD%AEAndroid%20Studio.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E9%85%8D%E7%BD%AEAndroid%20Studio.command)
+### <span id="jobs-toc-heading-60" data-jobs-toc="v2">[【MacOS】⚙️配置Android Studio.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E9%85%8D%E7%BD%AEAndroid%20Studio.command/%E3%80%90MacOS%E3%80%91%E2%9A%99%EF%B8%8F%E9%85%8D%E7%BD%AEAndroid%20Studio.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 安装 Android 命令行组件并创建可启动的 AVD。
 
@@ -568,7 +636,7 @@ JobsCommand@Flutter/
 - 创建并启动 AVD，显示需要持久化的环境配置。
 
 
-### [【MacOS】🎈双击打开系统配置文件.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%F0%9F%8E%88%E5%8F%8C%E5%87%BB%E6%89%93%E5%BC%80%E7%B3%BB%E7%BB%9F%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6.command/%E3%80%90MacOS%E3%80%91%F0%9F%8E%88%E5%8F%8C%E5%87%BB%E6%89%93%E5%BC%80%E7%B3%BB%E7%BB%9F%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6.command)
+### <span id="jobs-toc-heading-61" data-jobs-toc="v2">[【MacOS】🎈双击打开系统配置文件.command](./%E9%85%8D%E7%BD%AE%E7%9B%B8%E5%85%B3/%E3%80%90MacOS%E3%80%91%F0%9F%8E%88%E5%8F%8C%E5%87%BB%E6%89%93%E5%BC%80%E7%B3%BB%E7%BB%9F%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6.command/%E3%80%90MacOS%E3%80%91%F0%9F%8E%88%E5%8F%8C%E5%87%BB%E6%89%93%E5%BC%80%E7%B3%BB%E7%BB%9F%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6.command)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 选择并打开用户环境配置文件。
 
