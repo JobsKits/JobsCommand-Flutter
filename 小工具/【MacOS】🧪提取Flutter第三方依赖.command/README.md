@@ -2,7 +2,18 @@
 
 ![Jobs出品，必属精品](https://picsum.photos/1500/400)
 
-[toc]
+<!-- jobs-toc:start -->
+<!-- jobs-toc:source {"v":2,"token":"[toc]"} -->
+<details>
+<summary>📚 目录（点击展开 / 收起）</summary>
+
+- [🔥 前言](#%E5%89%8D%E8%A8%80)
+- [一、目录与运行](#jobs-toc-heading-2)
+- [二、输出与范围](#jobs-toc-heading-3)
+- [三、日志与排查](#jobs-toc-heading-4)
+
+</details>
+<!-- jobs-toc:end -->
 
 ---
 
@@ -19,7 +30,7 @@
 | 重复提取同一项目 | 每次产生不同名称，不覆盖旧结果。 |
 | 缓存缺失、版本不匹配、解析过期 | 停止并提示先执行 `flutter pub get`；不会自动下载或更新依赖。 |
 
-## 一、目录与运行 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
+## <span id="jobs-toc-heading-2" data-jobs-toc="v2">一、目录与运行 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a></span><!-- jobs-toc:heading-end -->
 
 ```text
 【MacOS】提取Flutter第三方依赖.command/
@@ -47,7 +58,7 @@
 
 4、等待逐包显示来源、版本和目标，查看完成路径与日志。失败会给出原因，不把部分复制显示为完整成功。
 
-## 二、输出与范围 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
+## <span id="jobs-toc-heading-3" data-jobs-toc="v2">二、输出与范围 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a></span><!-- jobs-toc:heading-end -->
 
 ```text
 FlutterDependencies-项目名-UTC时间-随机标识/
@@ -68,7 +79,7 @@ FlutterDependencies-项目名-UTC时间-随机标识/
 
 Pub 的解析与缓存机制见 [Dart pub get](https://dart.dev/tools/pub/cmd/pub-get)；共享解析行为见 [Pub workspaces](https://dart.dev/tools/pub/workspaces)。
 
-## 三、日志与排查 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
+## <span id="jobs-toc-heading-4" data-jobs-toc="v2">三、日志与排查 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a></span><!-- jobs-toc:heading-end -->
 
 日志在自述确认后，以私有权限创建于系统临时目录 `${TMPDIR:-/tmp/}`，普通文件名称为 `JobsFlutterDependencyExtractor.随机标识`，准确路径显示在终端。日志同步保存逐包本地来源、目标、失败原因与最终结果，不展开远端认证 URL。
 
