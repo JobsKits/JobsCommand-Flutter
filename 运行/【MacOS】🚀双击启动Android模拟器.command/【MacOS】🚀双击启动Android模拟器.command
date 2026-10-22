@@ -1,628 +1,701 @@
 #!/bin/zsh
 # 脚本自述：
-# - 脚本名称：【MacOS】🚀双击启动Android模拟器.command
-# - 核心用途：执行“🚀双击启动Android模拟器”对应的移动端项目自动化任务。
-# - 影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。
-# - 运行提示：运行后会先打印内置自述；终端模式按回车确认后继续，按 Ctrl+C 可取消。
-# =====================================================================
-# Jobs 标准化脚本外壳
-# 说明：保留原脚本业务逻辑，补齐 README 防误触、彩色日志、zsh 入口、Homebrew 健康自检标准。
-# =====================================================================
+# - 脚本名称：Android 模拟器启动与新建工具。
+# - 核心用途：启动已有 AVD，或按本机架构选择设备和系统映像后新建、启动 AVD。
+# - 影响范围：仅按确认安装选中的 SDK 组件和新增 AVD；不删除、覆盖现有设备，不修改 Shell / 系统代理。
+# - 运行提示：双击先阅读自述并回车确认；--create 直接新建；--check / --help 只读且不等待确认。
+# shell: zsh
 
-# 仅渲染自述：标题红色加粗，编号正文蓝色常规字重；非彩色终端输出纯文本。
-# >>> Jobs Homebrew install choice >>>
-# 输出安装诊断，避免混入返回的命令路径。
-jobs_brew_note() {
-  print -u2 -r -- "ℹ $*"
-}
-# 验证候选能够执行；共享安装只读不代表未安装。
-jobs_brew_candidate_ok() {
-  local candidate="$1" prefix
-  [[ -n "$candidate" && -x "$candidate" ]] || return 1
-  HOMEBREW_NO_AUTO_UPDATE=1 "$candidate" --version >/dev/null 2>&1 || return 1
-  prefix="$("$candidate" --prefix 2>/dev/null)" || return 1
-  [[ "$prefix" == /* && -d "$prefix" ]]
-}
-# 发现既有健康安装，不以目录可写性决定是否重新安装。
-jobs_brew_find() {
-  local candidate
-  local -a candidates
-  candidates=("${JOBS_HOMEBREW_BIN:-}" "$(command -v brew 2>/dev/null)" /opt/homebrew/bin/brew /usr/local/bin/brew
-    "${JOBS_HOMEBREW_INSTALL_PREFIX:-$HOME/.local/homebrew}/bin/brew" "$HOME/.homebrew/bin/brew")
-  for candidate in "${candidates[@]}"; do
-    if jobs_brew_candidate_ok "$candidate"; then
-      print -r -- "$candidate"
-      return 0
+# >>> Jobs Android simulator core >>>
+# 准备展示所需路径；在确认前只计算变量，不创建文件。
+android_prepare_context() {
+    local source_path="${(%):-%x}"
+    SCRIPT_PATH="${source_path:A}"
+    SCRIPT_DIR="${SCRIPT_PATH:h}"
+    SCRIPT_BASENAME="${SCRIPT_PATH:t:r}"
+    LOG_FILE="${TMPDIR:-/tmp}/${SCRIPT_BASENAME}.$$.log"
+    ANDROID_SIM_MODE=menu
+    ANDROID_SIM_LOG_READY=0
+    ANDROID_SIM_FZF=""
+    ANDROID_SIM_SELECTED=""
+    ANDROID_SIM_SDK=""
+    ANDROID_SIM_EMULATOR=""
+    ANDROID_SIM_SDKMANAGER=""
+    ANDROID_SIM_AVDMANAGER=""
+    ANDROID_SIM_JAVA=""
+    ANDROID_SIM_DEVICES=""
+    ANDROID_SIM_AVDS=""
+    ANDROID_SIM_IMAGES=""
+    ANDROID_SIM_NEW_AVD=""
+    ANDROID_SIM_BOOTSTRAP_STAGE=""
+    ANDROID_SIM_COLOR=0
+    if [[ -t 1 && -n "${TERM:-}" && "$TERM" != dumb && -z "${NO_COLOR+x}" && "${PLAIN_OUTPUT:-0}" != 1 ]]; then
+        ANDROID_SIM_COLOR=1
     fi
-  done
-  return 1
 }
-# 计算官方系统目录；实际支持范围和授权交由官方安装器处理。
-jobs_brew_system_prefix() {
-  case "$(/usr/bin/uname -m)" in
-    arm64) print -r -- /opt/homebrew ;;
-    *) print -r -- /usr/local ;;
-  esac
-}
-# 缺失时强提示选择安装路径；YES 只表示选择系统目录，不验证密码或权限。
-jobs_brew_choose_installation() {
-  local answer="" system_prefix="$(jobs_brew_system_prefix)"
-  if [[ ! -t 0 || ! -t 2 || "${IS_SOURCETREE_RUNTIME:-0}" == 1 ]]; then
-    jobs_brew_note "缺少 Homebrew，需要人工选择安装路径；请在可交互终端重新运行，未执行安装。"
-    return 1
-  fi
-  print -u2 -r -- "⚠ Homebrew 尚未就绪，必须先选择安装路径："
-  print -u2 -r -- "1、输入精确大写 YES：选择系统标准目录 $system_prefix（Apple Silicon：/opt/homebrew；Intel：/usr/local）。"
-  print -u2 -r -- "   这表示你准备向系统目录安装；官方安装器可能随后要求管理员密码，并自行验证权限。"
-  print -u2 -r -- "2、其它输入或直接回车：选择用户目录 ${JOBS_HOMEBREW_INSTALL_PREFIX:-$HOME/.local/homebrew}，不使用 sudo；有管理员权限也可选此路径。"
-  print -u2 -r -- "本步骤只选择路径，不收集或验证密码；选定路径失败就停止，不自动切换。按 Ctrl+C 取消整个任务。"
-  print -u2 -n -r -- "➤ 安装路径选择："
-  if ! IFS= read -r answer; then
-    jobs_brew_note "输入已取消或结束，停止安装。"
-    return 1
-  fi
-  if [[ "$answer" == YES ]]; then
-    typeset -g JOBS_HOMEBREW_INSTALL_MODE=system
-  else
-    typeset -g JOBS_HOMEBREW_INSTALL_MODE=user
-  fi
-}
-# 将官方系统安装器下载到临时文件后执行，失败不自动改装到用户目录。
-jobs_brew_install_system() {
-  local installer system_prefix="$(jobs_brew_system_prefix)" installer_result=0
-  command -v curl >/dev/null 2>&1 || { jobs_brew_note "缺少 curl，无法获取官方安装器。"; return 1; }
-  installer="$(mktemp "${TMPDIR:-/tmp}/jobs-homebrew-install.XXXXXX")" || return 1
-  if curl -fsSL --connect-timeout 10 --max-time 120 https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh -o "$installer"; then
-    /bin/bash "$installer" || installer_result=$?
-  else
-    installer_result=1
-  fi
-  rm -- "$installer"
-  if (( installer_result != 0 )); then
-    jobs_brew_note "系统目录安装失败（退出码 $installer_result）；停止，不自动切换安装路径。"
-    return 1
-  fi
-  typeset -g JOBS_HOMEBREW_BIN="$system_prefix/bin/brew"
-  jobs_brew_candidate_ok "$JOBS_HOMEBREW_BIN" || { jobs_brew_note "官方安装器结束后未找到健康 Homebrew：$JOBS_HOMEBREW_BIN"; return 1; }
-}
-# 克隆官方稳定版本到用户目录；不覆盖非空目录，不调用 sudo。
-jobs_brew_install_user() {
-  local prefix="${JOBS_HOMEBREW_INSTALL_PREFIX:-$HOME/.local/homebrew}" stage release_tag git_bin
-  [[ "$prefix" == /* && "$prefix" != / && "$prefix" != *[[:space:]:]* ]] || {
-    jobs_brew_note "Homebrew 用户前缀须为不含空白或冒号的绝对目录：$prefix"
-    return 1
-  }
-  if [[ -L "$prefix" || ( -e "$prefix" && ! -d "$prefix" ) || ( -d "$prefix" && -n "$(ls -A "$prefix" 2>/dev/null)" ) ]]; then
-    jobs_brew_note "用户安装目标非空或不是普通目录，不覆盖：$prefix"
-    return 1
-  fi
-  git_bin="$(command -v git 2>/dev/null)"
-  [[ -n "$git_bin" ]] && "$git_bin" --version >/dev/null 2>&1 || { jobs_brew_note "用户目录安装需要可用 Git；请先准备 Git / Command Line Tools。"; return 1; }
-  command -v curl >/dev/null 2>&1 || { jobs_brew_note "缺少 curl，无法获取官方稳定版本。"; return 1; }
-  export HOMEBREW_NO_SUDO=1
-  mkdir -p "${prefix:h}" || return 1
-  stage="$(mktemp -d "${prefix:h}/.jobs-homebrew.XXXXXX")" || return 1
-  if ! curl -fsSL --connect-timeout 10 --max-time 60 https://api.github.com/repos/Homebrew/brew/releases/latest -o "$stage/release.json"; then
-    rm -r -- "$stage"
-    jobs_brew_note "获取官方稳定版本失败，停止安装。"
-    return 1
-  fi
-  release_tag="$(sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([0-9][0-9.]*\)".*/\1/p' "$stage/release.json" | head -n 1)"
-  if [[ ! "$release_tag" =~ '^[0-9]+\.[0-9]+\.[0-9]+$' ]] ||
-     ! GIT_TERMINAL_PROMPT=0 "$git_bin" -c http.lowSpeedLimit=1 -c http.lowSpeedTime=60 clone --depth 1 --branch "$release_tag" --single-branch https://github.com/Homebrew/brew.git "$stage/brew" ||
-     ! "$git_bin" -C "$stage/brew" checkout -b stable ||
-     ! "$git_bin" -C "$stage/brew" config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' ||
-     ! mkdir -p "$stage/brew/Cellar" "$stage/brew/Caskroom" "$stage/brew/etc" "$stage/brew/var"; then
-    rm -r -- "$stage"
-    jobs_brew_note "Homebrew 用户目录初始化失败，停止安装。"
-    return 1
-  fi
-  # 空目录也只在下载成功后移除，避免提前改动用户的目标目录。
-  if [[ -d "$prefix" ]] && ! rmdir -- "$prefix"; then
-    rm -r -- "$stage"
-    return 1
-  fi
-  if ! mv "$stage/brew" "$prefix"; then
-    rm -r -- "$stage"
-    return 1
-  fi
-  rm -r -- "$stage"
-  typeset -g JOBS_HOMEBREW_BIN="$prefix/bin/brew"
-  jobs_brew_candidate_ok "$JOBS_HOMEBREW_BIN" || { jobs_brew_note "用户目录安装后复检失败：$prefix"; return 1; }
-}
-# 只更新本模块的 shellenv 配置块，并保留配置文件的符号链接和权限。
-jobs_brew_save_shellenv() {
-  local profile_file="$HOME/.zprofile" profile_stage shellenv_line current_shell="${SHELL:-/bin/zsh}"
-  [[ "${current_shell##*/}" != bash ]] || profile_file="$HOME/.bash_profile"
-  shellenv_line='eval "$('"${(q)JOBS_HOMEBREW_BIN}"' shellenv)"'
-  profile_stage="$(mktemp "${TMPDIR:-/tmp}/jobs-homebrew-profile.XXXXXX")" || return 1
-  if [[ -e "$profile_file" || -L "$profile_file" ]]; then
-    awk '
-      $0 == "# >>> Jobs Homebrew shellenv >>>" { inside = 1; block = $0 ORS; next }
-      inside {
-        block = block $0 ORS
-        if ($0 == "# <<< Jobs Homebrew shellenv <<<") { inside = 0; block = "" }
-        next
-      }
-      { print }
-      END { if (inside) printf "%s", block }
-    ' "$profile_file" > "$profile_stage" || { rm -- "$profile_stage"; return 1; }
-  fi
-  {
-    print -r -- '# >>> Jobs Homebrew shellenv >>>'
-    print -rl -- "$shellenv_line" '# <<< Jobs Homebrew shellenv <<<'
-  } >> "$profile_stage"
-  if ! cmp -s "$profile_stage" "$profile_file"; then
-    cat "$profile_stage" > "$profile_file" || { rm -- "$profile_stage"; jobs_brew_note "无法写入用户配置：$profile_file"; return 1; }
-  fi
-  rm -- "$profile_stage"
-}
-# 激活当前进程并验证 Ruby 命令层；只有新安装才持久化 shellenv。
-jobs_brew_activate() {
-  local brew_env
-  brew_env="$("$JOBS_HOMEBREW_BIN" shellenv)" || return 1
-  eval "$brew_env" || return 1
-  typeset -g JOBS_HOMEBREW_PREFIX="$("$JOBS_HOMEBREW_BIN" --prefix)"
-  export PATH="$JOBS_HOMEBREW_PREFIX/bin:$JOBS_HOMEBREW_PREFIX/sbin:$PATH"
-  rehash
-  HOMEBREW_NO_AUTO_UPDATE=1 "$JOBS_HOMEBREW_BIN" config >/dev/null || { jobs_brew_note "Homebrew 命令层复检失败，停止后续业务。"; return 1; }
-  if [[ "${1:-}" == installed ]]; then
-    if [[ "${JOBS_HOMEBREW_INSTALL_MODE:-}" == user && -z "${HOMEBREW_CASK_OPTS:-}" ]]; then
-      export HOMEBREW_CASK_OPTS="--appdir=$HOME/Applications"
-    fi
-    jobs_brew_save_shellenv || return 1
-  fi
-}
-# 在原版安装位置复用或安装 Homebrew，安装失败必须终止外层业务。
-jobs_brew_install_or_exit() {
-  local installed=""
-  if [[ "${DRY_RUN:-0}" == 1 ]]; then
-    jobs_brew_note "演练：Homebrew 系统路径 $(jobs_brew_system_prefix)；用户路径 ${JOBS_HOMEBREW_INSTALL_PREFIX:-$HOME/.local/homebrew}；未询问或执行安装。"
-    return 0
-  fi
-  if ! JOBS_HOMEBREW_BIN="$(jobs_brew_find)"; then
-    jobs_brew_choose_installation || exit 1
-    case "$JOBS_HOMEBREW_INSTALL_MODE" in
-      system) jobs_brew_install_system || exit 1 ;;
-      user) jobs_brew_install_user || exit 1 ;;
-      *) jobs_brew_note "安装路径选择无效，停止。"; exit 1 ;;
-    esac
-    installed=installed
-  fi
-  jobs_brew_activate "$installed" || exit 1
-}
-# <<< Jobs Homebrew install choice <<<
-jobs_intro_style() {
-  local intro_color=0
-  if [ -t 1 ] && [ -n "${TERM:-}" ] && [ "${TERM:-}" != dumb ] &&
-     [ -z "${NO_COLOR+x}" ] && [ "${PLAIN_OUTPUT:-0}" != 1 ] &&
-     [ "${IS_SOURCETREE_RUNTIME:-0}" != 1 ]; then
-    intro_color=1
-  fi
-  /usr/bin/awk -v color="$intro_color" -v role="${1:-body}" '
-    BEGIN { esc = sprintf("%c", 27) }
-    {
-      gsub(esc "\\[[0-9;]*m", "")
-      gsub(/\\(033|e|x1[bB])\[[0-9;]*m/, "")
-      if (!color || $0 ~ /^[[:space:]]*$/) { print; next }
-      numbered = ($0 ~ /^[[:space:]➤ℹ🔹✔⚠]*([0-9]+[、.)）]|[0-9]+️⃣|[-•])/)
-      heading = ($0 ~ /^[[:space:]]*#{1,6}[[:space:]]/ || $0 ~ /[：:][[:space:]]*$/ || $0 ~ /^[[:space:]]*[=━─-]{3}/)
-      title = (!numbered && (role == "title" || heading))
-      if (role == "auto" && !seen && !numbered) title = 1
-      if ($0 !~ /^[[:space:]]*[=━─-]+[[:space:]]*$/) seen = 1
-      printf "%s%s%s\n", esc (title ? "[1;31m" : "[0;34m"), $0, esc "[0m"
-    }
-  '
-}
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
-SCRIPT_PATH="${SCRIPT_DIR}/$(basename -- "$0")"
-SCRIPT_BASENAME="$(basename "$0" | sed 's/\.[^.]*$//')"
-LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
-log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
-color_echo()     { log "\033[1;32m$1\033[0m"; }
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
-info_echo()      { log "\033[1;34mℹ $1\033[0m"; }
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
-success_echo()   { log "\033[1;32m✔ $1\033[0m"; }
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
-warn_echo()      { log "\033[1;33m⚠ $1\033[0m"; }
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
-warm_echo()      { log "\033[1;33m$1\033[0m"; }
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
-note_echo()      { log "\033[1;35m➤ $1\033[0m"; }
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
-error_echo()     { log "\033[1;31m✖ $1\033[0m"; }
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
-err_echo()       { log "\033[1;31m$1\033[0m"; }
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
-debug_echo()     { log "\033[1;35m🐞 $1\033[0m"; }
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
-highlight_echo() { log "\033[1;36m🔹 $1\033[0m"; }
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
-gray_echo()      { log "\033[0;90m$1\033[0m"; }
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
-bold_echo()      { log "\033[1m$1\033[0m"; }
-# 按当前输出级别记录终端信息，并同步写入脚本日志。
-underline_echo() { log "\033[4m$1\033[0m"; }
-# ============================= 标准工具函数 =============================
-get_cpu_arch() {
-  [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
-}
-# 封装 abs_path 对应的独立处理逻辑。
-abs_path() {
-  local p="$1"
-  [[ -z "$p" ]] && return 1
-  p="${p//\"/}"
-  [[ "$p" != "/" ]] && p="${p%/}"
-  if [[ -d "$p" ]]; then
-    (cd "$p" 2>/dev/null && pwd -P)
-  elif [[ -f "$p" ]]; then
-    (cd "${p:h}" 2>/dev/null && printf "%s/%s\n" "$(pwd -P)" "${p:t}")
-  else
-    return 1
-  fi
-}
-# 收集并校验用户输入，决定后续执行路径。
-ask_run() {
-  echo ""
-  note_echo "👉 $1"
-  gray_echo "【回车=跳过，输入任意字符后回车=执行】"
-  local input=""
-  IFS= read -r "input?➤ "
-  [[ -n "$input" ]]
-}
-# 收集并校验用户输入，决定后续执行路径。
-confirm_yes() {
-  echo ""
-  warn_echo "⚠ $1"
-  gray_echo "危险操作必须输入 YES 后回车；其它输入一律取消。"
-  local input=""
-  IFS= read -r "input?➤ "
-  [[ "$input" == "YES" ]]
-}
-# 封装 inject_shellenv_block 对应的独立处理逻辑。
-inject_shellenv_block() {
-  local profile_file="$1"
-  local shellenv_cmd="$2"
-  local header="# >>> Homebrew 环境变量 >>>"
-  [[ -z "$profile_file" || -z "$shellenv_cmd" ]] && { error_echo "缺少参数：inject_shellenv_block <profile_file> <shellenv_cmd>"; return 1; }
-  mkdir -p "$(dirname "$profile_file")"
-  touch "$profile_file"
-  if grep -Fq "$shellenv_cmd" "$profile_file" 2>/dev/null; then
-    info_echo "已存在 Homebrew shellenv：$profile_file"
-  elif grep -Fq "$header" "$profile_file" 2>/dev/null; then
-    info_echo "已存在 Homebrew 环境变量块：$profile_file"
-  else
-    {
-      echo ""
-      echo "$header"
-      echo "$shellenv_cmd"
-    } >> "$profile_file"
-    success_echo "已写入 Homebrew shellenv：$profile_file"
-  fi
-  eval "$shellenv_cmd" || true
-}
-# 封装 activate_homebrew_shellenv 对应的独立处理逻辑。
-activate_homebrew_shellenv() {
-  local arch="$(get_cpu_arch)"
-  local brew_bin=""
-  brew_bin="$(jobs_brew_find)" || { error_echo "没有健康 Homebrew，停止激活。"; return 1; }
-  JOBS_HOMEBREW_BIN="$brew_bin"
-  jobs_brew_activate || { error_echo "Homebrew 激活或命令层复检失败。"; return 1; }
-
-  local shell_name="${SHELL##*/}"
-  local profile_file=""
-  case "$shell_name" in
-    zsh)  profile_file="$HOME/.zprofile" ;;
-    bash) profile_file="$HOME/.bash_profile" ;;
-    *)    profile_file="$HOME/.profile" ;;
-  esac
-  inject_shellenv_block "$profile_file" "eval \"\$(${brew_bin} shellenv)\"" || return 1
-  eval "$(${brew_bin} shellenv)"
-}
-# 执行已经拆分完成的独立业务步骤。
-run_brew_health_update() {
-  info_echo "正在执行 Homebrew 健康更新..."
-  brew update  || { error_echo "brew update 失败"; return 1; }
-  brew upgrade || { error_echo "brew upgrade 失败"; return 1; }
-  brew cleanup || { error_echo "brew cleanup 失败"; return 1; }
-  brew doctor  || warn_echo "brew doctor 有警告，请按输出处理"
-  brew -v      || warn_echo "打印 brew 版本失败，可忽略"
-  success_echo "Homebrew 健康更新完成"
-}
-# 执行对应的环境配置或同步处理。
-install_homebrew() {
-  local arch="$(get_cpu_arch)"
-  local brew_bin=""
-
-  if ! brew_bin="$(jobs_brew_find)"; then
-    warn_echo "未检测到 Homebrew，准备按架构安装：$arch"
-    if [[ "$arch" == "arm64" ]]; then
-      jobs_brew_install_or_exit || { error_echo "Homebrew 安装失败（arm64）"; return 1; }
-      brew_bin="${JOBS_HOMEBREW_BIN:-$(jobs_brew_find 2>/dev/null || true)}"
+# 输出纯文本日志；交互终端按级别着色，文件始终不含 ANSI。
+android_log() {
+    local message="$1" color="${2:-0;34}"
+    if (( ANDROID_SIM_COLOR )); then
+        print -r -- $'\e['"${color}m${message}"$'\e[0m'
     else
-      jobs_brew_install_or_exit || { error_echo "Homebrew 安装失败（x86_64）"; return 1; }
-      brew_bin="${JOBS_HOMEBREW_BIN:-$(jobs_brew_find 2>/dev/null || true)}"
+        print -r -- "$message"
     fi
-    success_echo "Homebrew 安装完成"
-    activate_homebrew_shellenv || exit 1
-    return 0
-  fi
-
-  activate_homebrew_shellenv || exit 1
-  info_echo "Homebrew 已安装。"
-  if ask_run "是否执行 Homebrew 更新 / 升级 / 清理 / doctor？"; then
-    run_brew_health_update || exit 1
-  else
-    note_echo "已跳过 Homebrew 更新"
-  fi
-}
-# 封装 brew_install_or_upgrade 对应的独立处理逻辑。
-brew_install_or_upgrade() {
-  local formula="$1"
-  [[ -z "$formula" ]] && return 1
-  install_homebrew || return 1
-  if ! brew list --formula "$formula" >/dev/null 2>&1 && ! command -v "$formula" >/dev/null 2>&1; then
-    note_echo "未检测到 $formula，正在安装..."
-    brew install "$formula" || { error_echo "$formula 安装失败"; return 1; }
-    success_echo "$formula 安装完成"
-  else
-    info_echo "$formula 已安装。"
-    if ask_run "是否升级 $formula？"; then
-      brew upgrade "$formula" || warn_echo "$formula 可能已是最新或升级失败，请检查输出"
-      brew cleanup || true
-    else
-      note_echo "已跳过 $formula 升级"
+    if (( ANDROID_SIM_LOG_READY )); then
+        print -r -- "$message" >> "$LOG_FILE"
     fi
-  fi
 }
-# 展示脚本用途和影响范围，并在执行前等待用户确认。
+# 输出简明帮助，参数只选择入口模式，不接受无确认的安装或覆盖。
+android_help() {
+    android_log '用法：/bin/zsh 当前脚本 [--create | --check | --help]'
+    android_log '无参数：已有模拟器可启动或新建；没有已有设备时进入新建。'
+    android_log '--create：仅进入新建流程，仍逐步选择并最终确认。'
+    android_log '--check：只读检查 SDK / Java / 工具 / 已装映像和已有 AVD；不联网、不安装、不新建设备、不写脚本日志。'
+}
+# 首屏写死用途、影响和取消方法，再按入口区分只读请求与交互确认。
 show_script_intro_and_wait() {
-  clear
-  print -r -- '============================== 脚本内置自述 ==============================' | jobs_intro_style title
-  print -r -- '脚本名称：【MacOS】🚀双击启动Android模拟器.command' | jobs_intro_style title
-  print -r -- '核心用途：执行“🚀双击启动Android模拟器”对应的移动端项目自动化任务。' | jobs_intro_style body
-  print -r -- '影响范围：可能修改项目依赖、生成文件、构建产物或开发工具配置。' | jobs_intro_style body
-  print -r -- '取消方式：确认前按 Ctrl+C 终止，不会继续执行后续业务。' | jobs_intro_style body
-  print -r -- '============================================================================' | jobs_intro_style title
-  echo "" | jobs_intro_style body
-  read -r "?👉 已了解脚本用途与影响，按回车继续；按 Ctrl+C 取消：" _
-}
-# 执行已经拆分完成的独立业务步骤。
-run_original_logic() {
-  # ============================= 原脚本业务逻辑区 =============================
-  # ✅ 全局变量与日志
-  SCRIPT_BASENAME=$(basename "$0" | sed 's/\.[^.]*$//')
-  LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"
-
-  export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
-  export PATH="$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
-
-  EMULATOR_DIR="$ANDROID_HOME/emulator"
-  SYSTEM_IMAGES_DIR="$ANDROID_HOME/system-images"
-  AVD_DIR="$HOME/.android/avd"
-  CMDLINE_TOOLS_BIN="$ANDROID_HOME/cmdline-tools/latest/bin"
-
-  # ✅ 彩色输出函数
-  SCRIPT_BASENAME=$(basename "$0" | sed 's/\.[^.]*$//')   # 当前脚本名（去掉扩展名）
-  LOG_FILE="/tmp/${SCRIPT_BASENAME}.log"                  # 设置对应的日志文件路径
-  # 按当前输出级别记录终端信息，并同步写入脚本日志。
-  log()            { echo -e "$1" | tee -a "$LOG_FILE"; }
-  # 按当前输出级别记录终端信息，并同步写入脚本日志。
-  color_echo()     { log "\033[1;32m$1\033[0m"; }         # ✅ 正常绿色输出
-  # 按当前输出级别记录终端信息，并同步写入脚本日志。
-  info_echo()      { log "\033[1;34mℹ $1\033[0m"; }       # ℹ 信息
-  # 按当前输出级别记录终端信息，并同步写入脚本日志。
-  success_echo()   { log "\033[1;32m✔ $1\033[0m"; }       # ✔ 成功
-  # 按当前输出级别记录终端信息，并同步写入脚本日志。
-  warn_echo()      { log "\033[1;33m⚠ $1\033[0m"; }       # ⚠ 警告
-  # 按当前输出级别记录终端信息，并同步写入脚本日志。
-  warm_echo()      { log "\033[1;33m$1\033[0m"; }         # 🟡 温馨提示（无图标）
-  # 按当前输出级别记录终端信息，并同步写入脚本日志。
-  note_echo()      { log "\033[1;35m➤ $1\033[0m"; }       # ➤ 说明
-  # 按当前输出级别记录终端信息，并同步写入脚本日志。
-  error_echo()     { log "\033[1;31m✖ $1\033[0m"; }       # ✖ 错误
-  # 按当前输出级别记录终端信息，并同步写入脚本日志。
-  err_echo()       { log "\033[1;31m$1\033[0m"; }         # 🔴 错误纯文本
-  # 按当前输出级别记录终端信息，并同步写入脚本日志。
-  debug_echo()     { log "\033[1;35m🐞 $1\033[0m"; }      # 🐞 调试
-  # 按当前输出级别记录终端信息，并同步写入脚本日志。
-  highlight_echo() { log "\033[1;36m🔹 $1\033[0m"; }      # 🔹 高亮
-  # 按当前输出级别记录终端信息，并同步写入脚本日志。
-  gray_echo()      { log "\033[0;90m$1\033[0m"; }         # ⚫ 次要信息
-  # 按当前输出级别记录终端信息，并同步写入脚本日志。
-  bold_echo()      { log "\033[1m$1\033[0m"; }            # 📝 加粗
-  # 按当前输出级别记录终端信息，并同步写入脚本日志。
-  underline_echo() { log "\033[4m$1\033[0m"; }            # 🔗 下划线
-  # ✅ 自述信息
-  print_script_intro_and_path_check() {
-      highlight_echo "📦 Android 模拟器工具脚本" | jobs_intro_style title
-      echo "" | jobs_intro_style body
-      note_echo "🗂️ 模拟器路径结构说明：" | jobs_intro_style title
-      info_echo "1️⃣ SDK 根目录         ：\$ANDROID_HOME → $ANDROID_HOME" | jobs_intro_style body
-      info_echo "2️⃣ 模拟器工具目录     ：$EMULATOR_DIR" | jobs_intro_style body
-      info_echo "3️⃣ 系统镜像目录       ：$SYSTEM_IMAGES_DIR" | jobs_intro_style body
-      info_echo "4️⃣ 模拟器配置数据目录 ：$AVD_DIR" | jobs_intro_style body
-      echo "" | jobs_intro_style body
-
-      gray_echo "📂 示例结构：" | jobs_intro_style title
-      gray_echo "~/.android/avd/Pixel_5.avd/config.ini" | jobs_intro_style body
-      gray_echo "~/Library/Android/sdk/system-images/android-34/google_apis/x86_64/" | jobs_intro_style body
-      echo "" | jobs_intro_style body
-
-      info_echo "🔍 正在检测关键路径..." | jobs_intro_style body
-      for dir in "$ANDROID_HOME" "$EMULATOR_DIR" "$SYSTEM_IMAGES_DIR" "$AVD_DIR" "$CMDLINE_TOOLS_BIN"; do
-          [[ -e "$dir" ]] && success_echo "存在路径：$dir" || warn_echo "缺失路径：$dir"
-      done
-  }
-  # 封装 fzf_select 对应的独立处理逻辑。
-  fzf_select() {
-      local choice=$(printf "%s\n" "$@" | fzf --prompt="请选择：" --height=10 --border --reverse)
-      echo "$choice"
-  }
-  # ✅ 判断芯片架构（ARM64 / x86_64）
-  get_cpu_arch() {
-    [[ "$(uname -m)" == "arm64" ]] && echo "arm64" || echo "x86_64"
-  }
-  # ✅ 安装 Homebrew（自动架构判断，包含环境注入）
-  install_homebrew() {
-    local arch="$(get_cpu_arch)"
-    local shell_name="${SHELL##*/}"
-    local profile_file=""
-    local brew_bin=""
-
-    if ! command -v brew >/dev/null 2>&1 && [[ ! -x "/opt/homebrew/bin/brew" && ! -x "/usr/local/bin/brew" ]]; then
-      warn_echo "未检测到 Homebrew，准备安装（架构：$arch）"
-      if [[ "$arch" == "arm64" ]]; then
-        jobs_brew_install_or_exit || { error_echo "Homebrew 安装失败（arm64）"; return 1; }
-        brew_bin="${JOBS_HOMEBREW_BIN:-$(jobs_brew_find 2>/dev/null || true)}"
-      else
-        jobs_brew_install_or_exit || { error_echo "Homebrew 安装失败（x86_64）"; return 1; }
-        brew_bin="${JOBS_HOMEBREW_BIN:-$(jobs_brew_find 2>/dev/null || true)}"
-      fi
-      success_echo "Homebrew 安装完成"
-    else
-      command -v brew >/dev/null 2>&1 && brew_bin="$(command -v brew)"
-      [[ -z "$brew_bin" && -x "/opt/homebrew/bin/brew" ]] && brew_bin="/opt/homebrew/bin/brew"
-      [[ -z "$brew_bin" && -x "/usr/local/bin/brew" ]] && brew_bin="/usr/local/bin/brew"
+    android_prepare_context
+    android_log '━━━━━━━━━━ Android 模拟器：新建 / 启动 ━━━━━━━━━━' '1;31'
+    android_log "当前脚本：${SCRIPT_PATH}"
+    android_log '1、双击可启动已有 AVD，也可新建；桌面右键使用 --create 直接新建。'
+    android_log '2、新建时先选完整设备清单，再选匹配 Apple Silicon / Intel 的手机或平板系统映像。'
+    android_log '3、只补充缺失组件；下载 / 安装回车跳过，输入任意字符执行。官方许可证需本人阅读接受。'
+    android_log '4、不覆盖或清理任何现有 AVD，不安装 Homebrew，不改 Shell 配置或系统代理。'
+    android_log '5、回车采用选择清单首项；q / Esc / Ctrl+C 取消；最后回车才创建。'
+    android_log "日志位置：${LOG_FILE}（确认后创建；--check / --help 不写日志）"
+    if (( $# > 1 )); then
+        android_log '✖ 参数过多。' '1;31'
+        exit 2
     fi
-
-    case "$shell_name" in
-      zsh) profile_file="$HOME/.zprofile" ;;
-      bash) profile_file="$HOME/.bash_profile" ;;
-      *) profile_file="$HOME/.profile" ;;
+    case "${1:-}" in
+        '') ANDROID_SIM_MODE=menu ;;
+        --create) ANDROID_SIM_MODE=create ;;
+        --check) ANDROID_SIM_MODE=check; return 0 ;;
+        --help|-h) android_help; exit 0 ;;
+        *) android_log "✖ 不支持的参数：$1" '1;31'; android_help; exit 2 ;;
     esac
-    inject_shellenv_block "$profile_file" "eval \"\$(${brew_bin} shellenv)\""
-    eval "$(${brew_bin} shellenv)" || true
-
-    info_echo "Homebrew 已安装。"
-    if ask_run "是否执行 Homebrew 更新 / 升级 / 清理 / doctor？"; then
-      brew update  || { error_echo "brew update 失败"; return 1; }
-      brew upgrade || { error_echo "brew upgrade 失败"; return 1; }
-      brew cleanup || { error_echo "brew cleanup 失败"; return 1; }
-      brew doctor  || warn_echo "brew doctor 有警告，请按输出处理"
-      brew -v      || warn_echo "打印 brew 版本失败，可忽略"
-      success_echo "Homebrew 健康更新完成"
-    else
-      note_echo "已跳过 Homebrew 更新"
+    if [[ ! -t 0 ]]; then
+        android_log '✖ 请在可交互终端或双击 .command 执行；无交互检查请用 --check。' '1;31'
+        exit 1
     fi
-  }
-  # ✅ 自检安装 Homebrew.fzf
-  install_fzf() {
-    if ! command -v fzf &>/dev/null; then
-      note_echo "📦 未检测到 fzf，正在通过 Homebrew 安装..."
-      brew install fzf || { error_echo "❌ fzf 安装失败"; exit 1; }
-      success_echo "✅ fzf 安装成功"
-    else
-      info_echo "🔄 fzf 已安装，升级中..."
-      brew upgrade fzf && brew cleanup
-      success_echo "✅ fzf 已是最新版"
+    local answer=""
+    if ! IFS= read -r "?已了解用途，按回车继续，非空输入取消：" answer || [[ -n "$answer" ]]; then
+        android_log '➤ 已取消，未执行后续操作。'
+        exit 0
     fi
-  }
-  # ✅ 检查工具链：emulator 状态
-  check_emulator() {
-      if ! command -v emulator &>/dev/null; then
-          error_echo "未找到 emulator 命令，请检查 \$ANDROID_HOME 是否配置正确"
-          exit 1
-      fi
-  }
-  # ✅ 检查工具链：sdkmanager / avdmanager 状态
-  check_sdk_tools() {
-      if [[ ! -x "$CMDLINE_TOOLS_BIN/sdkmanager" || ! -x "$CMDLINE_TOOLS_BIN/avdmanager" ]]; then
-          error_echo "缺少 sdkmanager 或 avdmanager"
-          note_echo "请前往 https://developer.android.com/studio#cmdline 下载解压至："
-          gray_echo "$ANDROID_HOME/cmdline-tools/latest/"
-          exit 1
-      fi
-  }
-  # ✅ 创建模拟器
-  create_avd_if_needed() {
-      avds=($(emulator -list-avds))
-      if [[ ${#avds[@]} -eq 0 ]]; then
-          warn_echo "本机尚未创建任何模拟器，准备创建..."
-
-  selected=$(cat <<EOF | fzf --prompt="请选择要创建的模拟器：" --height=10 --border
-  Pixel 5 (pixel_5) + system-images;android-34;google_apis;x86_64
-  Pixel 4 (pixel_4) + system-images;android-33;google_apis;x86_64
-  Pixel 3 (pixel_3) + system-images;android-31;google_apis;x86_64
-EOF
-  )
-
-          [[ -z "$selected" ]] && warn_echo "已取消模拟器创建" && exit 0
-
-          device_id=$(echo "$selected" | awk -F '[()]' '{print $2}')
-          avd_label=$(echo "$selected" | cut -d '+' -f 1 | cut -d '(' -f 1 | xargs)
-          avd_name=$(echo "$avd_label" | tr ' ' '_' | tr -cd '[:alnum:]_.-')
-          image_id=$(echo "$selected" | cut -d '+' -f 2 | xargs)
-
-          info_echo "📦 安装系统镜像：$image_id ..."
-          yes | "$CMDLINE_TOOLS_BIN/sdkmanager" "$image_id"
-
-          note_echo "🛠️ 创建模拟器：$avd_name ..."
-          echo "no" | "$CMDLINE_TOOLS_BIN/avdmanager" create avd -n "$avd_name" -k "$image_id" --device "$device_id"
-
-          open "$AVD_DIR/$avd_name.avd"
-          emulator -avd "$avd_name" &
-
-          sleep 5
-          if pgrep -f "emulator.*$avd_name" >/dev/null; then
-            success_echo "模拟器 $avd_name 已成功启动"
-          else
-            error_echo "模拟器启动失败，请尝试手动启动：emulator -avd $avd_name"
-          fi
-          exit 0
-      fi
-  }
-  # ✅ 启动已存在模拟器
-  start_avd() {
-      avds=($(emulator -list-avds))
-      selected=$(printf "%s\n" "${avds[@]}" | fzf --prompt="请选择要启动的模拟器：")
-      [[ -z "$selected" ]] && warn_echo "用户取消选择，退出" && exit 0
-
-      note_echo "🚀 正在启动模拟器：$selected"
-      emulator -avd "$selected" &
-
-      sleep 5
-      if pgrep -f "emulator.*$selected" >/dev/null; then
-          success_echo "模拟器 $selected 启动成功"
-      else
-          error_echo "启动失败，请手动执行：emulator -avd $selected"
-      fi
-  }
-  # ✅ 主函数入口
-  main() {
-      clear
-      print_script_intro_and_path_check                  # ✅ 自述信息
-      read "?⏎ 按回车继续执行，或 Ctrl+C 退出..."
-      install_homebrew                                   # ✅ 安装 Homebrew（自动架构判断，包含环境注入）
-      install_fzf                                        # ✅ 自检安装 Homebrew.fzf
-      check_emulator                                     # ✅ 检查工具链：emulator 状态
-      check_sdk_tools                                    # ✅ 检查工具链：sdkmanager / avdmanager 状态
-      create_avd_if_needed                               # ✅ 创建模拟器
-      start_avd                                          # ✅ 启动已存在模拟器
-  }
-
-  main "$@"
-
-  # =========================== 原脚本业务逻辑区结束 ===========================
 }
-# 编排脚本的高层业务流程。
-# 初始化脚本运行环境，并集中承载原有的顶层执行逻辑。
-initialize_script_runtime() {
-  : > "$LOG_FILE"
+# 确认后初始化选项与独立日志；只读入口没有文件写入。
+android_initialize_runtime() {
+    setopt NO_NOMATCH
+    if [[ "$ANDROID_SIM_MODE" != check ]]; then
+        if ! (umask 077; setopt NO_CLOBBER; : > "$LOG_FILE") 2>/dev/null; then
+            android_log "✖ 无法安全创建日志：${LOG_FILE}" '1;31'
+            return 1
+        fi
+        ANDROID_SIM_LOG_READY=1
+        trap 'android_handle_interrupt' INT TERM HUP
+    fi
 }
-# 编排脚本的高层业务流程。
+# 为只读探测设置有限等待，只终止本函数启动的进程。
+android_timed() {
+    local limit="$1" child_pid watchdog_pid result=0
+    shift
+    "$@" &
+    child_pid=$!
+    (
+        /bin/sleep "$limit"
+        kill -TERM "$child_pid" 2>/dev/null
+        /bin/sleep 1
+        kill -KILL "$child_pid" 2>/dev/null
+    ) >/dev/null 2>&1 &
+    watchdog_pid=$!
+    wait "$child_pid" 2>/dev/null || result=$?
+    kill -TERM "$watchdog_pid" 2>/dev/null
+    wait "$watchdog_pid" 2>/dev/null
+    if (( result >= 128 )); then
+        print -u2 -r -- "命令超时或被终止（${limit} 秒）：${1:t}"
+    fi
+    return "$result"
+}
+# 解析宿主真实硬件架构，兼容 Apple Silicon 的 Rosetta 终端。
+android_detect_architecture() {
+    local machine="$(/usr/bin/uname -m)" arm_hardware=""
+    arm_hardware="$(/usr/sbin/sysctl -n hw.optional.arm64 2>/dev/null)"
+    if [[ "$machine" == arm64 || "$arm_hardware" == 1 ]]; then
+        ANDROID_SIM_ABI=arm64-v8a
+    elif [[ "$machine" == x86_64 ]]; then
+        ANDROID_SIM_ABI=x86_64
+    else
+        android_log "✖ 不支持的 Mac 架构：${machine}" '1;31'
+        return 1
+    fi
+    android_log "➤ 系统映像架构：${ANDROID_SIM_ABI}"
+}
+# SDK 显式环境优先；保持用户配置目录，不向其它 SDK 悄悄安装。
+android_find_sdk() {
+    ANDROID_SIM_SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
+    if [[ "$ANDROID_SIM_SDK" != /* || ! -d "$ANDROID_SIM_SDK" ]]; then
+        android_log "✖ SDK 根目录不存在或不是绝对目录：${ANDROID_SIM_SDK}" '1;31'
+        android_log '➤ 请在 Android Studio → SDK Manager 安装 SDK，再设置 ANDROID_HOME；官方说明：https://developer.android.com/studio/intro/update#sdk-manager'
+        return 1
+    fi
+    ANDROID_SIM_SDK="${ANDROID_SIM_SDK:A}"
+    if [[ -n "${ANDROID_HOME:-}" && -n "${ANDROID_SDK_ROOT:-}" && "${ANDROID_HOME:A}" != "${ANDROID_SDK_ROOT:A}" ]]; then
+        android_log '⚠ ANDROID_HOME 与 ANDROID_SDK_ROOT 不一致，本次进程统一使用 ANDROID_HOME。' '1;33'
+    fi
+    export ANDROID_HOME="$ANDROID_SIM_SDK" ANDROID_SDK_ROOT="$ANDROID_SIM_SDK"
+    android_log "✔ SDK：${ANDROID_SIM_SDK}" '1;32'
+}
+# 依次验证已配置 Java、Android Studio 内置 JBR 和系统 Java，不安装或改持久配置。
+android_find_java() {
+    local candidate version="" resolved="" major=""
+    local -a candidates
+    resolved="$(/usr/libexec/java_home 2>/dev/null)"
+    candidates=("${JAVA_HOME:-}/bin/java" '/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/java' "$HOME/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/java" "${resolved}/bin/java" "$(command -v java 2>/dev/null)")
+    for candidate in "${candidates[@]}"; do
+        [[ -n "$candidate" && -x "$candidate" ]] || continue
+        if version="$(android_timed 12 "$candidate" -version 2>&1)"; then
+            major="$(print -r -- "$version" | /usr/bin/awk '/version/ { for(i=1;i<NF;i++) if($i == "version") { value=$(i+1); gsub(/"/, "", value); split(value,p,"."); print (p[1] == 1 ? p[2] : p[1]); exit } }')"
+            [[ "$major" == <-> && "$major" -ge 17 ]] || continue
+            ANDROID_SIM_JAVA="$candidate"
+            export JAVA_HOME="${candidate:A:h:h}"
+            android_log "✔ Java：${candidate}；${version%%$'\n'*}" '1;32'
+            return 0
+        fi
+    done
+    android_log '✖ 没有可执行的 Java。请安装 / 修复 Android Studio 的内置 JBR，或配置可用 JAVA_HOME。' '1;31'
+    android_log '➤ 官方说明：https://developer.android.com/build/jdks'
+    return 1
+}
+# 只从选定 SDK 中发现成对的 sdkmanager / avdmanager，并实际验证二者可运行。
+android_find_command_tools() {
+    local bin_dir output="" last_error="" candidate
+    local -a bins
+    bins=("$ANDROID_SIM_SDK/cmdline-tools/latest/bin")
+    while IFS= read -r -d '' candidate; do
+        bins+=("${candidate:h}")
+    done < <(/usr/bin/find "$ANDROID_SIM_SDK/cmdline-tools" -type f -name sdkmanager -print0 2>/dev/null)
+    bins+=("$ANDROID_SIM_SDK/tools/bin")
+    for bin_dir in "${bins[@]}"; do
+        [[ -x "$bin_dir/sdkmanager" && -x "$bin_dir/avdmanager" ]] || continue
+        if ! output="$(android_timed 20 "$bin_dir/sdkmanager" --sdk_root="$ANDROID_SIM_SDK" --version 2>&1)"; then
+            last_error="${bin_dir}/sdkmanager --version：${output}"
+            continue
+        fi
+        if ! output="$(android_timed 20 "$bin_dir/avdmanager" list device 2>&1)"; then
+            last_error="${bin_dir}/avdmanager list device：${output}"
+            continue
+        fi
+        ANDROID_SIM_SDKMANAGER="$bin_dir/sdkmanager"
+        ANDROID_SIM_AVDMANAGER="$bin_dir/avdmanager"
+        ANDROID_SIM_DEVICES="$output"
+        android_log "✔ SDK 命令行工具：${bin_dir}" '1;32'
+        return 0
+    done
+    android_log '✖ SDK Command-line Tools 缺失或无法运行；尚未进行任何下载安装。' '1;31'
+    [[ -z "$last_error" ]] || android_log "➤ 失败命令：${last_error}"
+    android_log '➤ 请在 Android Studio → SDK Manager → SDK Tools 安装 / 修复 Android SDK Command-line Tools (latest)，并检查 Java 兼容性。'
+    android_log '➤ 官方下载及目录布局：https://developer.android.com/tools/sdkmanager'
+    return 1
+}
+# 下载固定官方 HTTPS 地址，不跟随重定向，失败时保留明确诊断。
+android_download_official() {
+    local url="$1" target="$2" limit="$3" http_code="" curl_bin="$(command -v curl 2>/dev/null)"
+    [[ "$url" == https://dl.google.com/android/repository/* && -n "$curl_bin" ]] || return 1
+    if ! http_code="$("$curl_bin" --disable --fail --show-error --silent --proto '=https' --connect-timeout 10 --max-time "$limit" --max-redirs 0 --output "$target" --write-out '%{http_code}' "$url" 2>&1)" || [[ "$http_code" != 200 ]]; then
+        android_log "✖ Google 官方下载失败：${url}；${http_code}" '1;31'
+        return 1
+    fi
+}
+# 解析官方稳定版 macOS 归档，按真实硬件选择架构；旧通用归档仍兼容。
+android_read_tools_archive() {
+    local xml="$1" package_path="" archive_path="" host_arch=x64 field=""
+    [[ "$ANDROID_SIM_ABI" != arm64-v8a ]] || host_arch=aarch64
+    package_path="(//*[local-name()='remotePackage' and @path='cmdline-tools;latest'][*[local-name()='channelRef' and @ref='channel-0']])[1]"
+    archive_path="(${package_path}/*[local-name()='archives']/*[local-name()='archive'][*[local-name()='host-os' and .='macosx']][*[local-name()='host-arch' and .='${host_arch}'] or not(*[local-name()='host-arch'])]/*[local-name()='complete'])[1]"
+    ANDROID_SIM_TOOLS_ARCHIVE="$(/usr/bin/xmllint --nonet --xpath "string(${archive_path}/*[local-name()='url'])" "$xml" 2>/dev/null)" || return 1
+    ANDROID_SIM_TOOLS_SIZE="$(/usr/bin/xmllint --nonet --xpath "string(${archive_path}/*[local-name()='size'])" "$xml" 2>/dev/null)" || return 1
+    ANDROID_SIM_TOOLS_CHECKSUM="$(/usr/bin/xmllint --nonet --xpath "string(${archive_path}/*[local-name()='checksum'])" "$xml" 2>/dev/null)" || return 1
+    ANDROID_SIM_TOOLS_HASH_TYPE="$(/usr/bin/xmllint --nonet --xpath "string(${archive_path}/*[local-name()='checksum']/@type)" "$xml" 2>/dev/null)" || return 1
+    ANDROID_SIM_TOOLS_VERSION="$(/usr/bin/xmllint --nonet --xpath "string(${package_path}/*[local-name()='revision']/*[local-name()='major'])" "$xml" 2>/dev/null)"
+    field="$(/usr/bin/xmllint --nonet --xpath "string(${package_path}/*[local-name()='revision']/*[local-name()='minor'])" "$xml" 2>/dev/null)"
+    [[ -z "$field" ]] || ANDROID_SIM_TOOLS_VERSION+=".${field}"
+    if [[ ! "$ANDROID_SIM_TOOLS_ARCHIVE" =~ '^commandlinetools-mac(_arm64|_x86_64)?-[0-9]+_latest\.zip$' || ! "$ANDROID_SIM_TOOLS_SIZE" == <-> || ${#ANDROID_SIM_TOOLS_SIZE} -gt 10 || "$ANDROID_SIM_TOOLS_SIZE" -le 0 || "$ANDROID_SIM_TOOLS_SIZE" -gt 1073741824 || ! "$ANDROID_SIM_TOOLS_VERSION" =~ '^[0-9]+(\.[0-9]+)?$' ]]; then
+        android_log '✖ 官方工具元数据格式或归档地址不符合预期，未下载工具归档。' '1;31'
+        return 1
+    fi
+    case "$ANDROID_SIM_TOOLS_HASH_TYPE" in
+        sha1) [[ "$ANDROID_SIM_TOOLS_CHECKSUM" =~ '^[0-9a-fA-F]{40}$' ]] || return 1 ;;
+        sha256) [[ "$ANDROID_SIM_TOOLS_CHECKSUM" =~ '^[0-9a-fA-F]{64}$' ]] || return 1 ;;
+        *) android_log '✖ 官方归档使用未知校验算法，已停止。' '1;31'; return 1 ;;
+    esac
+}
+# 解压前校验长度、官方摘要与路径；禁止归档符号链接和目录穿越。
+android_validate_tools_zip() {
+    local zip="$1" size="" digest="" algorithm=1 listing=""
+    size="$(/usr/bin/stat -f %z "$zip" 2>/dev/null)" || return 1
+    [[ "$size" == "$ANDROID_SIM_TOOLS_SIZE" ]] || { android_log '✖ 工具归档长度与官方元数据不符。' '1;31'; return 1; }
+    [[ "$ANDROID_SIM_TOOLS_HASH_TYPE" != sha256 ]] || algorithm=256
+    digest="$(/usr/bin/shasum -a "$algorithm" "$zip" | /usr/bin/awk '{print $1}')" || return 1
+    [[ "${digest:l}" == "${ANDROID_SIM_TOOLS_CHECKSUM:l}" ]] || { android_log '✖ 工具归档校验失败，未解压或写入 SDK。' '1;31'; return 1; }
+    listing="$(/usr/bin/unzip -Z1 "$zip" 2>/dev/null)" || return 1
+    if ! print -r -- "$listing" | /usr/bin/awk '
+        !/^cmdline-tools\// || /(^|\/)\.\.?(\/|$)/ || /\\/ || /\/\// || /[^A-Za-z0-9_.\/+@ -]/ { bad=1 }
+        END { exit bad }
+    '; then
+        android_log '✖ 工具归档包含不安全的路径，已停止解压。' '1;31'
+        return 1
+    fi
+    if /usr/bin/unzip -Z -l "$zip" 2>/dev/null | /usr/bin/awk '$1 ~ /^l/ { found=1 } END { exit !found }'; then
+        android_log '✖ 工具归档含符号链接，已停止解压。' '1;31'
+        return 1
+    fi
+}
+# 使用系统排他移动 API 发布目录；目标即使在预检后出现也不会嵌套或覆盖。
+android_publish_tools_directory() {
+    /usr/bin/osascript -l JavaScript - "$1" "$2" <<'JXA'
+ObjC.import('Foundation');
+function run(args) {
+    var error = Ref();
+    if (!$.NSFileManager.defaultManager.moveItemAtPathToPathError(args[0], args[1], error)) {
+        throw Error('工具目录发布失败，目标已存在或文件系统返回错误；未覆盖目标。');
+    }
+}
+JXA
+}
+# 临时下载与校验完成后只新增独立版本目录，不移动或覆盖任何现有工具版本。
+android_perform_tools_bootstrap() {
+    local stage="$ANDROID_SIM_BOOTSTRAP_STAGE" destination="" url=""
+    android_download_official 'https://dl.google.com/android/repository/repository2-3.xml' "$stage/repository.xml" 60 || return 1
+    android_read_tools_archive "$stage/repository.xml" || return 1
+    url="https://dl.google.com/android/repository/${ANDROID_SIM_TOOLS_ARCHIVE}"
+    destination="$ANDROID_SIM_SDK/cmdline-tools/jobs-${ANDROID_SIM_TOOLS_VERSION}-${${stage:t}#.jobs-staging.}"
+    android_log "📦 对象：Android SDK Command-line Tools ${ANDROID_SIM_TOOLS_VERSION}（stable）"
+    android_log "📥 官方归档：${url}"
+    android_log "📂 新增目录：${destination}"
+    android_log "➤ 官方校验：${ANDROID_SIM_TOOLS_HASH_TYPE} ${ANDROID_SIM_TOOLS_CHECKSUM}；${ANDROID_SIM_TOOLS_SIZE} 字节。"
+    android_download_official "$url" "$stage/tools.zip" 600 || return 1
+    android_validate_tools_zip "$stage/tools.zip" || return 1
+    /bin/mkdir "$stage/extract" || return 1
+    /usr/bin/unzip -q "$stage/tools.zip" -d "$stage/extract" || return 1
+    if [[ ! -x "$stage/extract/cmdline-tools/bin/sdkmanager" || ! -x "$stage/extract/cmdline-tools/bin/avdmanager" || ! -d "$stage/extract/cmdline-tools/lib" || ! -f "$stage/extract/cmdline-tools/source.properties" ]]; then
+        android_log '✖ 官方工具归档内容不完整，未写入 SDK。' '1;31'
+        return 1
+    fi
+    if [[ -L "$ANDROID_SIM_SDK/cmdline-tools" ]]; then
+        android_log '✖ cmdline-tools 是符号链接，请在 SDK Manager 人工处理，未写入该路径。' '1;31'
+        return 1
+    fi
+    /bin/mkdir -p "$ANDROID_SIM_SDK/cmdline-tools" || return 1
+    [[ ! -e "$destination" && ! -L "$destination" ]] || return 1
+    if ! android_publish_tools_directory "$stage/extract/cmdline-tools" "$destination"; then
+        android_log '✖ 工具目录发布失败，未覆盖或嵌入既有目标目录。' '1;31'
+        return 1
+    fi
+    if [[ -e "$stage/extract/cmdline-tools" || ! -x "$destination/bin/sdkmanager" || ! -x "$destination/bin/avdmanager" || ! -d "$destination/lib" || ! -f "$destination/source.properties" ]]; then
+        android_log '✖ 工具目标目录发生冲突，未覆盖现有内容。' '1;31'
+        return 1
+    fi
+    android_log "✔ 已新增官方命令行工具：${destination}；来源：${url}" '1;32'
+}
+# 仅移除本次创建的私有临时下载目录，永不清理 SDK 或 AVD。
+android_cleanup_bootstrap() {
+    if [[ -n "$ANDROID_SIM_BOOTSTRAP_STAGE" && -d "$ANDROID_SIM_BOOTSTRAP_STAGE" ]]; then
+        /bin/rm -r -- "$ANDROID_SIM_BOOTSTRAP_STAGE"
+        ANDROID_SIM_BOOTSTRAP_STAGE=""
+    fi
+}
+# 中断时清理本次下载，保留所有已安装组件与已有 / 新增设备。
+android_handle_interrupt() {
+    android_cleanup_bootstrap
+    android_log '➤ 操作已中断，SDK 与 AVD 保持现有内容。'
+    exit 130
+}
+# 缺失工具允许选择官方自助安装一次，健康安装不触发网络或更新。
+android_ensure_command_tools() {
+    local result=0 tool=""
+    android_find_command_tools && return 0
+    [[ "$ANDROID_SIM_MODE" != check ]] || return 1
+    android_log '━━━━━━━━━━ 来源｜补充 SDK Command-line Tools ━━━━━━━━━━' '1;36'
+    android_log '📥 官方元数据：https://dl.google.com/android/repository/repository2-3.xml'
+    android_log "📂 目标：${ANDROID_SIM_SDK}/cmdline-tools/ 下新建独立版本目录；不会覆盖 latest 或既有版本。"
+    android_ask_install '是否下载官方稳定命令行工具？归档约 150 MB；确认后联网、校验并新增工具目录；不会自动接受 SDK 许可证。' || return 1
+    for tool in curl; do
+        command -v "$tool" >/dev/null 2>&1 || { android_log "✖ 缺少 ${tool}，请使用 Android Studio 的 SDK Manager。" '1;31'; return 1; }
+    done
+    for tool in /usr/bin/xmllint /usr/bin/unzip /usr/bin/shasum /usr/bin/osascript; do
+        [[ -x "$tool" ]] || { android_log "✖ 缺少系统校验工具 ${tool}。" '1;31'; return 1; }
+    done
+    if [[ -L "$ANDROID_SIM_SDK/cmdline-tools" || ( -e "$ANDROID_SIM_SDK/cmdline-tools" && ! -d "$ANDROID_SIM_SDK/cmdline-tools" ) ]]; then
+        android_log '✖ cmdline-tools 不是普通目录，请在 SDK Manager 人工处理，未写入该路径。' '1;31'
+        return 1
+    fi
+    /bin/mkdir -p "$ANDROID_SIM_SDK/cmdline-tools" || return 1
+    ANDROID_SIM_BOOTSTRAP_STAGE="$(umask 077; /usr/bin/mktemp -d "$ANDROID_SIM_SDK/cmdline-tools/.jobs-staging.XXXXXX")" || return 1
+    android_perform_tools_bootstrap || result=$?
+    android_cleanup_bootstrap
+    (( result == 0 )) || return "$result"
+    if ! android_find_command_tools; then
+        android_log '✖ 命令行工具安装后复检失败，已停止；新增版本保留供 SDK Manager 人工排查。' '1;31'
+        return 1
+    fi
+}
+# 检查本 SDK 的 emulator 本体与 AVD 清单，存在文件不代表安装健康。
+android_probe_emulator() {
+    local output=""
+    ANDROID_SIM_EMULATOR="$ANDROID_SIM_SDK/emulator/emulator"
+    [[ -x "$ANDROID_SIM_EMULATOR" ]] || return 1
+    output="$(android_timed 15 "$ANDROID_SIM_EMULATOR" -version 2>&1)" || return 1
+    ANDROID_SIM_AVDS="$(android_timed 15 "$ANDROID_SIM_EMULATOR" -list-avds 2>&1)" || return 1
+    android_log "✔ emulator：${ANDROID_SIM_EMULATOR}；${output%%$'\n'*}" '1;32'
+}
+# 普通安装独立确认；直接回车或 EOF 不会写入 SDK。
+android_ask_install() {
+    local answer=""
+    android_log "⚠ $1" '1;33'
+    if ! IFS= read -r "?回车跳过；输入任意字符执行；Ctrl+C 取消：" answer; then
+        return 1
+    fi
+    [[ -n "$answer" ]]
+}
+# 在每次真实安装前显示可追溯的软件源与目标，地址尚由工具解析时如实说明。
+android_show_install_source() {
+    android_log '━━━━━━━━━━ 来源｜SDK 组件安装 ━━━━━━━━━━' '1;36'
+    android_log "📦 对象：$1（stable channel 0）"
+    android_log '🌐 平台 / 软件源：Google 官方 Android SDK Repository'
+    android_log '📥 来源地址：https://dl.google.com/android/repository/（具体归档地址由 sdkmanager 解析，尚未核实）'
+    android_log "📂 目标位置：${ANDROID_SIM_SDK}"
+    android_log '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' '1;36'
+}
+# 清除外部命令展示中的 ANSI，使终端和落盘日志保留可搜索的文本。
+android_strip_ansi() {
+    /usr/bin/awk 'BEGIN { esc=sprintf("%c",27) } { gsub(esc "\\[[0-9;?]*[ -/]*[@-~]", ""); print }'
+}
+# 安装精确组件并保留 SDK 官方许可证交互，不执行 yes 管道或全量更新。
+android_install_package() {
+    local package="$1" result=0
+    android_show_install_source "$package"
+    android_ask_install "将下载 / 安装所选组件：${package}；可能占用数 GB，许可证由你阅读并选择。" || return 1
+    NO_COLOR=1 FORCE_COLOR=0 TERM=dumb "$ANDROID_SIM_SDKMANAGER" --sdk_root="$ANDROID_SIM_SDK" --install "$package" --channel=0 2>&1 | /usr/bin/tee -a "$LOG_FILE"
+    result=${pipestatus[1]}
+    if (( result != 0 )); then
+        android_log "✖ 组件安装失败（退出码 ${result}）：${package}；来源：Google 官方 Android SDK Repository。" '1;31'
+        return "$result"
+    fi
+}
+# 缺失 emulator 只补装一次；已登记或有本体却损坏时停止并给出官方修复入口。
+android_ensure_emulator() {
+    android_probe_emulator && return 0
+    android_log "⚠ emulator 缺失或健康检查失败：${ANDROID_SIM_SDK}/emulator/emulator" '1;33'
+    [[ "$ANDROID_SIM_MODE" != check ]] || return 1
+    if [[ -e "$ANDROID_SIM_SDK/emulator/emulator" || -e "$ANDROID_SIM_SDK/emulator/source.properties" || -e "$ANDROID_SIM_SDK/emulator/package.xml" ]]; then
+        android_log '✖ emulator 已存在或已被 SDK 登记，但无法运行；sdkmanager --install 可能跳过已登记包，因此本次停止，未声称完成修复。' '1;31'
+        android_log '➤ 请在 Android Studio → SDK Manager → SDK Tools 中取消 Android Emulator 并 Apply，再重新勾选安装；只重装工具包，保留已有 AVD。'
+        return 1
+    fi
+    if [[ -z "$ANDROID_SIM_SDKMANAGER" ]]; then
+        android_find_java && android_ensure_command_tools || return 1
+    fi
+    android_install_package emulator || return 1
+    if ! android_probe_emulator; then
+        android_log '✖ emulator 安装后复检仍失败，已停止；请在 SDK Manager 修复 Android Emulator。' '1;31'
+        return 1
+    fi
+}
+# 可用 fzf 只是交互增强；缺失或损坏时直接使用编号，无安装依赖。
+android_find_selector() {
+    local candidate="$(command -v fzf 2>/dev/null)"
+    if [[ -n "$candidate" && -x "$candidate" ]] && android_timed 8 "$candidate" --version >/dev/null 2>&1; then
+        ANDROID_SIM_FZF="$candidate"
+        android_log "✔ 选择器：${candidate}" '1;32'
+    else
+        ANDROID_SIM_FZF=""
+        android_log '➤ fzf 缺失或不可用，使用编号选择；无需安装。'
+    fi
+}
+# 选择清单首项为回车默认值，防止 fzf 配置注入并校验返回值属于当前清单。
+android_choose() {
+    local title="$1" content="$2" answer="" result=0 index=0
+    local -a rows
+    rows=("${(@f)content}")
+    ANDROID_SIM_SELECTED=""
+    [[ -n "$content" && ${#rows} -gt 0 ]] || return 1
+    android_log "➤ ${title}"
+    if [[ -n "$ANDROID_SIM_FZF" ]]; then
+        ANDROID_SIM_SELECTED="$(print -rl -- "${rows[@]}" | /usr/bin/env -u FZF_DEFAULT_OPTS -u FZF_DEFAULT_OPTS_FILE "$ANDROID_SIM_FZF" --delimiter=$'\t' --with-nth=1 --height=60% --reverse --prompt="${title} > ")" || result=$?
+        if (( result == 1 || result == 130 )) || [[ -z "$ANDROID_SIM_SELECTED" && $result == 0 ]]; then
+            return 130
+        fi
+        if (( result == 0 )); then
+            if (( ${rows[(Ie)$ANDROID_SIM_SELECTED]} == 0 )); then
+                android_log '✖ 选择结果不属于当前清单，已停止。' '1;31'
+                return 1
+            fi
+            return 0
+        fi
+        android_log "⚠ fzf 运行失败（${result}），改用编号选择。" '1;33'
+        ANDROID_SIM_FZF=""
+    fi
+    for (( index=1; index<=${#rows}; index++ )); do
+        android_log "${index}、${rows[index]%%$'\t'*}"
+    done
+    while true; do
+        if ! IFS= read -r "?输入编号（回车选第 1 项，q 取消）：" answer || [[ "$answer" == [qQ] || "$answer" == $'\e' ]]; then
+            return 130
+        fi
+        [[ -n "$answer" ]] || answer=1
+        if [[ "$answer" == <-> && ${#answer} -le 6 ]]; then
+            index=$(( 10#$answer ))
+            if (( index >= 1 && index <= ${#rows} )); then
+                ANDROID_SIM_SELECTED="${rows[index]}"
+                return 0
+            fi
+        fi
+        android_log '⚠ 请输入清单内的编号，或 q 取消。' '1;33'
+    done
+}
+# 根据 SDK 自带设备定义列出所有型号，Pixel 手机优先，其余硬件定义仍可选择。
+android_device_rows() {
+    print -r -- "$ANDROID_SIM_DEVICES" | /usr/bin/awk '
+        /^[[:space:]]*id:/ { id=$0; if (id !~ /"/) { id=""; next }; sub(/^[^"]*"/, "", id); sub(/".*$/, "", id) }
+        /^[[:space:]]*Name:/ && id != "" {
+            name=$0; sub(/^[[:space:]]*Name:[[:space:]]*/, "", name)
+            if (id !~ /^[A-Za-z0-9_.-]+$/ || name ~ /[\t\r]/) next
+            if (tolower(id " " name) ~ /wear|watch|(^|[ _])tv|television|automotive|desktop/) next
+            rank=(id ~ /^pixel_[0-9]+[a-z_]*$/ ? 0 : 1)
+            print rank "\t" name "\t" id
+        }
+    ' | /usr/bin/sort -k1,1n -k2,2Vr | /usr/bin/cut -f2-
+}
+# 仅从完整的已装手机 / 平板映像发现候选，过滤预览及不匹配 ABI 的镜像。
+android_installed_images() {
+    local properties relative package image_dir
+    local -a packages
+    packages=()
+    if [[ -d "$ANDROID_SIM_SDK/system-images" ]]; then
+        while IFS= read -r -d '' properties; do
+            image_dir="${properties:h}"
+            relative="${image_dir#"$ANDROID_SIM_SDK/system-images/"}"
+            package="system-images;${relative//\//;}"
+            if [[ -f "$image_dir/system.img" ]] && print -r -- "$package" | /usr/bin/grep -Eq "^system-images;android-[0-9]+(\\.[0-9]+)?(-ext[0-9]+)?;(google_apis|google_apis_playstore|default);${ANDROID_SIM_ABI}$"; then
+                packages+=("$package")
+            fi
+        done < <(/usr/bin/find "$ANDROID_SIM_SDK/system-images" -type f -name source.properties -print0 2>/dev/null)
+    fi
+    if (( ${#packages} )); then
+        print -rl -- "${packages[@]}" | /usr/bin/sort -t ';' -k2,2Vr -k3,3 -u
+    fi
+}
+# 将精确的包 ID 变为可读行，元数据始终保留完整包标识。
+android_image_rows() {
+    local package api variant
+    while IFS= read -r package; do
+        [[ -n "$package" ]] || continue
+        api="${package#system-images;android-}"
+        api="${api%%;*}"
+        variant="${package#system-images;android-${api};}"
+        variant="${variant%%;*}"
+        print -r -- "API ${api} · ${variant} · ${ANDROID_SIM_ABI}"$'\t'"$package"
+    done
+}
+# 下载清单需用户先确认联网，再只列稳定、同架构手机 / 平板系统映像。
+android_remote_images() {
+    local output="" result=0
+    android_log '➤ 将从 Google 官方 Android SDK Repository 查询稳定系统映像；不会修改系统代理。'
+    android_ask_install '是否联网读取可下载的系统映像清单？' || return 130
+    if ! output="$(android_timed 60 "$ANDROID_SIM_SDKMANAGER" --sdk_root="$ANDROID_SIM_SDK" --list --channel=0 2>&1)"; then
+        android_log "✖ 读取 Google SDK 清单失败：${output}" '1;31'
+        return 1
+    fi
+    ANDROID_SIM_IMAGES="$(print -r -- "$output" | /usr/bin/awk -F '|' -v abi="$ANDROID_SIM_ABI" '
+        { package=$1; gsub(/^[[:space:]]+|[[:space:]]+$/, "", package)
+          if (package ~ ("^system-images;android-[0-9]+(\\.[0-9]+)?(-ext[0-9]+)?;(google_apis|google_apis_playstore|default);" abi "$")) print package }
+    ' | /usr/bin/sort -t ';' -k2,2Vr -k3,3 -u)"
+    if [[ -z "$ANDROID_SIM_IMAGES" ]]; then
+        android_log "✖ 官方清单没有可用的 ${ANDROID_SIM_ABI} 手机 / 平板映像。请在 SDK Manager 中检查。" '1;31'
+        return 1
+    fi
+}
+# 优先使用已装映像，允许显式另选下载；安装成功后确认映像文件实际存在。
+android_select_image() {
+    local installed="$(android_installed_images)" rows="" package image_path
+    if [[ -n "$installed" ]]; then
+        rows="$(print -r -- "$installed" | android_image_rows)"
+        rows+=$'\n从 Google 官方源选择其它系统映像\t__download__'
+        android_choose '选择系统映像（优先已安装）' "$rows" || return $?
+        package="${ANDROID_SIM_SELECTED#*$'\t'}"
+    else
+        package=__download__
+    fi
+    if [[ "$package" == __download__ ]]; then
+        android_remote_images || return $?
+        rows="$(print -r -- "$ANDROID_SIM_IMAGES" | android_image_rows)"
+        android_choose '选择要安装的系统映像' "$rows" || return $?
+        package="${ANDROID_SIM_SELECTED#*$'\t'}"
+        image_path="$ANDROID_SIM_SDK/${(j:/:)${(s:;:)package}}/system.img"
+        if [[ ! -f "$image_path" ]]; then
+            android_install_package "$package" || return $?
+        fi
+    fi
+    image_path="$ANDROID_SIM_SDK/${(j:/:)${(s:;:)package}}/system.img"
+    if [[ ! -f "$image_path" || ! -f "${image_path:h}/source.properties" ]]; then
+        android_log "✖ 映像安装后复检失败：${image_path}；已停止创建设备。" '1;31'
+        return 1
+    fi
+    ANDROID_SIM_IMAGE="$package"
+}
+# 检查 AVD 元数据和实际目录，禁止同名覆盖，包括未能列出的损坏设备。
+android_name_exists() {
+    local name="$1" avd_home="${ANDROID_AVD_HOME:-${ANDROID_USER_HOME:-${ANDROID_EMULATOR_HOME:-$HOME/.android}}/avd}"
+    if [[ -e "$avd_home/$name.ini" || -L "$avd_home/$name.ini" || -e "$avd_home/$name.avd" || -L "$avd_home/$name.avd" ]]; then
+        return 0
+    fi
+    print -r -- "$ANDROID_SIM_AVDS" | /usr/bin/grep -Fxq -- "$name"
+}
+# 提供可读默认名；名称仅允许 AVD 安全字符，冲突时要求重新选择。
+android_choose_name() {
+    local default_name="$1" answer=""
+    while true; do
+        if ! IFS= read -r "?新 AVD 名称（回车用 ${default_name}；q 取消）：" answer || [[ "$answer" == [qQ] ]]; then
+            return 130
+        fi
+        [[ -n "$answer" ]] || answer="$default_name"
+        if [[ ! "$answer" =~ '^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$' ]]; then
+            android_log '⚠ 名称须为 1–80 位字母、数字、下划线、点或连字符，首位须为字母 / 数字。' '1;33'
+        elif android_name_exists "$answer"; then
+            android_log "⚠ 已存在同名 AVD 或遗留目录：${answer}；请换名称，现有内容保持不动。" '1;33'
+        else
+            ANDROID_SIM_NEW_AVD="$answer"
+            return 0
+        fi
+    done
+}
+# 分离后台模拟器与终端，短暂检查启动进程，不把进程存活误报为 Android 完成开机。
+android_launch() {
+    local name="$1" pid=0 launch_log="${LOG_FILE:r}.${1}.emulator.log"
+    android_log "➤ 正在启动：${name}"
+    /usr/bin/nohup "$ANDROID_SIM_EMULATOR" -avd "$name" > "$launch_log" 2>&1 < /dev/null &!
+    pid=$!
+    /bin/sleep 2
+    if ! kill -0 "$pid" 2>/dev/null; then
+        android_log "✖ 模拟器进程已退出，请检查日志：${launch_log}" '1;31'
+        return 1
+    fi
+    android_log "✔ 模拟器启动进程已保持运行（PID ${pid}）；Android 开机仍需等待。关闭终端不会主动停止它。" '1;32'
+    android_log "➤ emulator 日志：${launch_log}"
+}
+# 按实际 SDK 型号、架构映像和无冲突名称新增 AVD，不使用 --force 或 wipe。
+android_create() {
+    local rows="" device_id api default_name answer="" result=0
+    [[ -n "$ANDROID_SIM_SDKMANAGER" ]] || { android_find_java && android_ensure_command_tools || return 1; }
+    rows="$(android_device_rows)"
+    if [[ -z "$rows" ]]; then
+        android_log '✖ SDK 中没有可解析的设备定义，请在 SDK Tools 修复命令行工具。' '1;31'
+        return 1
+    fi
+    android_choose '选择 Android 设备型号' "$rows" || return $?
+    device_id="${ANDROID_SIM_SELECTED#*$'\t'}"
+    android_select_image || return $?
+    api="${ANDROID_SIM_IMAGE#system-images;android-}"
+    api="${api%%;*}"
+    default_name="${device_id}_API_${api}_${ANDROID_SIM_ABI//-/_}"
+    android_choose_name "$default_name" || return $?
+    android_log "➤ 即将新建：${ANDROID_SIM_NEW_AVD}；设备：${device_id}；系统：${ANDROID_SIM_IMAGE}"
+    if ! IFS= read -r "?按回车创建并启动，任意非空输入取消：" answer || [[ -n "$answer" ]]; then
+        return 130
+    fi
+    if android_name_exists "$ANDROID_SIM_NEW_AVD"; then
+        android_log '✖ 创建前发现同名设备，已停止以保留现有内容。' '1;31'
+        return 1
+    fi
+    print -r -- no | "$ANDROID_SIM_AVDMANAGER" create avd -n "$ANDROID_SIM_NEW_AVD" -k "$ANDROID_SIM_IMAGE" --device "$device_id" 2>&1 | android_strip_ansi | /usr/bin/tee -a "$LOG_FILE"
+    result=${pipestatus[2]}
+    if (( result != 0 )); then
+        android_log "✖ 创建失败（${result}）；未覆盖已有设备。若有本次同名半成品，请在 Device Manager 人工检查：${ANDROID_SIM_NEW_AVD}" '1;31'
+        return "$result"
+    fi
+    ANDROID_SIM_AVDS="$(android_timed 15 "$ANDROID_SIM_EMULATOR" -list-avds 2>&1)" || return 1
+    if ! print -r -- "$ANDROID_SIM_AVDS" | /usr/bin/grep -Fxq -- "$ANDROID_SIM_NEW_AVD"; then
+        android_log "✖ 创建命令返回成功，但列表未检出 ${ANDROID_SIM_NEW_AVD}，已停止启动。" '1;31'
+        return 1
+    fi
+    android_log "✔ 已新增 AVD：${ANDROID_SIM_NEW_AVD}" '1;32'
+    android_launch "$ANDROID_SIM_NEW_AVD"
+}
+# 双击入口保留已有设备启动能力，同时显式提供新增入口。
+android_menu() {
+    local rows=$'新建 Android 模拟器\t__create__' name
+    while IFS= read -r name; do
+        [[ -n "$name" ]] || continue
+        if [[ "$name" =~ '^[A-Za-z0-9][A-Za-z0-9_.-]*$' ]]; then
+            rows+=$'\n'"启动 ${name}"$'\t'"$name"
+        fi
+    done <<< "$ANDROID_SIM_AVDS"
+    if [[ -z "$ANDROID_SIM_AVDS" ]]; then
+        android_log '➤ 当前没有 AVD，进入新建流程。'
+        android_create
+        return $?
+    fi
+    android_choose '选择操作' "$rows" || return $?
+    name="${ANDROID_SIM_SELECTED#*$'\t'}"
+    if [[ "$name" == __create__ ]]; then
+        android_create
+    else
+        android_launch "$name"
+    fi
+}
+# 汇总完整依赖与本地状态，健康时不安装或升级，缺失层明确返回失败。
+android_check() {
+    local failures=0 installed="" count=0
+    android_log '➤ 只读自检：不联网、不下载、不安装、不创建设备、不写脚本日志。'
+    android_detect_architecture || return 1
+    android_find_sdk || return 1
+    android_find_java && android_find_command_tools || failures=$((failures + 1))
+    android_ensure_emulator || failures=$((failures + 1))
+    android_find_selector
+    installed="$(android_installed_images)"
+    if [[ -n "$installed" ]]; then
+        count="$(print -r -- "$installed" | /usr/bin/wc -l | /usr/bin/tr -d ' ')"
+        android_log "✔ 已装匹配架构的手机 / 平板系统映像：${count} 个" '1;32'
+        android_log "➤ 回车首选系统映像：${installed%%$'\n'*}"
+    else
+        android_log "⚠ 尚无完整的 ${ANDROID_SIM_ABI} 手机 / 平板系统映像；交互新建时可选择官方下载安装。" '1;33'
+        failures=$((failures + 1))
+    fi
+    android_log "➤ 已有 AVD：${ANDROID_SIM_AVDS:-无}"
+    if (( failures )); then
+        android_log "✖ 自检发现 ${failures} 处未就绪；未执行修复。" '1;31'
+        return 1
+    fi
+    android_log '✔ 创建依赖已就绪。' '1;32'
+}
+# 执行选择模式并统一传播失败或取消状态，不吞掉外部工具错误。
+android_run_requested_action() {
+    local result=0
+    android_initialize_runtime || return $?
+    if [[ "$ANDROID_SIM_MODE" == check ]]; then
+        android_check
+        return $?
+    fi
+    android_detect_architecture && android_find_sdk && android_ensure_emulator || return 1
+    android_find_selector
+    if [[ "$ANDROID_SIM_MODE" == create ]]; then
+        android_create || result=$?
+    else
+        android_menu || result=$?
+    fi
+    if (( result == 130 )); then
+        android_log '➤ 已取消；未删除或覆盖现有 AVD。'
+        result=0
+    fi
+    android_log "➤ 操作结束；日志：${LOG_FILE}"
+    return "$result"
+}
+# <<< Jobs Android simulator core <<<
+# 编排内置自述和独立环境自检、选择与新建 / 启动流程。
 main() {
-  # 展示脚本内置自述，并按运行入口完成防误触确认。
-  show_script_intro_and_wait
-  # 初始化 Shell 选项、日志、依赖和入口运行状态。
-  initialize_script_runtime
-  # 执行 run_original_logic 对应的核心业务步骤。
-  run_original_logic "$@"
-  # 输出脚本执行结果、摘要和日志位置。
-  success_echo "脚本执行结束。日志：$LOG_FILE"
+    show_script_intro_and_wait "$@" # 首屏说明影响，区分只读检查与终端确认。
+    android_run_requested_action # 沿本次依赖链检查环境，执行所选模拟器操作。
 }
 
 main "$@"
