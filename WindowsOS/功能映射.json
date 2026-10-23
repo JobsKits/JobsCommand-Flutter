@@ -1,0 +1,316 @@
+{
+  "entries": [
+    {
+      "mac": "MacOS/【MacOS】⚙️Git拉取Flutter项目到本地以后的必要配置.command/【MacOS】⚙️Git拉取Flutter项目到本地以后的必要配置.command",
+      "windows": "WindowsOS/【WindowsOS】⚙️Git拉取Flutter项目到本地以后的必要配置.ps1/【WindowsOS】⚙️Git拉取Flutter项目到本地以后的必要配置.ps1",
+      "action": "postclone",
+      "purpose": "恢复项目 FVM 版本、获取依赖并合并 VS Code SDK 路径"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】♻️修复Flutter项目中文路径.command/【MacOS】♻️修复Flutter项目中文路径.command",
+      "windows": "WindowsOS/小工具/【WindowsOS】♻️修复Flutter项目中文路径.ps1/【WindowsOS】♻️修复Flutter项目中文路径.ps1",
+      "action": "uri",
+      "purpose": "将本项目 lib 内 import/export/part URI 的中文片段进行百分号转义"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】♻️双击修复：找不到 Android SDK 或 platforms 目录为空.command/【MacOS】♻️双击修复：找不到 Android SDK 或 platforms 目录为空.command",
+      "windows": "WindowsOS/小工具/【WindowsOS】♻️双击修复：找不到 Android SDK 或 platforms 目录为空.ps1/【WindowsOS】♻️双击修复：找不到 Android SDK 或 platforms 目录为空.ps1",
+      "action": "androidprepare",
+      "purpose": "按 Windows 安装位置准备 JDK、Android SDK 和 emulator 组件"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】♻️当前脚本所在目录的快捷方式放到桌面.command/【MacOS】♻️当前脚本所在目录的快捷方式放到桌面.command",
+      "windows": "WindowsOS/小工具/【WindowsOS】♻️当前脚本所在目录的快捷方式放到桌面.ps1/【WindowsOS】♻️当前脚本所在目录的快捷方式放到桌面.ps1",
+      "action": "shortcut",
+      "purpose": "为指定目录创建桌面 .lnk 快捷方式"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】⚙️import =＞package💣.command/【MacOS】⚙️import =＞package💣.command",
+      "windows": "WindowsOS/小工具/【WindowsOS】⚙️import =＞package💣.ps1/【WindowsOS】⚙️import =＞package💣.ps1",
+      "action": "imports",
+      "purpose": "将 lib 内相对 Dart 引用转换为本项目 package URI"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】⚙️保存系统环境配置（运行后输入jobs）.command/【MacOS】⚙️保存系统环境配置（运行后输入jobs）.command",
+      "windows": "WindowsOS/小工具/【WindowsOS】⚙️保存系统环境配置（运行后输入jobs）.ps1/【WindowsOS】⚙️保存系统环境配置（运行后输入jobs）.ps1",
+      "action": "jobsfunction",
+      "purpose": "在当前用户 PowerShell profile 中增加 jobs 环境摘要函数"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】⚙️双击显示隐藏文件.command/【MacOS】⚙️双击显示隐藏文件.command",
+      "windows": "WindowsOS/小工具/【WindowsOS】⚙️双击显示隐藏文件.ps1/【WindowsOS】⚙️双击显示隐藏文件.ps1",
+      "action": "hidden",
+      "purpose": "切换资源管理器普通隐藏文件显示"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】⚙️自动化替换Flutter图片资源.command/【MacOS】⚙️自动化替换Flutter图片资源.command",
+      "windows": "WindowsOS/小工具/【WindowsOS】⚙️自动化替换Flutter图片资源.ps1/【WindowsOS】⚙️自动化替换Flutter图片资源.ps1",
+      "action": "assets",
+      "purpose": "备份并复制本地 assets，按项目声明运行图标与启动图生成器"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】⚙️运行授权.command/【MacOS】⚙️运行授权.command",
+      "windows": "WindowsOS/小工具/【WindowsOS】⚙️运行授权.ps1/【WindowsOS】⚙️运行授权.ps1",
+      "action": "authorize",
+      "purpose": "只解除单个普通文件的下载区域标记，不执行该文件"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】🌞颜色格式的转换.command/【MacOS】🌞颜色格式的转换.command",
+      "windows": "WindowsOS/小工具/【WindowsOS】🌞颜色格式的转换.ps1/【WindowsOS】🌞颜色格式的转换.ps1",
+      "action": "color",
+      "purpose": "转换十六进制颜色为 ARGB、CSS rgba 和 Flutter Color"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】🎈切换Shell.command/【MacOS】🎈切换Shell.command",
+      "windows": "WindowsOS/小工具/【WindowsOS】🎈切换Shell.ps1/【WindowsOS】🎈切换Shell.ps1",
+      "action": "shell",
+      "purpose": "选择并打开当前会话的 Windows Shell"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】🎈双击打开当前路径终端.command/【MacOS】🎈双击打开当前路径终端.command",
+      "windows": "WindowsOS/小工具/【WindowsOS】🎈双击打开当前路径终端.ps1/【WindowsOS】🎈双击打开当前路径终端.ps1",
+      "action": "terminal",
+      "purpose": "在指定目录打开 Windows PowerShell"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】🏥双击自检Flutter.command/【MacOS】🏥双击自检Flutter.command",
+      "windows": "WindowsOS/小工具/【WindowsOS】🏥双击自检Flutter.ps1/【WindowsOS】🏥双击自检Flutter.ps1",
+      "action": "doctor",
+      "purpose": "使用项目同源 Flutter SDK 运行版本与 doctor 诊断"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】🐦Flutter自动化生产代码.command/【MacOS】🐦Flutter自动化生产代码.command",
+      "windows": "WindowsOS/小工具/【WindowsOS】🐦Flutter自动化生产代码.ps1/【WindowsOS】🐦Flutter自动化生产代码.ps1",
+      "action": "codegen",
+      "purpose": "按项目依赖和配置运行可用生成器，冲突删除另行确认"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】🔍查询Flutter依赖版本.command/【MacOS】🔍查询Flutter依赖版本.command",
+      "windows": "WindowsOS/小工具/【WindowsOS】🔍查询Flutter依赖版本.ps1/【WindowsOS】🔍查询Flutter依赖版本.ps1",
+      "action": "outdated",
+      "purpose": "查询当前项目依赖的可用版本和约束"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】🛠️Android 模拟器一键检测与修复.command/【MacOS】🛠️Android 模拟器一键检测与修复.command",
+      "windows": "WindowsOS/小工具/【WindowsOS】🛠️Android 模拟器一键检测与修复.ps1/【WindowsOS】🛠️Android 模拟器一键检测与修复.ps1",
+      "action": "androidrepair",
+      "purpose": "诊断设备数据分区和安装位置，确认后恢复自动安装位置并重启 adb"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】🛠️Flutter 插件 namespace 修复工具＂.command/【MacOS】🛠️Flutter 插件 namespace 修复工具＂.command",
+      "windows": "WindowsOS/小工具/【WindowsOS】🛠️Flutter 插件 namespace 修复工具＂.ps1/【WindowsOS】🛠️Flutter 插件 namespace 修复工具＂.ps1",
+      "action": "namespace",
+      "purpose": "只为本工程 Android app 补缺失 namespace，保留第三方缓存"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】🧪提取Flutter第三方依赖.command/【MacOS】🧪提取Flutter第三方依赖.command",
+      "windows": "WindowsOS/小工具/【WindowsOS】🧪提取Flutter第三方依赖.ps1/【WindowsOS】🧪提取Flutter第三方依赖.ps1",
+      "action": "extractsources",
+      "purpose": "复用随包 Dart 核心提取已解析第三方 Pub 源码，排除 SDK、缓存与外部原生依赖"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】🧹Flutter清理维护工具.command/【MacOS】🧹Flutter清理维护工具.command",
+      "windows": "WindowsOS/小工具/【WindowsOS】🧹Flutter清理维护工具.ps1/【WindowsOS】🧹Flutter清理维护工具.ps1",
+      "action": "clean",
+      "purpose": "确认 CLEAN 后执行本工程 flutter clean 与 pub get"
+    },
+    {
+      "mac": "MacOS/屏幕录制/【MacOS】📹双击制作Android模拟器录屏Gif.command/【MacOS】📹双击制作Android模拟器录屏Gif.command",
+      "windows": "WindowsOS/屏幕录制/【WindowsOS】📹双击制作Android模拟器录屏Gif.ps1/【WindowsOS】📹双击制作Android模拟器录屏Gif.ps1",
+      "action": "record",
+      "purpose": "通过 adb 录制指定 Android 设备并由 ffmpeg 转 GIF"
+    },
+    {
+      "mac": "MacOS/打包相关/【MacOS】📦双击打包Flutter.Android.command/【MacOS】📦双击打包Flutter.Android.command",
+      "windows": "WindowsOS/打包相关/【WindowsOS】📦双击打包Flutter.Android.ps1/【WindowsOS】📦双击打包Flutter.Android.ps1",
+      "action": "build",
+      "purpose": "选择 APK、AAB 或两者，使用现有 Windows Android 工具链构建并核验产物"
+    },
+    {
+      "mac": "MacOS/更新升级/【MacOS】⬆️双击升级Flutter.SDK.command/【MacOS】⬆️双击升级Flutter.SDK.command",
+      "windows": "WindowsOS/更新升级/【WindowsOS】⬆️双击升级Flutter.SDK.ps1/【WindowsOS】⬆️双击升级Flutter.SDK.ps1",
+      "action": "upgrade",
+      "purpose": "升级当前工程选中的 Flutter SDK"
+    },
+    {
+      "mac": "MacOS/更新升级/【MacOS】⬆️双击更新Flutter依赖.command/【MacOS】⬆️双击更新Flutter依赖.command",
+      "windows": "WindowsOS/更新升级/【WindowsOS】⬆️双击更新Flutter依赖.ps1/【WindowsOS】⬆️双击更新Flutter依赖.ps1",
+      "action": "pubupgrade",
+      "purpose": "升级工程约束允许的依赖并更新锁文件"
+    },
+    {
+      "mac": "MacOS/运行/【MacOS】☀️双击运行Flutter项目（Android 模拟器） .command/【MacOS】☀️双击运行Flutter项目（Android 模拟器） .command",
+      "windows": "WindowsOS/运行/【WindowsOS】☀️双击运行Flutter项目（Android 模拟器） .ps1/【WindowsOS】☀️双击运行Flutter项目（Android 模拟器） .ps1",
+      "action": "androidrun",
+      "purpose": "启动所选 AVD 后选择 Android 设备运行 Flutter 工程"
+    },
+    {
+      "mac": "MacOS/运行/【MacOS】🎈双击真机运行项目.command/【MacOS】🎈双击真机运行项目.command",
+      "windows": "WindowsOS/运行/【WindowsOS】🎈双击真机运行项目.ps1/【WindowsOS】🎈双击真机运行项目.ps1",
+      "action": "physicalrun",
+      "purpose": "只从已连接和授权的 Android 真机中选择设备运行工程"
+    },
+    {
+      "mac": "MacOS/运行/【MacOS】🚀双击启动Android模拟器.command/【MacOS】🚀双击启动Android模拟器.command",
+      "windows": "WindowsOS/运行/【WindowsOS】🚀双击启动Android模拟器.ps1/【WindowsOS】🚀双击启动Android模拟器.ps1",
+      "action": "androidstart",
+      "purpose": "启动已有 AVD，或用 -Mode Create 准备工具链并新建设备"
+    },
+    {
+      "mac": "MacOS/配置相关/【MacOS】VSCode.command/【MacOS】⏬双击配置VSCode.command/【MacOS】⏬双击配置VSCode.command",
+      "windows": "WindowsOS/配置相关/【WindowsOS】VSCode.ps1/【WindowsOS】⏬双击配置VSCode.ps1/【WindowsOS】⏬双击配置VSCode.ps1",
+      "action": "vscode",
+      "purpose": "从已登记源合并工程与当前用户 VS Code 配置并分别备份"
+    },
+    {
+      "mac": "MacOS/配置相关/【MacOS】VSCode.command/【MacOS】💉VSCode配置注入@全局.command/【MacOS】💉VSCode配置注入@全局.command",
+      "windows": "WindowsOS/配置相关/【WindowsOS】VSCode.ps1/【WindowsOS】💉VSCode配置注入@全局.ps1/【WindowsOS】💉VSCode配置注入@全局.ps1",
+      "action": "vscodeglobal",
+      "purpose": "从已登记源合并当前用户 VS Code 配置并备份旧目录"
+    },
+    {
+      "mac": "MacOS/配置相关/【MacOS】VSCode.command/【MacOS】💉VSCode配置注入@当前Flutter项目.command/【MacOS】💉VSCode配置注入@当前Flutter项目.command",
+      "windows": "WindowsOS/配置相关/【WindowsOS】VSCode.ps1/【WindowsOS】💉VSCode配置注入@当前Flutter项目.ps1/【WindowsOS】💉VSCode配置注入@当前Flutter项目.ps1",
+      "action": "vscodeproject",
+      "purpose": "从已登记源合并所选工程 VS Code 配置并备份旧目录"
+    },
+    {
+      "mac": "MacOS/配置相关/【MacOS】⏬下载配置系统环境变量.command/【MacOS】⏬下载配置系统环境变量.command",
+      "windows": "WindowsOS/配置相关/【WindowsOS】⏬下载配置系统环境变量.ps1/【WindowsOS】⏬下载配置系统环境变量.ps1",
+      "action": "environment",
+      "purpose": "配置已有 Android SDK 与 JDK 的当前用户变量，支持精确恢复"
+    },
+    {
+      "mac": "MacOS/配置相关/【MacOS】⏬双击下载SourceTree效率脚本.command/【MacOS】⏬双击下载SourceTree效率脚本.command",
+      "windows": "WindowsOS/配置相关/【WindowsOS】⏬双击下载SourceTree效率脚本.ps1/【WindowsOS】⏬双击下载SourceTree效率脚本.ps1",
+      "action": "sourcetree",
+      "purpose": "克隆 SourceTree 效率脚本到新目录，不覆盖已有目录"
+    },
+    {
+      "mac": "MacOS/配置相关/【MacOS】⏬双击配置VSCode.command/【MacOS】⏬双击配置VSCode.command",
+      "windows": "WindowsOS/配置相关/【WindowsOS】⏬双击配置VSCode.ps1/【WindowsOS】⏬双击配置VSCode.ps1",
+      "action": "vscode",
+      "purpose": "从已登记源合并工程与当前用户 VS Code 配置并分别备份"
+    },
+    {
+      "mac": "MacOS/配置相关/【MacOS】⚙️Flutter 项目组件预下载.command/【MacOS】⚙️Flutter 项目组件预下载.command",
+      "windows": "WindowsOS/配置相关/【WindowsOS】⚙️Flutter 项目组件预下载.ps1/【WindowsOS】⚙️Flutter 项目组件预下载.ps1",
+      "action": "precache",
+      "purpose": "预下载 Android、Web、Windows 所需 Flutter 引擎缓存"
+    },
+    {
+      "mac": "MacOS/配置相关/【MacOS】⚙️一键配置Flutter项目至运行.command/【MacOS】⚙️一键配置Flutter项目至运行.command",
+      "windows": "WindowsOS/配置相关/【WindowsOS】⚙️一键配置Flutter项目至运行.ps1/【WindowsOS】⚙️一键配置Flutter项目至运行.ps1",
+      "action": "setup",
+      "purpose": "选择 Android、Web 或 Windows，按需准备工具链与 FVM，获取依赖并运行所选目标"
+    },
+    {
+      "mac": "MacOS/配置相关/【MacOS】⚙️一键配置Flutter／鸿蒙项目至运行.command/【MacOS】⚙️一键配置Flutter／鸿蒙项目至运行.command",
+      "windows": "WindowsOS/配置相关/【WindowsOS】⚙️一键配置Flutter／鸿蒙项目至运行.ps1/【WindowsOS】⚙️一键配置Flutter／鸿蒙项目至运行.ps1",
+      "action": "harmony",
+      "purpose": "使用已有鸿蒙 Flutter SDK 和 DevEco 工具链校验并运行 ohos 工程"
+    },
+    {
+      "mac": "MacOS/配置相关/【MacOS】⚙️下载配置系统环境变量.command/【MacOS】⚙️下载配置系统环境变量.command",
+      "windows": "WindowsOS/配置相关/【WindowsOS】⚙️下载配置系统环境变量.ps1/【WindowsOS】⚙️下载配置系统环境变量.ps1",
+      "action": "environment",
+      "purpose": "配置已有 Android SDK 与 JDK 的当前用户变量，支持精确恢复"
+    },
+    {
+      "mac": "MacOS/配置相关/【MacOS】⚙️双击安装FVM.command/【MacOS】⚙️双击安装FVM.command",
+      "windows": "WindowsOS/配置相关/【WindowsOS】⚙️双击安装FVM.ps1/【WindowsOS】⚙️双击安装FVM.ps1",
+      "action": "fvm",
+      "purpose": "安装当前用户 FVM 并按所选版本绑定现有工程"
+    },
+    {
+      "mac": "MacOS/配置相关/【MacOS】⚙️双击安装Flutter.SDK.command/【MacOS】⚙️双击安装Flutter.SDK.command",
+      "windows": "WindowsOS/配置相关/【WindowsOS】⚙️双击安装Flutter.SDK.ps1/【WindowsOS】⚙️双击安装Flutter.SDK.ps1",
+      "action": "sdk",
+      "purpose": "从 Flutter 官方 Windows 清单下载稳定 SDK，验证 SHA-256 后安装到新目录"
+    },
+    {
+      "mac": "MacOS/配置相关/【MacOS】⚙️收集当前Flutter工程的依赖.command/【MacOS】⚙️收集当前Flutter工程的依赖.command",
+      "windows": "WindowsOS/配置相关/【WindowsOS】⚙️收集当前Flutter工程的依赖.ps1/【WindowsOS】⚙️收集当前Flutter工程的依赖.ps1",
+      "action": "dependencies",
+      "purpose": "导出当前工程解析到的 Dart 包源码和依赖声明，不复制整个系统缓存"
+    },
+    {
+      "mac": "MacOS/配置相关/【MacOS】⚙️配置Android Studio.command/【MacOS】⚙️配置Android Studio.command",
+      "windows": "WindowsOS/配置相关/【WindowsOS】⚙️配置Android Studio.ps1/【WindowsOS】⚙️配置Android Studio.ps1",
+      "action": "androidprepare",
+      "purpose": "自动准备 Android SDK、JDK 与必要组件，许可证本人确认"
+    },
+    {
+      "mac": "MacOS/配置相关/【MacOS】🎈双击打开系统配置文件.command/【MacOS】🎈双击打开系统配置文件.command",
+      "windows": "WindowsOS/配置相关/【WindowsOS】🎈双击打开系统配置文件.ps1/【WindowsOS】🎈双击打开系统配置文件.ps1",
+      "action": "profile",
+      "purpose": "使用记事本打开已有当前用户 PowerShell profile，不自动执行未知配置"
+    }
+  ],
+  "excluded": [
+    {
+      "mac": "MacOS/Cocoapods/【MacOS】⚙️Pod_Install.command/【MacOS】⚙️Pod_Install.command",
+      "reason": "CocoaPods / Xcode 构建专用，仅 MacOS"
+    },
+    {
+      "mac": "MacOS/Cocoapods/【MacOS】⚙️双击安装Cocoapods.command/【MacOS】⚙️双击安装Cocoapods.command",
+      "reason": "CocoaPods / Xcode 构建专用，仅 MacOS"
+    },
+    {
+      "mac": "MacOS/Cocoapods/【MacOS】⚙️双击更换Cocoapods源[-]CDN[+]Github.command/【MacOS】⚙️双击更换Cocoapods源[-]CDN[+]Github.command",
+      "reason": "CocoaPods / Xcode 构建专用，仅 MacOS"
+    },
+    {
+      "mac": "MacOS/Cocoapods/【MacOS】⚙️双击禁用沙盒保证Cocoapods构建流程.command/【MacOS】⚙️双击禁用沙盒保证Cocoapods构建流程.command",
+      "reason": "CocoaPods / Xcode 构建专用，仅 MacOS"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】⚙️双击任何来源安装.command/【MacOS】⚙️双击任何来源安装.command",
+      "reason": "macOS Gatekeeper / SIP 专用，WindowsOS 不全局关闭安全策略"
+    },
+    {
+      "mac": "MacOS/小工具/【MacOS】⚙️双击卸载Homebrew.command/【MacOS】⚙️双击卸载Homebrew.command",
+      "reason": "Homebrew 管理专用；Windows 使用其原生工具安装机制"
+    },
+    {
+      "mac": "MacOS/屏幕录制/【MacOS】📹双击制作iOS模拟器录屏Gif.command/【MacOS】📹双击制作iOS模拟器录屏Gif.command",
+      "reason": "iOS 模拟器或 iOS 构建要求 MacOS + Xcode，WindowsOS 不提供入口"
+    },
+    {
+      "mac": "MacOS/打包相关/【MacOS】📦双击打包Flutter.iOS.command/【MacOS】📦双击打包Flutter.iOS.command",
+      "reason": "iOS 模拟器或 iOS 构建要求 MacOS + Xcode，WindowsOS 不提供入口"
+    },
+    {
+      "mac": "MacOS/更新升级/【MacOS】⬆️Pod_Update.command/【MacOS】⬆️Pod_Update.command",
+      "reason": "CocoaPods / Xcode 构建专用，仅 MacOS"
+    },
+    {
+      "mac": "MacOS/更新升级/【MacOS】⬆️双击升级Cocoapods.command/【MacOS】⬆️双击升级Cocoapods.command",
+      "reason": "CocoaPods / Xcode 构建专用，仅 MacOS"
+    },
+    {
+      "mac": "MacOS/更新升级/【MacOS】⬆️双击更新CocoaPods本地仓库.command/【MacOS】⬆️双击更新CocoaPods本地仓库.command",
+      "reason": "CocoaPods / Xcode 构建专用，仅 MacOS"
+    },
+    {
+      "mac": "MacOS/运行/【MacOS】☀️双击运行Flutter项目（iOS 模拟器）.command/【MacOS】☀️双击运行Flutter项目（iOS 模拟器）.command",
+      "reason": "iOS 模拟器或 iOS 构建要求 MacOS + Xcode，WindowsOS 不提供入口"
+    },
+    {
+      "mac": "MacOS/运行/【MacOS】📱双击初始化iOS模拟器.command/【MacOS】📱双击初始化iOS模拟器.command",
+      "reason": "iOS 模拟器或 iOS 构建要求 MacOS + Xcode，WindowsOS 不提供入口"
+    },
+    {
+      "mac": "MacOS/运行/【MacOS】📱双击打开已实例化的iOS模拟器.command/【MacOS】📱双击打开已实例化的iOS模拟器.command",
+      "reason": "iOS 模拟器或 iOS 构建要求 MacOS + Xcode，WindowsOS 不提供入口"
+    },
+    {
+      "mac": "MacOS/配置相关/【MacOS】⚙️双击安装Cocoapods.command/【MacOS】⚙️双击安装Cocoapods.command",
+      "reason": "CocoaPods / Xcode 构建专用，仅 MacOS"
+    },
+    {
+      "mac": "MacOS/配置相关/【MacOS】⚙️双击安装（升级）Homebrew.command/【MacOS】⚙️双击安装（升级）Homebrew.command",
+      "reason": "Homebrew 管理专用；Windows 使用其原生工具安装机制"
+    }
+  ]
+}
