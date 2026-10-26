@@ -349,8 +349,19 @@ function Export-JobsDependencies {
             }
         }
         [IO.File]::WriteAllText((Join-Path $stage 'manifest.json'),($manifest | ConvertTo-Json -Depth 4),(New-Object Text.UTF8Encoding $false))
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        [IO.Compression.ZipFile]::CreateFromDirectory($stage,[IO.Path]::GetFullPath($Output))
+        Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
+        # 5.1 宿主可能沿用 .NET 的反斜杠 ZIP 路径；显式使用 / 保证跨端解压目录。
+        $archive = [IO.Compression.ZipFile]::Open([IO.Path]::GetFullPath($Output),[IO.Compression.ZipArchiveMode]::Create)
+        try {
+            foreach ($item in Get-ChildItem -LiteralPath $stage -Recurse -Force) {
+                $entryName = $item.FullName.Substring($stage.Length+1).Replace('\','/')
+                if ($item.PSIsContainer) {
+                    if (@(Get-ChildItem -LiteralPath $item.FullName -Force).Count -eq 0) { [void]$archive.CreateEntry($entryName+'/') }
+                } else {
+                    [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive,$item.FullName,$entryName)
+                }
+            }
+        } finally { $archive.Dispose() }
         Write-JobsMessage ('已导出源码和依赖声明：' + $Output)
     } finally { if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force } }
 }

@@ -616,27 +616,91 @@ run_original_logic() {
       error_echo "❌ 无效路径：$abs，请重试"
     done
   }
-  # ✅  构建参数选择
+  # 选择构建计划的一层，左键仅返回，不把取消解释成默认选项。
+  choose_build_row() {
+    setopt LOCAL_OPTIONS PIPE_FAIL
+    local title="$1" allow_back="$2" output="" key="" result=0
+    shift 2
+    local -a picker_args choices
+    choices=("$@")
+    picker_args=(--height=50% --reverse --border --prompt="${title} > " --header='回车确认；Esc / Ctrl+C 取消')
+    (( allow_back )) && picker_args+=(--expect=left --header='← 返回上一层；回车确认；Esc / Ctrl+C 取消')
+    output="$(printf '%s\n' "$@" | env -u FZF_DEFAULT_OPTS -u FZF_DEFAULT_OPTS_FILE fzf "${picker_args[@]}")" || result=$?
+    if (( allow_back && (result == 0 || result == 1) )) && [[ "${output%%$'\n'*}" == left ]]; then
+      return 10
+    fi
+    (( result == 130 || result == 1 )) && return 130
+    (( result == 0 )) || { error_echo "选择器失败（退出码 ${result}）。"; return "$result"; }
+    if (( allow_back )); then
+      key="${output%%$'\n'*}"
+      [[ "$key" == left ]] && return 10
+      [[ -z "$key" ]] || return 1
+      [[ "$output" == *$'\n'* ]] || return 1
+      output="${output#*$'\n'}"
+    fi
+    [[ -n "$output" ]] || return 130
+    (( ${choices[(Ie)$output]} > 0 )) || return 1
+    BUILD_SELECTED_ROW="$output"
+  }
+  # 选择 APK / AAB 产物，只记录计划。
   select_build_target() {
     warn_echo "📦 请选择构建类型："
     local options=("只构建 APK" "只构建 AAB" "同时构建 APK 和 AAB")
-    local selected=$(printf '%s\n' "${options[@]}" | fzf)
+    choose_build_row '构建类型' 0 "${options[@]}" || return $?
+    local selected="$BUILD_SELECTED_ROW"
     case "$selected" in
       "只构建 APK") build_target="apk" ;;
       "只构建 AAB") build_target="appbundle" ;;
       "同时构建 APK 和 AAB") build_target="all" ;;
-      *) build_target="apk" ;;
+      *) return 1 ;;
     esac
     success_echo "✅ 构建类型：$selected"
   }
   # ✅ 选择 flavor 和构建模式（release/debug/profile）
   prompt_flavor_and_mode() {
-    read "flavor_name?📎 请输入 flavor（可留空）: "
+    local entered_flavor=""
+    read -r "entered_flavor?📎 请输入 flavor（回车保留 ${flavor_name:-空}）: " || return 130
+    [[ -z "$entered_flavor" ]] || flavor_name="$entered_flavor"
     local modes=("release" "debug" "profile")
     warn_echo "⚙️ 请选择构建模式："
-    build_mode=$(printf '%s\n' "${modes[@]}" | fzf)
+    choose_build_row '构建模式' 1 "${modes[@]}" || return $?
+    build_mode="$BUILD_SELECTED_ROW"
     success_echo "✅ 模式：$build_mode"
     [[ -n "$flavor_name" ]] && success_echo "✅ 使用 flavor：$flavor_name" || info_echo "📎 未指定 flavor"
+  }
+  # 选择 JDK 版本时仍可返回模式，尚不安装或写入项目配置。
+  select_java_version() {
+    setopt LOCAL_OPTIONS PIPE_FAIL
+    local available_versions="" last_used=""
+    local -a versions
+    available_versions="$(brew search openjdk@ | grep -E '^openjdk@[0-9]+$' | sort -Vr)" || return 1
+    [[ -n "$available_versions" ]] || { error_echo '未找到可选 JDK。'; return 1; }
+    versions=("${(@f)available_versions}")
+    [[ ! -f "$flutter_root/.java-version" ]] || last_used="$(<"$flutter_root/.java-version")"
+    if [[ -n "$last_used" ]] && (( ${versions[(Ie)$last_used]} > 0 )); then
+      versions=("$last_used" "${(@)versions:#$last_used}")
+    fi
+    choose_build_row 'JDK 版本' 1 "${versions[@]}" || return $?
+    selected_jdk="$BUILD_SELECTED_ROW"
+  }
+  # 完成三层选择后才允许安装 JDK 或开始构建，返回不会触发业务。
+  select_build_plan() {
+    local stage=1 result=0
+    while true; do
+      result=0
+      case "$stage" in
+        1) select_build_target || result=$? ;;
+        2) prompt_flavor_and_mode || result=$? ;;
+        3) select_java_version || result=$? ;;
+      esac
+      if (( result == 10 )); then
+        (( stage-- ))
+        continue
+      fi
+      (( result == 0 )) || { warn_echo '构建选择已停止，未开始构建。'; return "$result"; }
+      (( stage == 3 )) && return 0
+      (( stage++ ))
+    done
   }
   # ✅ FVM 检测与 Flutter 命令
   detect_flutter_command() {
@@ -661,26 +725,8 @@ run_original_logic() {
   # ✅ 配置 Java 环境（支持记忆）
   configure_java_env() {
     local record_file="$flutter_root/.java-version"
-    local selected=""
-    local last_used=""
-    [[ -f "$record_file" ]] && last_used=$(cat "$record_file")
-
-    local available_versions=$(brew search openjdk@ | grep -E '^openjdk@\d+$' | sort -Vr)
-    if [[ -z "$available_versions" ]]; then
-      error_echo "❌ 未找到可用的 openjdk"
-      exit 1
-    fi
-
-    if [[ -n "$last_used" && "$available_versions" == *"$last_used"* ]]; then
-      success_echo "📦 上次使用的 JDK：$last_used"
-      read "?👉 是否继续使用？回车=是 / 任意键+回车=重新选择: "
-      [[ -z "$REPLY" ]] && selected="$last_used"
-    fi
-
-    if [[ -z "$selected" ]]; then
-      selected=$(echo "$available_versions" | fzf --prompt="☑️ 选择 openjdk 版本：" --height=40%)
-      [[ -z "$selected" ]] && error_echo "❌ 未选择 JDK" && exit 1
-    fi
+    local selected="$selected_jdk"
+    [[ "$selected" == openjdk@<-> ]] || return 1
 
     local version_number="${selected#*@}"
     brew list --formula | grep -q "^$selected$" || brew install "$selected"
@@ -869,16 +915,15 @@ run_original_logic() {
     run_flutter_with_java build "$build_target" ${flavor_name:+--flavor "$flavor_name"} --"$build_mode" | tee -a "$log_file"
   }
   # ✅ 🚀 main 函数入口
-  main() {
+  run_android_packaging_workflow() {
       cd "$(cd "$(dirname "$0")" && pwd -P)"      # ✅ 切换到脚本目录
       show_intro                                  # ✅ 自述信息
       install_homebrew                            # ✅ 自检 Homebrew
       install_fzf                                 # ✅ 自检 Homebrew.fzf
       resolve_flutter_root                        # ✅ 获取 Flutter 根目录
-      select_build_target                         # ✅ 选择 APK / AAB / All 构建类型
-      prompt_flavor_and_mode                      # ✅ 选择 flavor 和构建模式（release/debug/profile）
+      select_build_plan || return $?              # 完成目标、模式与 JDK 选择；子层左键返回，取消停止。
       detect_flutter_command                      # ✅ 判断是否使用 FVM
-      configure_java_env                          # ✅ 配置 Java 环境（支持记忆）
+      configure_java_env || return $?             # 选定计划后才安装 JDK 并保存配置。
     
       print_env_diagnostics                       # ✅ 第一阶段：环境信息检查
       maybe_flutter_clean_and_get                 # ✅ 第二阶段：flutter clean 与 pub get
@@ -889,7 +934,7 @@ run_original_logic() {
       success_echo "🎉 构建完成，日志保存在 /tmp/flutter_build_log.txt"
   }
 
-  main "$@"
+  run_android_packaging_workflow "$@"
 
   # =========================== 原脚本业务逻辑区结束 ===========================
 }
@@ -900,14 +945,9 @@ initialize_script_runtime() {
 }
 # 编排脚本的高层业务流程。
 main() {
-  # 展示脚本内置自述，并按运行入口完成防误触确认。
-  show_script_intro_and_wait
-  # 初始化 Shell 选项、日志、依赖和入口运行状态。
-  initialize_script_runtime
-  # 执行 run_original_logic 对应的核心业务步骤。
-  run_original_logic "$@"
-  # 输出脚本执行结果、摘要和日志位置。
-  success_echo "脚本执行结束。日志：$LOG_FILE"
+  show_script_intro_and_wait # 展示内置自述并完成防误触确认。
+  initialize_script_runtime # 初始化日志和脚本运行状态。
+  run_original_logic "$@" # 执行构建计划与业务，并保留取消或失败状态。
 }
 
 main "$@"

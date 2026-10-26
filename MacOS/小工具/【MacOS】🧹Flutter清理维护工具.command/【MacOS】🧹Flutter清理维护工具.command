@@ -487,18 +487,58 @@ run_original_logic() {
   is_flutter_project() {
       [[ -f "$1/pubspec.yaml" && -d "$1/lib" ]]
   }
-  # ✅ 系统级 Flutter 清理菜单
+  typeset -gA CLEANUP_MENU_QUERY CLEANUP_MENU_POSITION
+  typeset -g CLEANUP_SELECTION="" FLUTTER_PROJECT_DIR=""
+  # 选择清理动作，返回键、取消、空选与选择器失败各自传回状态。
+  select_cleanup_option() {
+      local menu_key="$1" has_parent="$2" prompt="$3"
+      shift 3
+      local selection_output="" selector_result=0 selected_row="" row_index=1 candidate=""
+      local -a selector_options
+      selector_options=(--height=15 --border --reverse --sync --print-query
+          --query="${CLEANUP_MENU_QUERY[$menu_key]:-}"
+          --bind="start:pos(${CLEANUP_MENU_POSITION[$menu_key]:-1})"
+          --prompt="$prompt")
+      if [[ "$has_parent" == 1 ]]; then
+          selector_options+=(--expect=left --header='← 返回系统菜单｜回车选择｜Esc 取消流程')
+      else
+          selector_options+=(--header='回车选择｜Esc 取消流程')
+      fi
+      CLEANUP_SELECTION=""
+      selection_output="$(printf '%s\n' "$@" | fzf "${selector_options[@]}")" || selector_result=$?
+      case "$selector_result" in
+          0|1) ;;
+          130) return 130 ;;
+          *) error_echo "fzf 选择失败（退出码 $selector_result）。"; return "$selector_result" ;;
+      esac
+      CLEANUP_MENU_QUERY[$menu_key]="${selection_output%%$'\n'*}"
+      selected_row="${selection_output#*$'\n'}"
+      if [[ "$has_parent" == 1 ]]; then
+          [[ "${selected_row%%$'\n'*}" != left ]] || return 10
+          selected_row="${selected_row#*$'\n'}"
+      fi
+      (( selector_result == 0 )) || return 11
+      [[ -n "$selected_row" ]] || return 11
+      for candidate in "$@"; do
+          if [[ "$candidate" == "$selected_row" ]]; then
+              CLEANUP_MENU_POSITION[$menu_key]="$row_index"
+              CLEANUP_SELECTION="$selected_row"
+              return 0
+          fi
+          row_index=$((row_index + 1))
+      done
+      error_echo "选择结果不在当前候选列表，停止清理。"
+      return 2
+  }
+  # 展示系统菜单，载入项目时仅形成下一层选择计划。
   show_global_menu() {
-      local CHOICE
-      CHOICE=$(cat <<EOF | fzf --prompt="📌 请选择要执行的系统清理操作：" --height=15 --border --reverse
-  【清除 Pub 缓存】rm -rf ~/.pub-cache/*
-  【清除 Android 缓存】rm -rf ~/.gradle
-  【修复依赖缓存】flutter pub cache repair
-  【加载 Flutter 项目】拖入 pubspec.yaml 所在路径
-EOF
-    )
-
-      [[ -z "$CHOICE" ]] && error_echo "❌ 操作取消" && exit 0
+      local CHOICE=""
+      select_cleanup_option global 0 '📌 系统清理操作：' \
+          '【清除 Pub 缓存】rm -rf ~/.pub-cache/*' \
+          '【清除 Android 缓存】rm -rf ~/.gradle' \
+          '【修复依赖缓存】flutter pub cache repair' \
+          '【加载 Flutter 项目】拖入 pubspec.yaml 所在路径' || return $?
+      CHOICE="$CLEANUP_SELECTION"
       echo ""
       success_echo "▶️ 执行中：$CHOICE"
 
@@ -517,51 +557,53 @@ EOF
             success_echo "✅ Flutter 依赖缓存已修复"
             ;;
           *加载\ Flutter\ 项目*)
-            prompt_flutter_path
+            prompt_flutter_path || return $?
+            return 20
             ;;
       esac
   }
-  # ✅ Flutter 项目路径交互
+  # 读取项目路径；回车返回系统菜单，输入结束取消流程。
   prompt_flutter_path() {
+      local user_input="" resolved_path=""
       while true; do
           note_echo "📂 请拖入 Flutter 项目目录（含 pubspec.yaml 和 lib/）"
-          read "?👉 输入路径（回车返回）："
-          local user_input="$REPLY"
+          IFS= read -r "user_input?👉 输入路径（回车返回系统菜单，Ctrl+C 取消）：" || return 130
+          user_input="${(Q)user_input}"
 
-          if [[ -z "$user_input" || "$user_input" != /* ]]; then
+          if [[ -z "$user_input" ]]; then
               warn_echo "↩️ 返回系统菜单"
-              show_global_menu
-              return
+              return 10
           fi
 
-          if [[ ! -d "$user_input" ]]; then
+          resolved_path="$(abs_path "$user_input")" || resolved_path=""
+          if [[ -z "$resolved_path" || ! -d "$resolved_path" ]]; then
               error_echo "❌ 不是有效目录，请重新拖入"
               continue
           fi
 
-          if is_flutter_project "$user_input"; then
-              cd "$user_input"
-              success_echo "✅ 已识别 Flutter 项目：$user_input"
-              show_flutter_project_menu
-              return
+          if is_flutter_project "$resolved_path"; then
+              if [[ "$FLUTTER_PROJECT_DIR" != "$resolved_path" ]]; then
+                  unset 'CLEANUP_MENU_QUERY[project]' 'CLEANUP_MENU_POSITION[project]'
+              fi
+              FLUTTER_PROJECT_DIR="$resolved_path"
+              success_echo "✅ 已识别 Flutter 项目：$resolved_path"
+              return 0
           else
               error_echo "❌ 非有效 Flutter 项目（缺 pubspec.yaml / lib）"
           fi
       done
   }
-  # ✅ Flutter 项目清理菜单
+  # 展示项目动作，左键或返回行只返回系统菜单。
   show_flutter_project_menu() {
-      local CHOICE
-      CHOICE=$(cat <<EOF | fzf --prompt="📦 Flutter 项目操作菜单：" --height=15 --border --reverse
-  【刷新依赖】flutter pub get
-  【项目清理】flutter clean && pub get && pub upgrade
-  【清除 Flutter 缓存】rm -rf bin/cache
-  【清除 iOS 缓存】rm -rf ios/Pods ios/Podfile.lock ios/.symlinks ios/Flutter .dart_tool build pubspec.lock ~/Library/Developer/Xcode/DerivedData/*
-  【返回上级菜单】
-EOF
-      )
-
-      [[ -z "$CHOICE" ]] && error_echo "❌ 操作取消" && return
+      local CHOICE=""
+      select_cleanup_option project 1 '📦 Flutter 项目操作：' \
+          '【刷新依赖】flutter pub get' \
+          '【项目清理】flutter clean && pub get && pub upgrade' \
+          '【清除 Flutter 缓存】rm -rf bin/cache' \
+          '【清除 iOS 缓存】rm -rf ios/Pods ios/Podfile.lock ios/.symlinks ios/Flutter .dart_tool build pubspec.lock ~/Library/Developer/Xcode/DerivedData/*' \
+          '【返回上级菜单】' || return $?
+      CHOICE="$CLEANUP_SELECTION"
+      [[ "$CHOICE" != *返回* ]] || return 10
       success_echo "▶️ 执行中：$CHOICE"
 
       case "$CHOICE" in
@@ -591,54 +633,77 @@ EOF
             rm -rf ~/Library/Developer/Xcode/DerivedData/*
             success_echo "✅ iOS 缓存清除完成"
             ;;
-          *返回*) show_global_menu ;;
       esac
   }
-  # ✅ 主交互流程封装
+  # 用循环切换系统与项目层，返回不递归也不触发清理。
+  run_cleanup_navigation() {
+      local initial_dir="$PWD" menu_layer=global navigation_result=0
+      if is_flutter_project "$initial_dir"; then
+          FLUTTER_PROJECT_DIR="$initial_dir"
+          menu_layer=project
+      fi
+      while true; do
+          navigation_result=0
+          if [[ "$menu_layer" == project ]]; then
+              cd "$FLUTTER_PROJECT_DIR" || return 1
+              show_flutter_project_menu || navigation_result=$?
+          else
+              cd "$initial_dir" || return 1
+              show_global_menu || navigation_result=$?
+          fi
+          case "$navigation_result" in
+              0) cd "$initial_dir"; return $? ;;
+              10) menu_layer=global ;;
+              20) menu_layer=project ;;
+              11|130) cd "$initial_dir"; note_echo '清理选择已取消，未执行后续清理。'; return 0 ;;
+              *) cd "$initial_dir"; return "$navigation_result" ;;
+          esac
+      done
+  }
+  # 检查菜单依赖后进入可回溯的选择流程。
   enter_interactive_mode() {
       echo ""
       read "?👉 按下回车键继续，或 Ctrl+C 退出..."
 
-      install_homebrew
-      install_fzf
-
-      if is_flutter_project "$(pwd)"; then
-          success_echo "📁 当前目录为 Flutter 项目"
-          show_flutter_project_menu
-      else
-          warn_echo "📁 当前不是 Flutter 项目，将进入系统菜单"
-          show_global_menu
-      fi
+      install_homebrew || return $?
+      install_fzf || return $?
+      run_cleanup_navigation
   }
   # ✅ 主函数入口
-  main() {
+  run_flutter_cleanup_flow() {
       clear
       highlight_echo "🧹 Flutter 清理工具"
       info_echo "• 支持系统缓存与项目缓存清理"
       info_echo "• 支持拖入项目路径进入操作菜单"
-      enter_interactive_mode
+      enter_interactive_mode || return $?
       success_echo "🎉 所有操作执行完毕"
   }
 
-  main "$@"
+  run_flutter_cleanup_flow "$@"
 
   # =========================== 原脚本业务逻辑区结束 ===========================
 }
 # 编排脚本的高层业务流程。
 # 初始化脚本运行环境，并集中承载原有的顶层执行逻辑。
 initialize_script_runtime() {
+  setopt NO_NOMATCH
   : > "$LOG_FILE"
+}
+# 汇总菜单和清理结果，失败时保留失败状态。
+run_and_report_flutter_cleanup() {
+  local result_code=0
+  run_original_logic "$@" || result_code=$?
+  if (( result_code != 0 )); then
+    error_echo "脚本执行失败（退出码 $result_code）。日志：$LOG_FILE"
+    return "$result_code"
+  fi
+  success_echo "脚本执行结束。日志：$LOG_FILE"
 }
 # 编排脚本的高层业务流程。
 main() {
-  # 展示脚本内置自述，并按运行入口完成防误触确认。
-  show_script_intro_and_wait
-  # 初始化 Shell 选项、日志、依赖和入口运行状态。
-  initialize_script_runtime
-  # 执行 run_original_logic 对应的核心业务步骤。
-  run_original_logic "$@"
-  # 输出脚本执行结果、摘要和日志位置。
-  success_echo "脚本执行结束。日志：$LOG_FILE"
+  show_script_intro_and_wait # 展示用途与影响范围，等待回车确认。
+  initialize_script_runtime # 初始化 Shell 选项和日志。
+  run_and_report_flutter_cleanup "$@" # 执行菜单流程并传播真实结果。
 }
 
 main "$@"

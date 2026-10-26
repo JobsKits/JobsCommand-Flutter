@@ -23,6 +23,8 @@
 
 此目录包含 41 个 Windows 原生 PowerShell 入口，每个配套同名 .cmd。双击 .cmd 后先读内置自述，回车继续，其它输入取消。使用 Windows PowerShell 5.1 或更新版本；.ps1 / .psm1 为 UTF-8 BOM，中文在 5.1 中可正确读取。.cmd 的 ExecutionPolicy Bypass 只作用于本次进程，不永久修改系统策略。
 
+CMD 入口先关闭继承的延迟展开，保留路径和参数中的 `!`；企业组策略仍优先。
+
 分发时保留完整 WindowsOS 目录，脚本按自身位置寻找 Scripts/FlutterTools.psm1，不依赖其它仓库或 OS@Extension 的运行文件。路径含空格、中文时用引号；批处理工具参数含 cmd 特殊字符时安全停止。失败返回非零退出码。
 
 命令行提供 -Plan（仅展示功能）和 -Check（只核对入口资源与可选路径），均不调用 SDK、不联网、不安装、不清理。-Check 不表示 Android 工具链或真实设备已通过诊断。

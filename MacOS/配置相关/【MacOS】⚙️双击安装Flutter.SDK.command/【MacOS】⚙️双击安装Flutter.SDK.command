@@ -500,19 +500,24 @@ run_original_logic() {
   # 执行对应的环境配置或同步处理。
   install_fzf() {
     if ! command -v fzf &>/dev/null; then
-      method=$(fzf_select "通过 Homebrew 安装" "通过 Git 安装")
+      local method=""
+      warn_echo 'fzf 尚不可用，依赖引导使用文本选择：1 为 Homebrew，2 为 Git，其它输入取消。'
+      read -r 'method?安装 fzf 的方式：' || return 130
       case $method in
-        *Homebrew*) brew install fzf ;;
-        *Git*)
-          git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install --all
+        1) brew install fzf || return 1 ;;
+        2)
+          [[ ! -e "$HOME/.fzf" ]] || { error_echo '~/.fzf 已存在，未覆盖。'; return 1; }
+          git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf" && "$HOME/.fzf/install" --all || return 1
+          export PATH="$HOME/.fzf/bin:$PATH"
           ;;
-        *) error_echo "❌ 取消安装 fzf";;
+        *) error_echo "❌ 取消安装 fzf"; return 130 ;;
       esac
     else
       info_echo "🔄 fzf 已安装，升级中..."
       ask_run "升级 fzf？" && brew upgrade fzf
       success_echo "✅ fzf 已是最新版"
     fi
+    fzf --version >/dev/null 2>&1 || return 1
   }
   # ✅ 选择安装方式
   select_flutter_install_method() {
@@ -524,7 +529,7 @@ run_original_logic() {
       "2️⃣ Homebrew 安装/升级"
       "3️⃣ FVM 安装（推荐）"
     )
-    printf "%s\n" "${options[@]}" | fzf --prompt="👉 安装方式：" --height=15 --reverse
+    printf "%s\n" "${options[@]}" | env -u FZF_DEFAULT_OPTS -u FZF_DEFAULT_OPTS_FILE fzf --prompt="👉 安装方式：" --height=15 --reverse --header='回车确认；Esc / Ctrl+C 取消'
   }
   # ✅ 官方解压安装
   install_official() {
@@ -559,6 +564,9 @@ run_original_logic() {
   }
   # ✅ FVM 安装 Flutter（项目根目录）
   install_fvm() {
+    setopt LOCAL_OPTIONS PIPE_FAIL
+    local version="" versions="" output="" result=0 key=""
+    local -a available_versions
     # 检查当前运行条件是否满足后续流程要求。
     function is_flutter_project() {
       [[ -f "pubspec.yaml" && -d "lib" ]]
@@ -567,22 +575,37 @@ run_original_logic() {
     until is_flutter_project; do
       echo ""
       warn_echo "❌ 当前目录 $(pwd) 不是有效的 Flutter 项目"
-      echo "👉 请拖入 Flutter 项目根目录（包含 pubspec.yaml 和 lib/）"
-      read -r flutter_project_dir
+      echo "👉 请拖入 Flutter 项目根目录（包含 pubspec.yaml 和 lib/）；回车返回安装方式，Ctrl+C 取消。"
+      read -r flutter_project_dir || return 130
+      [[ -n "$flutter_project_dir" && "$flutter_project_dir" != $'\e[D' ]] || return 10
       flutter_project_dir="${flutter_project_dir/#\~/$HOME}"
-      cd "$flutter_project_dir"
+      cd "$flutter_project_dir" || continue
     done
 
     success_echo "✅ 已确认是 Flutter 项目：$(pwd)"
-    info_echo "📦 开始安装 fvm..."
-    brew install fvm
+    info_echo "📦 准备 FVM 命令，已有可用命令时复用。"
+    command -v fvm >/dev/null 2>&1 || brew install fvm || return 1
 
-    info_echo "🔍 可用 Flutter 版本（↑↓选择，回车确认，默认 stable）..."
-    version=$(fvm releases | awk '/^stable|beta|dev|master/ {print $1}' | fzf --prompt="选择 Flutter 版本：" || echo "stable")
+    info_echo "🔍 选择 Flutter 版本；← 返回安装方式，Esc / Ctrl+C 取消。"
+    versions="$(fvm releases | awk '/^stable|beta|dev|master/ {print $1}')" || return 1
+    available_versions=("${(@f)versions}")
+    output="$(printf '%s\n' stable "${(@f)versions}" | awk 'NF && !seen[$0]++' | env -u FZF_DEFAULT_OPTS -u FZF_DEFAULT_OPTS_FILE fzf --expect=left --prompt='选择 Flutter 版本 > ' --height=60% --reverse --header='← 返回安装方式；回车确认；Esc / Ctrl+C 取消')" || result=$?
+    if (( result == 0 || result == 1 )) && [[ "${output%%$'\n'*}" == left ]]; then
+      return 10
+    fi
+    (( result == 130 || result == 1 )) && return 130
+    (( result == 0 )) || { error_echo "版本选择器失败（退出码 ${result}）。"; return "$result"; }
+    key="${output%%$'\n'*}"
+    [[ "$key" == left ]] && return 10
+    [[ -z "$key" ]] || return 1
+    [[ "$output" == *$'\n'* ]] || return 1
+    version="${output#*$'\n'}"
+    [[ -n "$version" ]] || return 130
+    [[ "$version" == stable ]] || (( ${available_versions[(Ie)$version]} > 0 )) || return 1
 
     highlight_echo "⬇️ 安装 Flutter $version ..."
-    fvm install "$version"
-    fvm use "$version"
+    fvm install "$version" || return 1
+    fvm use "$version" || return 1
 
     success_echo "✅ 安装完成，执行 flutter doctor 检查配置"
     fvm flutter doctor
@@ -656,15 +679,21 @@ EOL
   }
   # ✅ 根据选择执行安装方式
   handle_flutter_install_selection() {
-    local method
-    method=$(select_flutter_install_method)
-
+    local method="" result=0
+    while true; do
+      result=0
+      method=$(select_flutter_install_method) || result=$?
+      (( result == 0 )) || return "$result"
+      [[ -n "$method" ]] || return 130
       case "$method" in
-        *"官方解压安装"*)       install_official ;;
-        *"Homebrew 安装"*)     install_brew ;;
-        *"FVM 安装"*)           install_fvm ;;
-        *) error_echo "❌ 未知选择：$method，脚本中止"; exit 1 ;;
+        *"官方解压安装"*)       install_official || result=$? ;;
+        *"Homebrew 安装"*)     install_brew || result=$? ;;
+        *"FVM 安装"*)           install_fvm || result=$? ;;
+        *) error_echo "❌ 未知选择：$method，脚本中止"; return 1 ;;
       esac
+      (( result == 10 )) && continue
+      return "$result"
+    done
   }
   # ✅ 自述信息
   print_intro() {
@@ -678,17 +707,17 @@ EOL
     gray_echo "------------------------------------------------------" | jobs_intro_style body
   }
   # ✅ 主函数入口
-  main() {
+  run_flutter_installation() {
     print_intro                         # ✅ 自述信息
     install_homebrew                    # ✅ 检查并安装 Homebrew（自动识别架构）
-    install_fzf                         # ✅ 安装或升级 fzf，用于交互选择安装方式
-    handle_flutter_install_selection    # ✅ fzf 选择安装方式并执行对应逻辑
+    install_fzf || return $?            # 准备健康选择器，取消依赖引导即停止。
+    handle_flutter_install_selection || return $? # 版本左键返回方式，取消不写环境配置。
     write_env_to_profile                # ✅ 检查并追加环境变量配置（避免重复）
 
     success_echo "🎉 Flutter 安装流程已完成！"
   }
 
-  main "$@"
+  run_flutter_installation "$@"
 
   # =========================== 原脚本业务逻辑区结束 ===========================
 }
@@ -699,14 +728,9 @@ initialize_script_runtime() {
 }
 # 编排脚本的高层业务流程。
 main() {
-  # 展示脚本内置自述，并按运行入口完成防误触确认。
-  show_script_intro_and_wait
-  # 初始化 Shell 选项、日志、依赖和入口运行状态。
-  initialize_script_runtime
-  # 执行 run_original_logic 对应的核心业务步骤。
-  run_original_logic "$@"
-  # 输出脚本执行结果、摘要和日志位置。
-  success_echo "脚本执行结束。日志：$LOG_FILE"
+  show_script_intro_and_wait # 展示内置自述并完成防误触确认。
+  initialize_script_runtime # 初始化日志和脚本运行状态。
+  run_original_logic "$@" # 执行安装选择与业务，并保留取消或失败状态。
 }
 
 main "$@"

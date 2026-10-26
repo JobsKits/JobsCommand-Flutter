@@ -34,13 +34,15 @@
 
 | 项目 | 当前行为 |
 | --- | --- |
-| 输入与默认值 | 拖入含 pubspec.yaml 与 lib/ 的工程；目标/模式菜单选择，flavor 可留空 |
+| 输入与默认值 | 拖入含 pubspec.yaml 与 lib/ 的工程；依次选择 APK / AAB、构建模式、JDK，flavor 可留空；上次有效 JDK 排首项 |
 | 输出与作用位置 | 工程 build/app/ 下 APK 或 AAB、Java 版本配置与日志 |
 | 依赖 | [**Flutter**](https://flutter.dev/)/[**FVM**](https://fvm.app)、[**Android**](https://developer.android.com) SDK、JDK、jenv、[**Homebrew**](https://brew.sh/)、[**fzf**](https://formulae.brew.sh/formula/fzf) 与网络 |
 
 ## <span id="jobs-toc-heading-4" data-jobs-toc="v2">三、运行方式 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a></span><!-- jobs-toc:heading-end -->
 
 在本 README 所在目录打开终端，也可双击同名 `.command`。先阅读内置自述，确认显示的目标再继续；`Ctrl+C` 可取消。
+
+选择面板用 `Enter` 确认当前高亮项；构建模式按 `←` 返回 APK / AAB，JDK 按 `←` 返回构建模式，可继续逐层返回。返回时保留已填写的 flavor，再次输入时回车沿用。`Esc` / `Ctrl+C`、空选或选择器失败立即停止，不默认选择 APK，也不安装 JDK、写入 Java 配置或开始构建。依赖自检仍在构建计划选择之前进行。
 
 ```shell
 zsh './【MacOS】📦双击打包Flutter.Android.command'
