@@ -37,36 +37,41 @@
   - [【MacOS】📹双击制作Android模拟器录屏Gif.command](#jobs-toc-heading-28)
   - [【MacOS】📹双击制作iOS模拟器录屏Gif.command](#jobs-toc-heading-29)
   - [【MacOS】📦双击打包Flutter.Android.command](#jobs-toc-heading-30)
-  - [【MacOS】📦双击打包Flutter.iOS.command](#jobs-toc-heading-31)
-  - [【MacOS】⬆️Pod\_Update.command](#jobs-toc-heading-32)
-  - [【MacOS】⬆️双击升级Cocoapods.command](#jobs-toc-heading-33)
-  - [【MacOS】⬆️双击升级Flutter.SDK.command](#jobs-toc-heading-34)
-  - [【MacOS】⬆️双击更新CocoaPods本地仓库.command](#jobs-toc-heading-35)
-  - [【MacOS】⬆️双击更新Flutter依赖.command](#jobs-toc-heading-36)
-  - [【MacOS】☀️双击运行Flutter项目（Android 模拟器） .command](#jobs-toc-heading-37)
-  - [【MacOS】☀️双击运行Flutter项目（iOS 模拟器）.command](#jobs-toc-heading-38)
-  - [【MacOS】🎈双击真机运行项目.command](#jobs-toc-heading-39)
-  - [【MacOS】📱双击初始化iOS模拟器.command](#jobs-toc-heading-40)
-  - [【MacOS】📱双击打开已实例化的iOS模拟器.command](#jobs-toc-heading-41)
-  - [【MacOS】🚀双击启动Android模拟器.command](#jobs-toc-heading-42)
-  - [【MacOS】⏬双击配置VSCode.command](#jobs-toc-heading-43)
-  - [【MacOS】💉VSCode配置注入@全局.command](#jobs-toc-heading-44)
-  - [【MacOS】💉VSCode配置注入@当前Flutter项目.command](#jobs-toc-heading-45)
-  - [【MacOS】⏬下载配置系统环境变量.command](#jobs-toc-heading-46)
-  - [【MacOS】⏬双击下载SourceTree效率脚本.command](#jobs-toc-heading-47)
-  - [【MacOS】⚙️Flutter 项目组件预下载.command](#jobs-toc-heading-48)
-  - [【MacOS】⚙️一键配置Flutter项目至运行.command](#jobs-toc-heading-49)
-  - [【MacOS】⚙️一键配置Flutter／鸿蒙项目至运行.command](#jobs-toc-heading-50)
-  - [【MacOS】⚙️下载配置系统环境变量.command](#jobs-toc-heading-51)
-  - [【MacOS】⚙️双击安装FVM.command](#jobs-toc-heading-52)
-  - [【MacOS】⚙️双击安装Flutter.SDK.command](#jobs-toc-heading-53)
-  - [【MacOS】⚙️双击安装（升级）Homebrew.command](#jobs-toc-heading-54)
-  - [【MacOS】⚙️收集当前Flutter工程的依赖.command](#jobs-toc-heading-55)
-  - [【MacOS】⚙️配置Android Studio.command](#jobs-toc-heading-56)
-  - [【MacOS】🎈双击打开系统配置文件.command](#jobs-toc-heading-57)
-  - [【MacOS】⚙️双击安装Cocoapods.command](#jobs-toc-heading-58)
-  - [【MacOS】🧪提取Flutter第三方依赖.command](#jobs-toc-heading-59)
-  - [【MacOS】⏬双击配置VSCode.command](#jobs-toc-heading-60)
+  - [【MacOS】📦双击打包Flutter.Harmony.command](#jobs-toc-heading-31)
+  - [【MacOS】📦双击打包Flutter.iOS.command](#jobs-toc-heading-32)
+  - [【MacOS】⬆️Pod\_Update.command](#jobs-toc-heading-33)
+  - [【MacOS】⬆️双击升级Cocoapods.command](#jobs-toc-heading-34)
+  - [【MacOS】⬆️双击升级Flutter.SDK.command](#jobs-toc-heading-35)
+  - [【MacOS】⬆️双击更新CocoaPods本地仓库.command](#jobs-toc-heading-36)
+  - [【MacOS】⬆️双击更新Flutter依赖.command](#jobs-toc-heading-37)
+  - [【MacOS】☀️双击运行Flutter项目（Android 模拟器） .command](#jobs-toc-heading-38)
+  - [【MacOS】📱双击初始化Android模拟器.command](#jobs-toc-heading-39)
+  - [【MacOS】📱双击初始化鸿蒙模拟器.command](#jobs-toc-heading-40)
+  - [【MacOS】📱双击打开已实例化的鸿蒙模拟器.command](#jobs-toc-heading-41)
+  - [【MacOS】☀️双击运行Flutter项目（鸿蒙模拟器）.command](#jobs-toc-heading-42)
+  - [【MacOS】☀️双击运行Flutter项目（iOS 模拟器）.command](#jobs-toc-heading-43)
+  - [【MacOS】🎈双击真机运行项目.command](#jobs-toc-heading-44)
+  - [【MacOS】📱双击初始化iOS模拟器.command](#jobs-toc-heading-45)
+  - [【MacOS】📱双击打开已实例化的iOS模拟器.command](#jobs-toc-heading-46)
+  - [【MacOS】🚀双击启动Android模拟器.command](#jobs-toc-heading-47)
+  - [【MacOS】⏬双击配置VSCode.command](#jobs-toc-heading-48)
+  - [【MacOS】💉VSCode配置注入@全局.command](#jobs-toc-heading-49)
+  - [【MacOS】💉VSCode配置注入@当前Flutter项目.command](#jobs-toc-heading-50)
+  - [【MacOS】⏬下载配置系统环境变量.command](#jobs-toc-heading-51)
+  - [【MacOS】⏬双击下载SourceTree效率脚本.command](#jobs-toc-heading-52)
+  - [【MacOS】⚙️Flutter 项目组件预下载.command](#jobs-toc-heading-53)
+  - [【MacOS】⚙️一键配置Flutter项目至运行.command](#jobs-toc-heading-54)
+  - [【MacOS】⚙️一键配置Flutter／鸿蒙项目至运行.command](#jobs-toc-heading-55)
+  - [【MacOS】⚙️下载配置系统环境变量.command](#jobs-toc-heading-56)
+  - [【MacOS】⚙️双击安装FVM.command](#jobs-toc-heading-57)
+  - [【MacOS】⚙️双击安装Flutter.SDK.command](#jobs-toc-heading-58)
+  - [【MacOS】⚙️双击安装（升级）Homebrew.command](#jobs-toc-heading-59)
+  - [【MacOS】⚙️收集当前Flutter工程的依赖.command](#jobs-toc-heading-60)
+  - [【MacOS】⚙️配置Android Studio.command](#jobs-toc-heading-61)
+  - [【MacOS】🎈双击打开系统配置文件.command](#jobs-toc-heading-62)
+  - [【MacOS】⚙️双击安装Cocoapods.command](#jobs-toc-heading-63)
+  - [【MacOS】🧪提取Flutter第三方依赖.command](#jobs-toc-heading-64)
+  - [【MacOS】⏬双击配置VSCode.command](#jobs-toc-heading-65)
 
 </details>
 <!-- jobs-toc:end -->
@@ -79,8 +84,8 @@
 
 | 使用系统 | 真实入口 | 功能边界 |
 | --- | --- | --- |
-| [**MacOS**](https://www.apple.com/macos/) | [MacOS/README.md](./MacOS/README.md)，57 个 .command（当前主入口计数，2026-10-23） | 脚本、资源和功能说明同目录；iOS / Xcode / CocoaPods 仅位于此端。 |
-| [**Windows**](https://www.microsoft.com/windows) | [WindowsOS/README.md](./WindowsOS/README.md)，41 个 .ps1 和同名 .cmd | 原生 PowerShell 5.1+ 实现 Flutter / Android / 配置与工具；双击 .cmd，命令行可用 -Plan / -Check。 |
+| [**MacOS**](https://www.apple.com/macos/) | [MacOS/README.md](./MacOS/README.md)，62 个 .command（同名包内主入口，2026-10-29） | 脚本、资源和功能说明同目录；iOS / Xcode / CocoaPods 仅位于此端。 |
+| [**Windows**](https://www.microsoft.com/windows) | [WindowsOS/README.md](./WindowsOS/README.md)，46 个 .ps1 和同名 .cmd | 原生 PowerShell 5.1+ 实现 Flutter / Android / 鸿蒙双包打包 / 配置与工具；双击 .cmd，命令行可用 -Plan / -Check。 |
 
 完整的逐入口对照与 16 个排除项见 [WindowsOS 功能映射](./WindowsOS/功能映射.json)。Windows 不提供 iOS 模拟器、iOS 打包、CocoaPods、Homebrew 或 Gatekeeper 入口。混合流程保留 Android、Web、Windows 缓存与鸿蒙工具链能力，项目缺少平台或 SDK 时明确停止。
 
@@ -117,7 +122,7 @@ MacOS 文件名使用可在 Windows 检出的全角字符；运行时请使用�
 | WindowsOS/配置相关 | [功能说明](<./WindowsOS/配置相关/README.md>) |
 | WindowsOS/运行 | [功能说明](<./WindowsOS/运行/README.md>) |
 | WindowsOS/更新升级 | [功能说明](<./WindowsOS/更新升级/README.md>) |
-| WindowsOS | [双端功能映射与运行说明](./WindowsOS/README.md)；41 个 PowerShell 主入口，不含公共模块与测试（当前目录，2026-10-23） |
+| WindowsOS | [双端功能映射与运行说明](./WindowsOS/README.md)；42 个 PowerShell 主入口，不含公共模块与测试（当前目录，2026-10-28） |
 
 ## 一、<span id="repository-layout">目录结构</span> <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 
@@ -146,7 +151,7 @@ JobsCommand@Flutter/
 
 ## 二、<span id="script-workflows">脚本执行流程</span> <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 
-MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入口。下面保留 MacOS 原功能说明；3 个 Git 通用操作链接到相邻 JobsCommand@Gits 仓库，独立下载本仓时可另行取得。独立子 Git、测试、函数库及打包资源模板不作为用户运行入口。按功能选择入口后核对该包的参数、产物与作用范围。
+MacOS 目录现有 58 个用户入口，WindowsOS 目录对应 42 个用户入口（同名包内主脚本计数，2026-10-28）。下面保留 MacOS 原功能说明；3 个 Git 通用操作链接到相邻 JobsCommand@Gits 仓库，独立下载本仓时可另行取得。独立子 Git、测试、函数库及打包资源模板不作为用户运行入口。按功能选择入口后核对该包的参数、产物与作用范围。
 
 ### <span id="jobs-toc-heading-4" data-jobs-toc="v2">[【MacOS】⚙️Pod_Install.command](<./MacOS/Cocoapods/【MacOS】⚙️Pod_Install.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
@@ -380,7 +385,15 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 检查或选择 JDK，处理 jenv/Android SDK。
 - 执行构建并在失败时输出诊断。
 
-### <span id="jobs-toc-heading-31" data-jobs-toc="v2">[【MacOS】📦双击打包Flutter.iOS.command](<./MacOS/打包相关/【MacOS】📦双击打包Flutter.iOS.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-31" data-jobs-toc="v2">[【MacOS】📦双击打包Flutter.Harmony.command](<./MacOS/打包相关/【MacOS】📦双击打包Flutter.Harmony.command/README.md>)</span><!-- jobs-toc:heading-end -->
+
+> **目的：** 使用已有鸿蒙适配 SDK，一次构建 HAP 安装包与 APP 发布包，默认 release。
+
+- 校验所选 Flutter 鸿蒙工程与两种包型的工具链能力。
+- 依次解析依赖、构建 HAP 与 APP，失败保留退出码并停止，不清理工程或改动签名。
+- 核验两类非空产物并显示日志；Windows 对应入口见[鸿蒙打包说明](<./WindowsOS/打包相关/【WindowsOS】📦双击打包Flutter.Harmony.ps1/README.md>)，真实编译与签名按目标工程验收。
+
+### <span id="jobs-toc-heading-32" data-jobs-toc="v2">[【MacOS】📦双击打包Flutter.iOS.command](<./MacOS/打包相关/【MacOS】📦双击打包Flutter.iOS.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 构建 release IPA 并打开产物目录。
 
@@ -390,7 +403,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 依次 clean、pub get、build ipa --release。
 - 检查 IPA 后打开目录。
 
-### <span id="jobs-toc-heading-32" data-jobs-toc="v2">[【MacOS】⬆️Pod_Update.command](<./MacOS/更新升级/【MacOS】⬆️Pod_Update.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-33" data-jobs-toc="v2">[【MacOS】⬆️Pod_Update.command](<./MacOS/更新升级/【MacOS】⬆️Pod_Update.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 更新目标工程的 Pod 依赖。
 
@@ -398,7 +411,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 按项目类型准备依赖命令和运行目录。
 - 执行 pod update 并显示结果；Podfile.lock 和解析版本可能改变。
 
-### <span id="jobs-toc-heading-33" data-jobs-toc="v2">[【MacOS】⬆️双击升级Cocoapods.command](<./MacOS/更新升级/【MacOS】⬆️双击升级Cocoapods.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-34" data-jobs-toc="v2">[【MacOS】⬆️双击升级Cocoapods.command](<./MacOS/更新升级/【MacOS】⬆️双击升级Cocoapods.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 用 RubyGems 更新 CocoaPods 到远端可用版本。
 
@@ -407,7 +420,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 版本不同时卸载已有 cocoapods Gem 再安装最新版。
 - 刷新环境并显示 pod 路径。
 
-### <span id="jobs-toc-heading-34" data-jobs-toc="v2">[【MacOS】⬆️双击升级Flutter.SDK.command](<./MacOS/更新升级/【MacOS】⬆️双击升级Flutter.SDK.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-35" data-jobs-toc="v2">[【MacOS】⬆️双击升级Flutter.SDK.command](<./MacOS/更新升级/【MacOS】⬆️双击升级Flutter.SDK.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 根据安装来源升级 Flutter SDK。
 
@@ -416,7 +429,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 支持选择 stable、beta、main、master 通道。
 - 按来源执行对应升级。
 
-### <span id="jobs-toc-heading-35" data-jobs-toc="v2">[【MacOS】⬆️双击更新CocoaPods本地仓库.command](<./MacOS/更新升级/【MacOS】⬆️双击更新CocoaPods本地仓库.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-36" data-jobs-toc="v2">[【MacOS】⬆️双击更新CocoaPods本地仓库.command](<./MacOS/更新升级/【MacOS】⬆️双击更新CocoaPods本地仓库.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 刷新 CocoaPods 本地仓库并安装工程依赖。
 
@@ -424,7 +437,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 按提示处理本地 Specs 更新及脚本授权。
 - 执行对应 pod install 流程，检查日志中的更新与安装结果。
 
-### <span id="jobs-toc-heading-36" data-jobs-toc="v2">[【MacOS】⬆️双击更新Flutter依赖.command](<./MacOS/更新升级/【MacOS】⬆️双击更新Flutter依赖.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-37" data-jobs-toc="v2">[【MacOS】⬆️双击更新Flutter依赖.command](<./MacOS/更新升级/【MacOS】⬆️双击更新Flutter依赖.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 选择清空缓存重拉或逐依赖更新 Flutter 包。
 
@@ -432,7 +445,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 通过 fzf 选择清空 hosted/pub.dev 缓存并 pub get，或逐项查询过期依赖、修改约束后 pub get。
 - 展示最后的 outdated 结果。
 
-### <span id="jobs-toc-heading-37" data-jobs-toc="v2">[【MacOS】☀️双击运行Flutter项目（Android 模拟器） .command](<./MacOS/运行/【MacOS】☀️双击运行Flutter项目（Android 模拟器） .command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-38" data-jobs-toc="v2">[【MacOS】☀️双击运行Flutter项目（Android 模拟器） .command](<./MacOS/运行/【MacOS】☀️双击运行Flutter项目（Android 模拟器） .command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 准备 Android 工具链、模拟器并运行 Flutter 项目。
 
@@ -443,7 +456,39 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 按 flavor、模式和 Dart 入口运行。
 - 输出诊断。
 
-### <span id="jobs-toc-heading-38" data-jobs-toc="v2">[【MacOS】☀️双击运行Flutter项目（iOS 模拟器）.command](<./MacOS/运行/【MacOS】☀️双击运行Flutter项目（iOS 模拟器）.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-39" data-jobs-toc="v2">[【MacOS】📱双击初始化Android模拟器.command](<./MacOS/运行/【MacOS】📱双击初始化Android模拟器.command/README.md>)</span><!-- jobs-toc:heading-end -->
+
+> **目的：** 选择设备型号和本机架构匹配的系统映像，创建唯一 AVD 并启动。缺失 SDK / JDK / 命令行工具可按首屏授权补齐，SDK 许可由本人阅读确认；已有设备与健康组件保留。
+
+- 先展示用途、影响和取消方式，回车确认后检查本机工具。
+- 按入口完成初始化、已有设备选择或工程 SDK 与模拟器选择；取消不继续。
+- 显示实际结果与日志位置，保留已有设备和工程配置。
+
+### <span id="jobs-toc-heading-40" data-jobs-toc="v2">[【MacOS】📱双击初始化鸿蒙模拟器.command](<./MacOS/运行/【MacOS】📱双击初始化鸿蒙模拟器.command/README.md>)</span><!-- jobs-toc:heading-end -->
+
+> **目的：** 准备官方 DevEco Emulator 与 Release 系统镜像，选择镜像后创建唯一鸿蒙实例，校验名称、设备类型与版本，再启动。缺工具采用固定 SDL 镜像快照并校验摘要，系统镜像由官方工具下载；许可须本人阅读确认。
+
+- 先展示用途、影响和取消方式，回车确认后检查本机工具。
+- 按入口完成初始化、已有设备选择或工程 SDK 与模拟器选择；取消不继续。
+- 显示实际结果与日志位置，保留已有设备和工程配置。
+
+### <span id="jobs-toc-heading-41" data-jobs-toc="v2">[【MacOS】📱双击打开已实例化的鸿蒙模拟器.command](<./MacOS/运行/【MacOS】📱双击打开已实例化的鸿蒙模拟器.command/README.md>)</span><!-- jobs-toc:heading-end -->
+
+> **目的：** 仅列出并启动已有鸿蒙实例，不下载工具或镜像、不创建设备。空列表明确提示先初始化，取消不启动。
+
+- 先展示用途、影响和取消方式，回车确认后检查本机工具。
+- 按入口完成初始化、已有设备选择或工程 SDK 与模拟器选择；取消不继续。
+- 显示实际结果与日志位置，保留已有设备和工程配置。
+
+### <span id="jobs-toc-heading-42" data-jobs-toc="v2">[【MacOS】☀️双击运行Flutter项目（鸿蒙模拟器）.command](<./MacOS/运行/【MacOS】☀️双击运行Flutter项目（鸿蒙模拟器）.command/README.md>)</span><!-- jobs-toc:heading-end -->
+
+> **目的：** 选择已有鸿蒙实例；缺失时进入初始化，再等待 Flutter 发现受支持的鸿蒙模拟器，选择设备、执行 pub get 和 run。显式 SDK 优先，其次项目 FVM 与 PATH；缺失 FVM 绑定或没有 HAP 能力即停止，不自动换成普通 Flutter。
+
+- 先展示用途、影响和取消方式，回车确认后检查本机工具。
+- 按入口完成初始化、已有设备选择或工程 SDK 与模拟器选择；取消不继续。
+- 显示实际结果与日志位置，保留已有设备和工程配置。
+
+### <span id="jobs-toc-heading-43" data-jobs-toc="v2">[【MacOS】☀️双击运行Flutter项目（iOS 模拟器）.command](<./MacOS/运行/【MacOS】☀️双击运行Flutter项目（iOS 模拟器）.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 选择 iOS 模拟器并运行 Flutter 入口。
 
@@ -454,7 +499,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 选择或创建模拟器。
 - 执行 run，失败时尝试 pod install。
 
-### <span id="jobs-toc-heading-39" data-jobs-toc="v2">[【MacOS】🎈双击真机运行项目.command](<./MacOS/运行/【MacOS】🎈双击真机运行项目.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-44" data-jobs-toc="v2">[【MacOS】🎈双击真机运行项目.command](<./MacOS/运行/【MacOS】🎈双击真机运行项目.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 以 release 模式把 Flutter 工程运行到连接设备。
 
@@ -462,7 +507,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 识别旧格式 .fvm/fvm_config.json 以选择 fvm flutter。
 - 执行 flutter run --release。
 
-### <span id="jobs-toc-heading-40" data-jobs-toc="v2">[【MacOS】📱双击初始化iOS模拟器.command](<./MacOS/运行/【MacOS】📱双击初始化iOS模拟器.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-45" data-jobs-toc="v2">[【MacOS】📱双击初始化iOS模拟器.command](<./MacOS/运行/【MacOS】📱双击初始化iOS模拟器.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 选择系统运行时并创建可用的 iOS 模拟器。
 
@@ -470,14 +515,14 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 选择可用运行时、设备类型与设备名称。
 - 创建并启动模拟器，等待就绪后按提示继续创建或退出。
 
-### <span id="jobs-toc-heading-41" data-jobs-toc="v2">[【MacOS】📱双击打开已实例化的iOS模拟器.command](<./MacOS/运行/【MacOS】📱双击打开已实例化的iOS模拟器.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-46" data-jobs-toc="v2">[【MacOS】📱双击打开已实例化的iOS模拟器.command](<./MacOS/运行/【MacOS】📱双击打开已实例化的iOS模拟器.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 打开系统 iOS Simulator 应用。
 
 - 调用 open -a Simulator。
 - 由 Simulator 恢复当前设备窗口。
 
-### <span id="jobs-toc-heading-42" data-jobs-toc="v2">[【MacOS】🚀双击启动Android模拟器.command](<./MacOS/运行/【MacOS】🚀双击启动Android模拟器.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-47" data-jobs-toc="v2">[【MacOS】🚀双击启动Android模拟器.command](<./MacOS/运行/【MacOS】🚀双击启动Android模拟器.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 选择或创建 Android AVD 并启动。
 
@@ -485,7 +530,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 选择既有 AVD；缺失时按提示创建。
 - 启动模拟器并等待设备可用。
 
-### <span id="jobs-toc-heading-43" data-jobs-toc="v2">[【MacOS】⏬双击配置VSCode.command](<./MacOS/配置相关/【MacOS】⏬双击配置VSCode.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-48" data-jobs-toc="v2">[【MacOS】⏬双击配置VSCode.command](<./MacOS/配置相关/【MacOS】⏬双击配置VSCode.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 下载并替换 Flutter 工程和 VS Code 全局配置。
 
@@ -494,7 +539,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 复制仓库内容并剔除仓库管理文件。
 - 打开目标目录。
 
-### <span id="jobs-toc-heading-44" data-jobs-toc="v2">[【MacOS】💉VSCode配置注入@全局.command](<./MacOS/配置相关/【MacOS】VSCode.command/【MacOS】💉VSCode配置注入%40全局.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-49" data-jobs-toc="v2">[【MacOS】💉VSCode配置注入@全局.command](<./MacOS/配置相关/【MacOS】VSCode.command/【MacOS】💉VSCode配置注入%40全局.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 把预设配置仓库注入 VS Code 全局 User 目录。
 
@@ -503,7 +548,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 去掉 .git 等文件。
 - 打开目录并退出/重新启动 VS Code。
 
-### <span id="jobs-toc-heading-45" data-jobs-toc="v2">[【MacOS】💉VSCode配置注入@当前Flutter项目.command](<./MacOS/配置相关/【MacOS】VSCode.command/【MacOS】💉VSCode配置注入%40当前Flutter项目.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-50" data-jobs-toc="v2">[【MacOS】💉VSCode配置注入@当前Flutter项目.command](<./MacOS/配置相关/【MacOS】VSCode.command/【MacOS】💉VSCode配置注入%40当前Flutter项目.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 把 Flutter 编辑器配置写入脚本所在目录。
 
@@ -511,7 +556,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 克隆 VScodeConfigByFlutter。
 - 复制配置并去掉 Git 管理文件。
 
-### <span id="jobs-toc-heading-46" data-jobs-toc="v2">[【MacOS】⏬下载配置系统环境变量.command](<./MacOS/配置相关/【MacOS】⏬下载配置系统环境变量.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-51" data-jobs-toc="v2">[【MacOS】⏬下载配置系统环境变量.command](<./MacOS/配置相关/【MacOS】⏬下载配置系统环境变量.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 下载预设的 macOS 环境变量配置仓库。
 
@@ -519,7 +564,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 按回答选择删除重建。
 - 克隆源码配置的环境仓库。
 
-### <span id="jobs-toc-heading-47" data-jobs-toc="v2">[【MacOS】⏬双击下载SourceTree效率脚本.command](<./MacOS/配置相关/【MacOS】⏬双击下载SourceTree效率脚本.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-52" data-jobs-toc="v2">[【MacOS】⏬双击下载SourceTree效率脚本.command](<./MacOS/配置相关/【MacOS】⏬双击下载SourceTree效率脚本.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 下载 SourceTree 自定义动作脚本集合。
 
@@ -528,7 +573,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 给其中 .sh 与 .command 添加执行权限。
 - 打开结果目录。
 
-### <span id="jobs-toc-heading-48" data-jobs-toc="v2">[【MacOS】⚙️Flutter 项目组件预下载.command](<./MacOS/配置相关/【MacOS】⚙️Flutter 项目组件预下载.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-53" data-jobs-toc="v2">[【MacOS】⚙️Flutter 项目组件预下载.command](<./MacOS/配置相关/【MacOS】⚙️Flutter 项目组件预下载.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 备份 Flutter 引擎缓存并按平台预下载组件。
 
@@ -537,7 +582,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 以 rsync 备份缓存。
 - 通过 fzf 多选平台执行 precache。
 
-### <span id="jobs-toc-heading-49" data-jobs-toc="v2">[【MacOS】⚙️一键配置Flutter项目至运行.command](<./MacOS/配置相关/【MacOS】⚙️一键配置Flutter项目至运行.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-54" data-jobs-toc="v2">[【MacOS】⚙️一键配置Flutter项目至运行.command](<./MacOS/配置相关/【MacOS】⚙️一键配置Flutter项目至运行.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 为 Apple Silicon 工程准备 FVM 与 VS Code 的直接运行配置。
 
@@ -545,7 +590,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 准备 FVM、选定 Flutter 版本与 iOS 缓存。
 - 备份并写入 VS Code settings / launch 配置，提示重载编辑器后按 F5；脚本本身不启动 App。
 
-### <span id="jobs-toc-heading-50" data-jobs-toc="v2">[【MacOS】⚙️一键配置Flutter／鸿蒙项目至运行.command](<./MacOS/配置相关/【MacOS】⚙️一键配置Flutter／鸿蒙项目至运行.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-55" data-jobs-toc="v2">[【MacOS】⚙️一键配置Flutter／鸿蒙项目至运行.command](<./MacOS/配置相关/【MacOS】⚙️一键配置Flutter／鸿蒙项目至运行.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 为现有 Flutter 工程准备鸿蒙适配 SDK、构建工具和设备，完成配置并按需运行。
 
@@ -555,7 +600,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 保留已有 `ohos/` 与签名；缺平台目录须精确 `YES` 生成，安全合并编辑器环境并解析两侧依赖。
 - 仅选择鸿蒙设备运行；无设备可重新加载或创建，失败保留日志与备份。`--help` / `--check` 不安装、不改工程。
 
-### <span id="jobs-toc-heading-51" data-jobs-toc="v2">[【MacOS】⚙️下载配置系统环境变量.command](<./MacOS/配置相关/【MacOS】⚙️下载配置系统环境变量.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-56" data-jobs-toc="v2">[【MacOS】⚙️下载配置系统环境变量.command](<./MacOS/配置相关/【MacOS】⚙️下载配置系统环境变量.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 下载预设的 macOS 环境变量配置仓库。
 
@@ -563,7 +608,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 按回答选择删除重建。
 - 克隆源码配置的环境仓库。
 
-### <span id="jobs-toc-heading-52" data-jobs-toc="v2">[【MacOS】⚙️双击安装FVM.command](<./MacOS/配置相关/【MacOS】⚙️双击安装FVM.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-57" data-jobs-toc="v2">[【MacOS】⚙️双击安装FVM.command](<./MacOS/配置相关/【MacOS】⚙️双击安装FVM.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 安装 FVM 并为当前 Flutter 项目选择 SDK。
 
@@ -573,7 +618,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 读取项目绑定与可用稳定版本。
 - 执行 fvm install 和 use。
 
-### <span id="jobs-toc-heading-53" data-jobs-toc="v2">[【MacOS】⚙️双击安装Flutter.SDK.command](<./MacOS/配置相关/【MacOS】⚙️双击安装Flutter.SDK.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-58" data-jobs-toc="v2">[【MacOS】⚙️双击安装Flutter.SDK.command](<./MacOS/配置相关/【MacOS】⚙️双击安装Flutter.SDK.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 选择官方包、Homebrew 或 FVM 安装 Flutter SDK。
 
@@ -581,7 +626,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 通过菜单选择官方 SDK 压缩包下载、Homebrew 安装/升级、FVM 安装/绑定。
 - 处理对应环境配置并查看版本。
 
-### <span id="jobs-toc-heading-54" data-jobs-toc="v2">[【MacOS】⚙️双击安装（升级）Homebrew.command](<./MacOS/配置相关/【MacOS】⚙️双击安装（升级）Homebrew.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-59" data-jobs-toc="v2">[【MacOS】⚙️双击安装（升级）Homebrew.command](<./MacOS/配置相关/【MacOS】⚙️双击安装（升级）Homebrew.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 安装 Homebrew 并准备一组开发工具。
 
@@ -591,7 +636,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 可选执行 update、upgrade、cleanup、doctor。
 - 安装源码清单中的命令与 Flutter Cask。
 
-### <span id="jobs-toc-heading-55" data-jobs-toc="v2">[【MacOS】⚙️收集当前Flutter工程的依赖.command](<./MacOS/配置相关/【MacOS】⚙️收集当前Flutter工程的依赖.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-60" data-jobs-toc="v2">[【MacOS】⚙️收集当前Flutter工程的依赖.command](<./MacOS/配置相关/【MacOS】⚙️收集当前Flutter工程的依赖.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 将工程实际解析的 Flutter 和原生依赖整理为可追溯压缩包。
 
@@ -599,7 +644,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 按所选范围读取实际包路径，复制依赖源码及关键工程清单。
 - 写入收集说明并生成桌面 Zip，显示输出位置。
 
-### <span id="jobs-toc-heading-56" data-jobs-toc="v2">[【MacOS】⚙️配置Android Studio.command](<./MacOS/配置相关/【MacOS】⚙️配置Android Studio.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-61" data-jobs-toc="v2">[【MacOS】⚙️配置Android Studio.command](<./MacOS/配置相关/【MacOS】⚙️配置Android Studio.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 安装 Android 命令行工具并创建 API 34 模拟器。
 
@@ -609,7 +654,7 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 创建 Pixel_5_API_34。
 - 通过 fzf 启动 AVD 并等候就绪。
 
-### <span id="jobs-toc-heading-57" data-jobs-toc="v2">[【MacOS】🎈双击打开系统配置文件.command](<./MacOS/配置相关/【MacOS】🎈双击打开系统配置文件.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-62" data-jobs-toc="v2">[【MacOS】🎈双击打开系统配置文件.command](<./MacOS/配置相关/【MacOS】🎈双击打开系统配置文件.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 选择打开并加载已有 Shell 配置。
 
@@ -617,19 +662,19 @@ MacOS 目录现有 57 个用户入口，WindowsOS 目录对应 41 个用户入�
 - 收集 bash_profile、bashrc、zshrc 和 Oh My Zsh 脚本。
 - 多选后逐项 open 与 source。
 
-### <span id="jobs-toc-heading-58" data-jobs-toc="v2">[【MacOS】⚙️双击安装Cocoapods.command](<./MacOS/Cocoapods/【MacOS】⚙️双击安装Cocoapods.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-63" data-jobs-toc="v2">[【MacOS】⚙️双击安装Cocoapods.command](<./MacOS/Cocoapods/【MacOS】⚙️双击安装Cocoapods.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 准备 Ruby 工具链并安装 CocoaPods。
 
 - 具体功能、选项、产物与运行步骤见相邻 README。
 
-### <span id="jobs-toc-heading-59" data-jobs-toc="v2">[【MacOS】🧪提取Flutter第三方依赖.command](<./MacOS/小工具/【MacOS】🧪提取Flutter第三方依赖.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-64" data-jobs-toc="v2">[【MacOS】🧪提取Flutter第三方依赖.command](<./MacOS/小工具/【MacOS】🧪提取Flutter第三方依赖.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 双击同目录的 [【MacOS】🧪提取Flutter第三方依赖.command](<./MacOS/小工具/【MacOS】🧪提取Flutter第三方依赖.command/【MacOS】🧪提取Flutter第三方依赖.command>)，输入或拖入 [**Flutter**](https://flutter.dev/) 项目文件夹，再选择输出父目录。
 
 - 具体功能、选项、产物与运行步骤见相邻 README。
 
-### <span id="jobs-toc-heading-60" data-jobs-toc="v2">[【MacOS】⏬双击配置VSCode.command](<./MacOS/配置相关/【MacOS】VSCode.command/【MacOS】⏬双击配置VSCode.command/README.md>)</span><!-- jobs-toc:heading-end -->
+### <span id="jobs-toc-heading-65" data-jobs-toc="v2">[【MacOS】⏬双击配置VSCode.command](<./MacOS/配置相关/【MacOS】VSCode.command/【MacOS】⏬双击配置VSCode.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
 > **目的：** 下载并替换 Flutter 工程和 VS Code 全局配置。
 

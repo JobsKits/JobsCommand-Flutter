@@ -127,6 +127,12 @@
       "purpose": "选择 APK、AAB 或两者，使用现有 Windows Android 工具链构建并核验产物"
     },
     {
+      "mac": "MacOS/打包相关/【MacOS】📦双击打包Flutter.Harmony.command/【MacOS】📦双击打包Flutter.Harmony.command",
+      "windows": "WindowsOS/打包相关/【WindowsOS】📦双击打包Flutter.Harmony.ps1/【WindowsOS】📦双击打包Flutter.Harmony.ps1",
+      "action": "build-harmony",
+      "purpose": "使用已有鸿蒙 Flutter SDK 同时构建并核验 HAP 和 APP，默认 release，沿用工程签名"
+    },
+    {
       "mac": "MacOS/更新升级/【MacOS】⬆️双击升级Flutter.SDK.command/【MacOS】⬆️双击升级Flutter.SDK.command",
       "windows": "WindowsOS/更新升级/【WindowsOS】⬆️双击升级Flutter.SDK.ps1/【WindowsOS】⬆️双击升级Flutter.SDK.ps1",
       "action": "upgrade",
@@ -245,6 +251,30 @@
       "windows": "WindowsOS/配置相关/【WindowsOS】🎈双击打开系统配置文件.ps1/【WindowsOS】🎈双击打开系统配置文件.ps1",
       "action": "profile",
       "purpose": "使用记事本打开已有当前用户 PowerShell profile，不自动执行未知配置"
+    },
+    {
+      "mac": "MacOS/运行/【MacOS】📱双击初始化Android模拟器.command/【MacOS】📱双击初始化Android模拟器.command",
+      "windows": "WindowsOS/运行/【WindowsOS】📱双击初始化Android模拟器.ps1/【WindowsOS】📱双击初始化Android模拟器.ps1",
+      "action": "androidcreate",
+      "purpose": "选择设备型号和本机架构匹配的系统映像，创建唯一 AVD 并启动。缺失 SDK / JDK / 命令行工具可按首屏授权补齐，SDK 许可由本人阅读确认；已有设备与健康组件保留。"
+    },
+    {
+      "mac": "MacOS/运行/【MacOS】📱双击初始化鸿蒙模拟器.command/【MacOS】📱双击初始化鸿蒙模拟器.command",
+      "windows": "WindowsOS/运行/【WindowsOS】📱双击初始化鸿蒙模拟器.ps1/【WindowsOS】📱双击初始化鸿蒙模拟器.ps1",
+      "action": "harmonycreate",
+      "purpose": "准备官方 DevEco Emulator 与 Release 系统镜像，选择镜像后创建唯一鸿蒙实例，校验名称、设备类型与版本，再启动。缺工具采用固定 SDL 镜像快照并校验摘要，系统镜像由官方工具下载；许可须本人阅读确认。"
+    },
+    {
+      "mac": "MacOS/运行/【MacOS】📱双击打开已实例化的鸿蒙模拟器.command/【MacOS】📱双击打开已实例化的鸿蒙模拟器.command",
+      "windows": "WindowsOS/运行/【WindowsOS】📱双击打开已实例化的鸿蒙模拟器.ps1/【WindowsOS】📱双击打开已实例化的鸿蒙模拟器.ps1",
+      "action": "harmonyopen",
+      "purpose": "仅列出并启动已有鸿蒙实例，不下载工具或镜像、不创建设备。空列表明确提示先初始化，取消不启动。"
+    },
+    {
+      "mac": "MacOS/运行/【MacOS】☀️双击运行Flutter项目（鸿蒙模拟器）.command/【MacOS】☀️双击运行Flutter项目（鸿蒙模拟器）.command",
+      "windows": "WindowsOS/运行/【WindowsOS】☀️双击运行Flutter项目（鸿蒙模拟器）.ps1/【WindowsOS】☀️双击运行Flutter项目（鸿蒙模拟器）.ps1",
+      "action": "harmonyrun",
+      "purpose": "选择已有鸿蒙实例；缺失时进入初始化，再等待 Flutter 发现受支持的鸿蒙模拟器，选择设备、执行 pub get 和 run。显式 SDK 优先，其次项目 FVM 与 PATH；缺失 FVM 绑定或没有 HAP 能力即停止，不自动换成普通 Flutter。"
     }
   ],
   "excluded": [

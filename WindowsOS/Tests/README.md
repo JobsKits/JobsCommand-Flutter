@@ -28,7 +28,23 @@ powershell.exe `
   -File .\Portable.Tests.ps1
 ```
 
-使用 `-SkipEntrypoints` 只运行模块夹具；默认还启动独立 PowerShell 进程验证功能映射清单中的 41 个入口各自的 `-Plan` 和 `-Check`。执行策略参数只作用于本次测试进程，不修改用户或机器策略。
+使用 `-SkipEntrypoints` 只运行模块夹具；默认还启动独立 PowerShell 进程验证功能映射清单中的 46 个入口各自的 `-Plan` 和 `-Check`。执行策略参数只作用于本次测试进程，不修改用户或机器策略。
+
+鸿蒙双产物业务隔离验证：
+
+```powershell
+powershell.exe `
+  -NoLogo `
+  -NoProfile `
+  -ExecutionPolicy Bypass `
+  -File .\HarmonyBuild.Tests.ps1
+```
+
+覆盖 HAP + APP 的命令顺序、缺 APP 能力停止、依赖或任一构建失败短路、缺失 / 空产物、SDK 路径 / FVM 边界及环境恢复；所有工具均由夹具替代，不执行真实 Flutter 或 DevEco。
+
+`SimulatorEntries.Tests.ps1` 使用内存替身验证鸿蒙模拟器筛选、空列表停止、唯一新实例、已有实例与取消路径；不会调用真实 Emulator。
+
+`Bootstrap.Tests.ps1` 使用临时 SDK 与下载 / 解压替身验证安装目录返回值、首次初始化的进程 PATH、已有 Dart 复用和取消路径；不访问网络，也不安装真实 SDK。运行方式与上例一致，将文件名替换为 `Bootstrap.Tests.ps1`。
 
 ## 二、<span id="scope">范围</span> <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 

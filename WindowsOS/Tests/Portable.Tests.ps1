@@ -88,7 +88,7 @@ try {
         }
     } $fixture $counter
     $map=Get-Content -LiteralPath (Join-Path $root '功能映射.json') -Raw -Encoding UTF8|ConvertFrom-Json
-    Assert-Equal $map.entries.Count 41 'Windows 映射数'
+    Assert-Equal $map.entries.Count 46 'Windows 映射数'
     Assert-Equal $map.excluded.Count 16 'Mac 专用排除数'
     foreach($entry in $map.entries){
         $path=Join-Path (Split-Path -Parent $root) $entry.windows

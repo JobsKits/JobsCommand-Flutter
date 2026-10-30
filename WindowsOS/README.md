@@ -21,13 +21,15 @@
 
 ## <span id="jobs-toc-heading-1" data-jobs-toc="v2">一、运行与交付</span><!-- jobs-toc:heading-end -->
 
-此目录包含 41 个 Windows 原生 PowerShell 入口，每个配套同名 .cmd。双击 .cmd 后先读内置自述，回车继续，其它输入取消。使用 Windows PowerShell 5.1 或更新版本；.ps1 / .psm1 为 UTF-8 BOM，中文在 5.1 中可正确读取。.cmd 的 ExecutionPolicy Bypass 只作用于本次进程，不永久修改系统策略。
+此目录包含 46 个 Windows 原生 PowerShell 入口，每个配套同名 .cmd。双击 .cmd 后先读内置自述，回车继续，其它输入取消。使用 Windows PowerShell 5.1 或更新版本；.ps1 / .psm1 为 UTF-8 BOM，中文在 5.1 中可正确读取。.cmd 的 ExecutionPolicy Bypass 只作用于本次进程，不永久修改系统策略。
 
 CMD 入口先关闭继承的延迟展开，保留路径和参数中的 `!`；企业组策略仍优先。
 
 分发时保留完整 WindowsOS 目录，脚本按自身位置寻找 Scripts/FlutterTools.psm1，不依赖其它仓库或 OS@Extension 的运行文件。路径含空格、中文时用引号；批处理工具参数含 cmd 特殊字符时安全停止。失败返回非零退出码。
 
 命令行提供 -Plan（仅展示功能）和 -Check（只核对入口资源与可选路径），均不调用 SDK、不联网、不安装、不清理。-Check 不表示 Android 工具链或真实设备已通过诊断。
+
+新增运行入口见 [运行目录](./运行/README.md)：Android 初始化、鸿蒙初始化、已有鸿蒙实例打开、Flutter 鸿蒙模拟器运行。四个新包各携带本地 Scripts，可单独复制。
 
 ## <span id="jobs-toc-heading-2" data-jobs-toc="v2">二、参数与平台行为</span><!-- jobs-toc:heading-end -->
 
@@ -43,6 +45,8 @@ Android 工具准备会使用 Google Android SDK 官方仓库与 Adoptium 官方
 Flutter SDK 安装读取官方 Windows 稳定发布清单、按 SHA-256 校验，拒绝覆盖已有 SDK。FVM 安装通过 pub.dev；绑定版本的 SDK 缺失时停止，避免悄悄换全局 Flutter。预下载只启用 Android / Web / Windows。Android 打包验证 APK / AAB 产物；真机运行只列 Android。
 
 鸿蒙运行要求已有 ohos 平台、鸿蒙适配 Flutter SDK（可用 FLUTTER_OHOS_SDK）和 DevEco 工具链。它不自动下载鸿蒙 SDK 或接受签名许可；-Mode Create 可调用已存在 DevEco 与本地 Release 镜像创建鸿蒙模拟器，条款由本人确认。namespace 修复只修改所选工程 Android app 或本地 Flutter 插件的 Android Gradle，第三方 Pub 缓存不属于本入口的修改范围。清理入口只清所选工程；其它 SDK / Pub / Gradle 全局缓存不自动清除。
+
+鸿蒙打包入口一次同时执行 HAP 与 APP 构建，默认 release，必须同时核验两种非空产物才完成；支持 `-HarmonyFlutterSdkPath`、`-Mode debug/profile`。`OHOS_BUILD_TARGET` 不改变双产物约定，签名沿用工程配置；未签名与缓存产物明确标记。工具环境仅作用于本进程及子进程，结束后恢复。详情见 [鸿蒙打包说明](<./打包相关/【WindowsOS】📦双击打包Flutter.Harmony.ps1/README.md>)。
 
 ## <span id="jobs-toc-heading-3" data-jobs-toc="v2">三、逐功能映射</span><!-- jobs-toc:heading-end -->
 
@@ -69,6 +73,7 @@ Flutter SDK 安装读取官方 Windows 稳定发布清单、按 SHA-256 校验�
 | [【MacOS】🧹Flutter清理维护工具.command](<../MacOS/小工具/【MacOS】🧹Flutter清理维护工具.command/【MacOS】🧹Flutter清理维护工具.command>) | [【WindowsOS】🧹Flutter清理维护工具.ps1](<./小工具/【WindowsOS】🧹Flutter清理维护工具.ps1/【WindowsOS】🧹Flutter清理维护工具.ps1>) | 确认 CLEAN 后执行本工程 flutter clean 与 pub get |
 | [【MacOS】📹双击制作Android模拟器录屏Gif.command](<../MacOS/屏幕录制/【MacOS】📹双击制作Android模拟器录屏Gif.command/【MacOS】📹双击制作Android模拟器录屏Gif.command>) | [【WindowsOS】📹双击制作Android模拟器录屏Gif.ps1](<./屏幕录制/【WindowsOS】📹双击制作Android模拟器录屏Gif.ps1/【WindowsOS】📹双击制作Android模拟器录屏Gif.ps1>) | 通过 adb 录制指定 Android 设备并由 ffmpeg 转 GIF |
 | [【MacOS】📦双击打包Flutter.Android.command](<../MacOS/打包相关/【MacOS】📦双击打包Flutter.Android.command/【MacOS】📦双击打包Flutter.Android.command>) | [【WindowsOS】📦双击打包Flutter.Android.ps1](<./打包相关/【WindowsOS】📦双击打包Flutter.Android.ps1/【WindowsOS】📦双击打包Flutter.Android.ps1>) | 选择 APK、AAB 或两者，使用现有 Windows Android 工具链构建并核验产物 |
+| [【MacOS】📦双击打包Flutter.Harmony.command](<../MacOS/打包相关/【MacOS】📦双击打包Flutter.Harmony.command/【MacOS】📦双击打包Flutter.Harmony.command>) | [【WindowsOS】📦双击打包Flutter.Harmony.ps1](<./打包相关/【WindowsOS】📦双击打包Flutter.Harmony.ps1/【WindowsOS】📦双击打包Flutter.Harmony.ps1>) | 一次同时构建并核验 HAP 和 APP，默认 release，沿用工程签名 |
 | [【MacOS】⬆️双击升级Flutter.SDK.command](<../MacOS/更新升级/【MacOS】⬆️双击升级Flutter.SDK.command/【MacOS】⬆️双击升级Flutter.SDK.command>) | [【WindowsOS】⬆️双击升级Flutter.SDK.ps1](<./更新升级/【WindowsOS】⬆️双击升级Flutter.SDK.ps1/【WindowsOS】⬆️双击升级Flutter.SDK.ps1>) | 升级当前工程选中的 Flutter SDK |
 | [【MacOS】⬆️双击更新Flutter依赖.command](<../MacOS/更新升级/【MacOS】⬆️双击更新Flutter依赖.command/【MacOS】⬆️双击更新Flutter依赖.command>) | [【WindowsOS】⬆️双击更新Flutter依赖.ps1](<./更新升级/【WindowsOS】⬆️双击更新Flutter依赖.ps1/【WindowsOS】⬆️双击更新Flutter依赖.ps1>) | 升级工程约束允许的依赖并更新锁文件 |
 | [【MacOS】☀️双击运行Flutter项目（Android 模拟器） .command](<../MacOS/运行/【MacOS】☀️双击运行Flutter项目（Android 模拟器） .command/【MacOS】☀️双击运行Flutter项目（Android 模拟器） .command>) | [【WindowsOS】☀️双击运行Flutter项目（Android 模拟器） .ps1](<./运行/【WindowsOS】☀️双击运行Flutter项目（Android 模拟器） .ps1/【WindowsOS】☀️双击运行Flutter项目（Android 模拟器） .ps1>) | 启动所选 AVD 后选择 Android 设备运行 Flutter 工程 |
@@ -121,6 +126,6 @@ Flutter SDK 安装读取官方 Windows 稳定发布清单、按 SHA-256 校验�
 
 ## <span id="jobs-toc-heading-6" data-jobs-toc="v2">六、验证与限制</span><!-- jobs-toc:heading-end -->
 
-PowerShell 全树语法解析和 Tests/Portable.Tests.ps1 的临时夹具、全部 41 个入口 Plan / Check 已验证；包括中文与空格路径、FVM 缺失停止、URI 编码幂等、配置保留、namespace 不覆盖、依赖 ZIP、原生命令非零失败。MacOS 原脚本与现有资源的移动前后字节核对另行执行。
+PowerShell 全树语法解析和 Tests/Portable.Tests.ps1 的临时夹具、全部 46 个入口 Plan / Check 可验证；包括中文与空格路径、FVM 缺失停止、URI 编码幂等、配置保留、namespace 不覆盖、依赖 ZIP、原生命令非零失败。Tests/HarmonyBuild.Tests.ps1 额外隔离验证双产物命令顺序、能力缺失、任一构建失败、空产物与环境恢复。MacOS 原脚本与现有资源的移动前后字节核对另行执行。
 
 验证未进行真实网络下载、安装、用户环境写入、缓存清理、设备运行或构建；Windows PowerShell 5.1 与 Windows 实机尚需目标机验收。运行测试见 [Tests/README.md](./Tests/README.md)。

@@ -3,6 +3,7 @@
 # 功能以 Windows 原生命令实现；入口自述确认、日志、精确备份统一在此编排。
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'SimulatorSessions.ps1')
 
 function Write-JobsMessage {
     param([string]$Message)
@@ -218,6 +219,7 @@ function Install-JobsFlutterSdk {
         [void][IO.Directory]::CreateDirectory($Destination)
         Move-Item -LiteralPath (Join-Path $stage 'unpacked/flutter') -Destination $sdk
         Write-JobsMessage ('安装完成，将此目录加入用户 Path：' + (Join-Path $sdk 'bin'))
+        return $sdk
     } finally { if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force } }
 }
 function Initialize-JobsFlutterBootstrap {
@@ -414,12 +416,15 @@ function Invoke-JobsTask {
     [CmdletBinding()]
     param([string]$Action, [string]$Title, [hashtable]$Options)
     Write-Host ('=== ' + $Title + ' ===') -ForegroundColor Red
-    Write-Host '范围：Windows Flutter / Android / 当前用户配置；写操作会改变所选工程或工具缓存。先核对目标，Ctrl+C 可取消。'
+    Write-Host '范围：Windows Flutter / Android / HarmonyOS / 当前用户配置；写操作会改变所选工程或工具缓存。先核对目标，Ctrl+C 可取消。'
     Write-Host '使用 -Plan 仅展示入口；-Check 仅检查路径与功能包；执行命令使用独立 argv，不拼接或 eval 用户输入。'
     if ($Options.Plan) { Write-Host ('计划：' + $Action + '；目标：' + $Options.TargetPath); return }
     if ($Options.Check) {
         if ($Options.TargetPath) { [void](Resolve-JobsDirectory $Options.TargetPath) }
-        foreach ($name in @('Doctor','Codegen','Packager','Android','Harmony')) {
+        $requiredFeatures = @('Doctor','Codegen','Packager','Android','Harmony')
+        if ($Action -eq 'androidcreate') { $requiredFeatures = @('Android') }
+        if ($Action -in @('harmonycreate','harmonyopen','harmonyrun')) { $requiredFeatures = @('Harmony','Packager') }
+        foreach ($name in $requiredFeatures) {
             if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot ('Features/' + $name + '/Action.psm1')))) { throw ('功能包缺失：' + $name) }
         }
         Write-Host '入口与随包模块完整；未启动 SDK、联网、安装或修改配置。'; return
@@ -432,17 +437,29 @@ function Invoke-JobsTask {
     Start-Transcript -LiteralPath $log | Out-Null
     $originalPath=$env:PATH
     try {
-        $projectActions = @('postclone','imports','uri','doctor','codegen','outdated','namespace','dependencies','clean','assets','androidrun','physicalrun','build','upgrade','pubupgrade','precache','setup','harmony','fvm','extractsources','vscode','vscodeproject')
+        $projectActions = @('postclone','imports','uri','doctor','codegen','outdated','namespace','dependencies','clean','assets','androidrun','physicalrun','build','build-harmony','harmonyrun','upgrade','pubupgrade','precache','setup','harmony','fvm','extractsources','vscode','vscodeproject')
         $root = ''
         if ($Action -in $projectActions) { $root = Resolve-JobsProject $Options.TargetPath }
         switch ($Action) {
             'doctor' { $module=Import-JobsFeature 'Doctor'; & $module { param($p) Invoke-JobsFlutterDoctorAction $p } $root }
             'codegen' { $module=Import-JobsFeature 'Codegen'; & $module { param($p) Invoke-JobsFlutterCodegenAction $p } $root }
             'androidprepare' { Invoke-JobsAndroidPrepare }
+            'androidcreate' { Invoke-JobsAndroidPrepare -Create }
+            'harmonycreate' { [void](Start-JobsHarmonySimulator -Create) }
+            'harmonyopen' { [void](Start-JobsHarmonySimulator -ExistingOnly) }
+            'harmonyrun' { Invoke-JobsHarmonySimulatorRun -Project $root -FlutterSdk $Options.HarmonyFlutterSdkPath -Log $log }
             'androidstart' { if ($Options.Mode -eq 'Create') { Invoke-JobsAndroidPrepare -Create } else { [void](Start-JobsAndroid $Options.Device) } }
             'androidrun' { [void](Start-JobsAndroid $Options.Device); Start-JobsFlutterProject $root 'emulator' '' }
             'physicalrun' { Start-JobsFlutterProject $root 'physical' $Options.Device }
             'build' { $module=Import-JobsFeature 'Packager'; $type=Select-JobsItem 'Android 产物' @('apk','appbundle','all'); & $module { param($p,$t,$l) $script:PackagerLog=$l; Invoke-JobsPackagerBuild -Project $p -Type $t } $root $type $log }
+            'build-harmony' {
+                $module = Import-JobsFeature 'Packager'
+                & $module {
+                    param($p, $sdk, $mode, $l)
+                    $script:PackagerLog = $l
+                    Invoke-JobsPackagerHarmonyBuild -Project $p -Type 'all' -Mode $mode -FlutterSdk $sdk
+                } $root $Options.HarmonyFlutterSdkPath $Options.Mode $log
+            }
             'upgrade' { Confirm-JobsChange '升级当前项目选中的 Flutter SDK，可能影响共用该版本的工程。'; Invoke-JobsFlutter $root @('upgrade') }
             'pubupgrade' { Confirm-JobsChange '升级项目允许范围内的依赖并更新 pubspec.lock。'; Invoke-JobsFlutter $root @('pub','upgrade') }
             'outdated' { Invoke-JobsFlutter $root @('pub','outdated') }

@@ -25,6 +25,7 @@
 | 功能说明 | 当前覆盖 |
 | --- | --- |
 | [【WindowsOS】📦双击打包Flutter.Android.ps1](<./【WindowsOS】📦双击打包Flutter.Android.ps1/README.md>) | 选择 APK、AAB 或两者，使用现有 [**Windows**](https://www.microsoft.com/windows) [**Android**](https://developer.android.com) 工具链构建并核验产物 |
+| [【WindowsOS】📦双击打包Flutter.Harmony.ps1](<./【WindowsOS】📦双击打包Flutter.Harmony.ps1/README.md>) | 一次同时构建 HAP 和 APP，默认 release；核验工具链、签名状态提示和两种非空产物，保留日志 |
 
 ## <span id="jobs-toc-heading-3" data-jobs-toc="v2">二、运行与作用范围 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a></span><!-- jobs-toc:heading-end -->
 

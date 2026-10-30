@@ -30,6 +30,8 @@
 | 更新升级 | [查看当前能力](<./更新升级/README.md>) |
 | Cocoapods | [查看当前能力](./Cocoapods/README.md) |
 
+运行目录包含独立 Android 初始化、鸿蒙初始化、已有鸿蒙实例打开与 Flutter 鸿蒙模拟器运行入口；完整功能包可单独复制，后端随包携带。
+
 ## <span id="jobs-toc-heading-2" data-jobs-toc="v2">二、平台边界与风险 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a></span><!-- jobs-toc:heading-end -->
 
 需要 macOS 对应开发工具；iOS 模拟器、Xcode、CocoaPods、Homebrew 与 Gatekeeper 脚本保留在本端。脚本会先显示内置自述；按其确认提示决定是否继续。不同入口可能安装工具、下载依赖、修改项目配置、清理产物或启动设备，日志位置以该脚本实际输出为准。

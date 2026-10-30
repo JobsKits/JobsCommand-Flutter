@@ -26,6 +26,7 @@
 | --- | --- |
 | [【MacOS】📦双击打包Flutter.Android.command](<./【MacOS】📦双击打包Flutter.Android.command/README.md>) | 交互构建 [**Flutter**](https://flutter.dev/) 的 [**Android**](https://developer.android.com) 产物 |
 | [【MacOS】📦双击打包Flutter.iOS.command](<./【MacOS】📦双击打包Flutter.iOS.command/README.md>) | 构建 release IPA 并打开产物目录 |
+| [【MacOS】📦双击打包Flutter.Harmony.command](<./【MacOS】📦双击打包Flutter.Harmony.command/README.md>) | 一次构建鸿蒙 HAP 安装包与 APP 发布包，默认 release，逐步核验产物 |
 
 ## <span id="jobs-toc-heading-3" data-jobs-toc="v2">二、运行与作用范围 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a></span><!-- jobs-toc:heading-end -->
 
