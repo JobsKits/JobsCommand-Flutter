@@ -1,4 +1,6 @@
 #!/bin/zsh
+
+
 # 脚本自述：
 # - 脚本名称：【MacOS】🧹Flutter清理维护工具.command
 # - 核心用途：执行“🧹Flutter清理维护工具”对应的移动端项目自动化任务。
@@ -12,6 +14,74 @@
 # 仅渲染自述：标题红色加粗，编号正文蓝色常规字重；非彩色终端输出纯文本。
 # >>> Jobs Homebrew install choice >>>
 # 输出安装诊断，避免混入返回的命令路径。
+# JOBS_FLUTTER_NETWORK_ADAPTER_BEGIN
+# 捕获真实入口参数；后续切换工程目录不影响随包模块定位。
+JOBS_FLUTTER_NETWORK_ENTRY_FILE=$0
+JOBS_FLUTTER_NETWORK_ENTRY_BASE=$PWD
+JOBS_FLUTTER_NETWORK_TASK_CACHE=
+JOBS_FLUTTER_NETWORK_TASK_LOG=
+# 只把SDK命令交给随包子进程，不把代理或源写回当前Shell。
+jobs_flutter_sdk_command() {
+    local entry=$JOBS_FLUTTER_NETWORK_ENTRY_FILE link= directory= adapter= network= count=0
+    case "$entry" in
+        /*) ;;
+        *) entry=$JOBS_FLUTTER_NETWORK_ENTRY_BASE/$entry ;;
+    esac
+    while [ -L "$entry" ]; do
+        count=$((count + 1))
+        [ "$count" -lt 40 ] || return 1
+        link=$(readlink "$entry") || return 1
+        case "$link" in
+            /*) entry=$link ;;
+            *) entry=$(dirname -- "$entry")/$link ;;
+        esac
+    done
+    directory=$(CDPATH= cd -P -- "$(dirname -- "$entry")" && pwd) || return 1
+    adapter=$directory/Scripts/【MacOS】FlutterSDK命令适配.sh/【MacOS】FlutterSDK命令适配.sh
+    network=$directory/Scripts/【MacOS】FlutterSDK网络选路.zsh/【MacOS】FlutterSDK网络选路.zsh
+    [ -f "$adapter" ] && [ -f "$network" ] || {
+        printf '%s\n' '✖ 缺少随包SDK网络资源；请保留入口旁完整Scripts目录。' >&2
+        return 1
+    }
+    if [ -z "$JOBS_FLUTTER_NETWORK_TASK_CACHE" ]; then
+        JOBS_FLUTTER_NETWORK_TASK_CACHE=$(/bin/zsh "$network" --cache-dir) || return $?
+        JOBS_FLUTTER_NETWORK_TASK_LOG=$JOBS_FLUTTER_NETWORK_TASK_CACHE/entry-network.log
+    fi
+    JOBS_FLUTTER_ROUTE_CACHE_DIR="$JOBS_FLUTTER_NETWORK_TASK_CACHE" \
+    JOBS_FLUTTER_ROUTE_LOG="$JOBS_FLUTTER_NETWORK_TASK_LOG" \
+        /bin/sh "$adapter" "$@"
+}
+# 既有选择值仅接受原来的两个Flutter执行器，不eval用户字符串。
+jobs_flutter_sdk_selected() {
+    local selected=$1
+    shift
+    case "$selected" in
+        'fvm flutter') jobs_flutter_sdk_command fvm flutter "$@" ;;
+        flutter) jobs_flutter_sdk_command flutter "$@" ;;
+        *) printf '%s\n' '✖ 未识别原Flutter执行器，未执行任何SDK或业务。' >&2; return 2 ;;
+    esac
+}
+# 先准备选定SDK；原非SDK业务失败回退保留，不让SDK重试循环重做业务。
+jobs_command_flutter_once() {
+  local -a preferred=(flutter)
+  local use_fvm=0 result=0
+  if [[ -x .fvm/flutter_sdk/bin/flutter ]]; then
+    preferred=("$PWD/.fvm/flutter_sdk/bin/flutter")
+    use_fvm=1
+  elif [[ -f .fvmrc || -f .fvm/fvm_config.json ]]; then
+    command -v fvm >/dev/null 2>&1 || { print -u2 '✖ 项目已固定FVM SDK，但fvm不可用。'; return 127; }
+    preferred=(fvm flutter)
+    use_fvm=1
+  fi
+  jobs_flutter_sdk_command "${preferred[@]}" --version >/dev/null || return $?
+  jobs_flutter_sdk_command "${preferred[@]}" "$@" || result=$?
+  (( result != 0 && use_fvm == 1 )) || return "$result"
+  case "$result" in 129|130|131|137|143) return "$result" ;; esac
+  jobs_flutter_sdk_command flutter --version >/dev/null || return $?
+  jobs_flutter_sdk_command flutter "$@"
+}
+# JOBS_FLUTTER_NETWORK_ADAPTER_END
+
 jobs_brew_note() {
   print -u2 -r -- "ℹ $*"
 }
@@ -553,7 +623,7 @@ run_original_logic() {
             success_echo "✅ Android 缓存已清除"
             ;;
           *依赖缓存*)
-            fvm flutter pub cache repair || flutter pub cache repair
+            jobs_command_flutter_once pub cache repair || return $?
             success_echo "✅ Flutter 依赖缓存已修复"
             ;;
           *加载\ Flutter\ 项目*)
@@ -607,12 +677,12 @@ run_original_logic() {
       success_echo "▶️ 执行中：$CHOICE"
 
       case "$CHOICE" in
-          *刷新依赖*) fvm flutter pub get || flutter pub get ;;
+          *刷新依赖*) jobs_command_flutter_once pub get || return $? ;;
           *项目清理*)
-            fvm flutter clean || flutter clean
+            jobs_command_flutter_once clean || return $?
             rm -rf .idea .dart_tool
-            fvm flutter pub get || flutter pub get
-            fvm flutter pub upgrade --major-versions || flutter pub upgrade --major-versions
+            jobs_command_flutter_once pub get || return $?
+            jobs_command_flutter_once pub upgrade --major-versions || return $?
             success_echo "✅ 项目清理完成"
             ;;
           *Flutter\ 缓存*)

@@ -20,6 +20,19 @@ spec = importlib.util.spec_from_file_location('harmony_config', ROOT / 'Scripts/
 config = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(config)
 
+# Generated projects own copied helpers. Keep the real adapter/retry wrappers and
+# intercept only their network boundary in existing business/configuration tests.
+_original_project_runtime = config.project_runtime
+
+
+def project_runtime_offline_fixture(root, *args):
+    _original_project_runtime(root, *args)
+    core = Path(root) / '.jobs-flutter/【MacOS】FlutterSDK网络选路.zsh/【MacOS】FlutterSDK网络选路.zsh'
+    core.write_text(core.read_text() + '\njobs_flutter_route_prepare() { return 0; }\n')
+
+
+config.project_runtime = project_runtime_offline_fixture
+
 
 class HarmonySetupTests(unittest.TestCase):
     def setUp(self):
@@ -46,6 +59,9 @@ class HarmonySetupTests(unittest.TestCase):
         return (source + '\nSCRIPT_DIR=' + shlex.quote(str(ROOT)) + '\n'
                 'source "$SCRIPT_DIR/Scripts/harmony_workflow.zsh"\n'
                 'JOBS_PYTHON_BIN="$TEST_PYTHON"\n'
+                 'jobs_command_sdk() { shift 3; "$@"; }\n'
+                 'jobs_command_sdk_platform() { return 0; }\n'
+                 'jobs_command_fvm_runtime() { return 0; }\n'
                 'setopt NO_NOMATCH PIPE_FAIL EXTENDED_GLOB\n')
 
     def assert_no_injection(self):
@@ -266,7 +282,7 @@ print -r -- "$JOBS_SDK_FAMILY/$JOBS_INSTALL_MODE"
 
     def test_runtime_environment_and_launcher_quote_untrusted_paths(self):
         sdk = self.base / "SDK ' $(touch INJECTED) `touch BACKTICK`"
-        self.fake_executable(sdk / 'bin/flutter', 'print -rl -- "$PWD" "$@" "$TOOL_HOME" "$JAVA_HOME"\n')
+        self.fake_executable(sdk / 'bin/flutter', 'if [[ "$1" == precache && "$2" == --help ]]; then print -- --ohos; exit 0; fi\nprint -rl -- "$PWD" "$@" "$TOOL_HOME" "$JAVA_HOME"\n')
         (self.project / '.fvm').mkdir()
         (self.project / '.fvm/flutter_sdk').symlink_to(sdk)
         tool = self.base / "工具 ' $(touch INJECTED) `touch BACKTICK`"

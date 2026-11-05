@@ -99,6 +99,7 @@ jobs_run_harmony_run() {
   SCRIPT_BASENAME="${JOBS_ENTRY_SOURCE:t:r}"
   initialize_script_runtime || return $?
   choose_flutter_sdk || return $?
+  jobs_command_sdk 'Flutter / Dart 初始化' "${FLUTTER_CMD[1]:A:h:h}" "" "${FLUTTER_CMD[@]}" --version || return $?
   if ! jobs_harmony_query "$LOG_FILE.hap-help" 60 "${FLUTTER_CMD[@]}" build hap --help; then
     hs_error "当前 Flutter SDK 未确认支持 HAP；不替换工程 SDK。诊断：$LOG_FILE.hap-help"; return 1
   fi
@@ -113,6 +114,7 @@ jobs_run_harmony_run() {
   trap '[[ -z "$JOBS_QUERY_PID" ]] || jobs_harmony_stop_query "$JOBS_QUERY_PID"; exit 130' INT TERM HUP
   cd "$PROJECT_ROOT" || return 1
   jobs_harmony_wait_device || return $?
+  jobs_command_sdk_platform "${FLUTTER_CMD[1]:A:h:h}" "" "${FLUTTER_CMD[1]}" ohos || return $?
   run_step 'Flutter 解析依赖' "${FLUTTER_CMD[@]}" pub get || return $?
   run_step 'Flutter 运行到鸿蒙模拟器' "${FLUTTER_CMD[@]}" run -d "$JOBS_HARMONY_DEVICE"
 }
@@ -133,7 +135,7 @@ jobs_run_harmony_intro() {
   jobs_entry_intro_line title '运行 Flutter 项目（鸿蒙模拟器）'
   jobs_entry_intro_line body '1、选择已有鸿蒙模拟器；没有时初始化。下载、创建与许可逐项确认，保留既有实例。'
   jobs_entry_intro_line body '2、使用工程适配的鸿蒙 Flutter SDK，核验 HAP 能力；缺失 FVM 绑定停止，不替换全局 SDK。'
-  jobs_entry_intro_line body '3、解析依赖并生成工程构建缓存；不改代理和签名；日志位于临时目录 JobsFlutterHarmonyPackager.*。'
+  jobs_entry_intro_line body '3、SDK 下载前自动检测网络，仅本次进程选路；失败持续重试至成功或 Ctrl+C。随后解析依赖并运行；不改系统代理与签名。'
   jobs_entry_intro_line body '4、fzf 选择，Esc / Ctrl+C 取消；--check 仅校验工程清单，不调用 SDK。'
   [[ "${1:-}" != --check && "${1:-}" != --help && "${1:-}" != -h ]] || return 0
   [[ -t 0 ]] || { print -u2 '需要交互终端；只读检查用 --check --project。'; exit 1; }

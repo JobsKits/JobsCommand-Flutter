@@ -1,4 +1,5 @@
 # Project workflow, loaded by the .command entrypoint. No work runs when sourced.
+source "${${(%):-%x}:A:h}/【MacOS】FlutterSDK网络适配.zsh/【MacOS】FlutterSDK网络适配.zsh" || return 1
 JOBS_OFFICIAL_REPO='https://github.com/flutter/flutter.git'
 JOBS_HARMONY_REPO='https://gitcode.com/CPF-Flutter/flutter_flutter.git'
 JOBS_HARMONY_REF='3.35.7+ohos-1.0.5'
@@ -109,6 +110,7 @@ jobs_ensure_fvm() {
     rehash
     JOBS_FVM_BIN="$(command -v fvm)" || return 1
   fi
+  jobs_command_fvm_runtime "$JOBS_FVM_BIN" || return $?
   "$JOBS_FVM_BIN" --version || return $?
   local help_text=""
   help_text="$("$JOBS_FVM_BIN" use --help)" || return $?
@@ -117,9 +119,19 @@ jobs_ensure_fvm() {
   }
 }
 jobs_git() { GIT_TERMINAL_PROMPT=0 /usr/bin/git -c http.lowSpeedLimit=1024 -c http.lowSpeedTime=60 "$@"; }
+# 失败尝试的部分stdout只作诊断，避免污染成功后的ref机器解析。
+jobs_harmony_remote_once() {
+  local remote_output="" remote_code=0
+  remote_output="$(jobs_git ls-remote "$JOBS_SDK_REPO" "refs/tags/$JOBS_SDK_REF" "refs/tags/$JOBS_SDK_REF^{}" "refs/heads/$JOBS_SDK_REF")" || remote_code=$?
+  if (( remote_code )); then
+    [[ -z "$remote_output" ]] || print -u2 -r -- "$remote_output"
+    return "$remote_code"
+  fi
+  print -r -- "$remote_output"
+}
 jobs_resolve_harmony_commit() {
   local remote="" sha="" ref="" tag="" peeled="" branch=""
-  remote="$(jobs_git ls-remote "$JOBS_SDK_REPO" "refs/tags/$JOBS_SDK_REF" "refs/tags/$JOBS_SDK_REF^{}" "refs/heads/$JOBS_SDK_REF")" || return $?
+  remote="$(JOBS_SDK_GIT_REF=HEAD jobs_command_sdk_git '鸿蒙 SDK ref 获取' '' "$JOBS_SDK_REF" jobs_harmony_remote_once)" || return $?
   while IFS=$'\t' read -r sha ref; do
     case "$ref" in
       "refs/tags/$JOBS_SDK_REF") tag="$sha" ;;
@@ -130,6 +142,8 @@ jobs_resolve_harmony_commit() {
   [[ -z "$tag" || -z "$branch" ]] || { jobs_error '远端有同名 tag 与分支，请选无歧义的版本。'; return 1; }
   JOBS_SDK_COMMIT="${peeled:-${tag:-$branch}}"
   [[ "$JOBS_SDK_COMMIT" =~ '^[0-9a-f]{40}$' ]] || { jobs_error '远端不存在所选 ref，未下载 SDK。'; return 1; }
+  JOBS_SDK_GIT_REF="refs/heads/$JOBS_SDK_REF"
+  [[ -z "$tag" ]] || JOBS_SDK_GIT_REF="refs/tags/$JOBS_SDK_REF"
   JOBS_FVM_VERSION="custom_jobs_ohos_$JOBS_SDK_COMMIT"
 }
 jobs_clone_harmony() (
@@ -166,6 +180,15 @@ if os.path.lexists(sys.argv[2]):
 os.rename(sys.argv[1], sys.argv[2])
 PY
 )
+# 已有缓存先作本地校验；来源冲突或源码修改立即返回，不反复下载覆盖。
+jobs_prepare_harmony_source() {
+  local target="$JOBS_FVM_CACHE/versions/$JOBS_FVM_VERSION"
+  if [[ -e "$target" || -L "$target" ]]; then
+    jobs_clone_harmony
+  else
+    jobs_command_sdk_git '鸿蒙 SDK 源码获取' '' "$JOBS_SDK_REF" jobs_clone_harmony
+  fi
+}
 jobs_setup_sdk_impl() {
   cd -- "$PROJECT_ROOT" || return 1
   JOBS_FVM_CACHE="$HOME/Library/Caches/JobsFlutter/fvm/$JOBS_SDK_FAMILY"
@@ -180,19 +203,25 @@ jobs_setup_sdk_impl() {
   # Explicit environment agrees with project config, overriding inherited FVM globals.
   export FVM_CACHE_PATH="$JOBS_FVM_CACHE" FVM_FLUTTER_URL="$JOBS_SDK_REPO" FVM_USE_GIT_CACHE=false
   if [[ "$JOBS_SDK_FAMILY" == harmony ]]; then
-    jobs_clone_harmony || return $?
+    jobs_prepare_harmony_source || return $?
   fi
   local -a pin=()
   [[ "$JOBS_SDK_FAMILY" != official || ( "$JOBS_SDK_REF" != stable && "$JOBS_SDK_REF" != beta ) ]] || pin=(--pin)
   # use installs missing versions itself. Installing stable first would duplicate the pinned SDK.
-  "$JOBS_FVM_BIN" use "$JOBS_FVM_VERSION" --skip-setup --skip-pub-get "${pin[@]}" || return $?
+  if [[ "$JOBS_SDK_FAMILY" == official ]]; then
+    JOBS_SDK_GIT_REF="refs/tags/$JOBS_SDK_REF"
+    case "$JOBS_SDK_REF" in stable|beta|main|master|dev) JOBS_SDK_GIT_REF="refs/heads/$JOBS_SDK_REF" ;; esac
+    jobs_command_sdk_git 'FVM SDK 源码获取与项目绑定' '' "$JOBS_SDK_REF" "$JOBS_FVM_BIN" use "$JOBS_FVM_VERSION" --skip-setup --skip-pub-get "${pin[@]}" || return $?
+  else
+    "$JOBS_FVM_BIN" use "$JOBS_FVM_VERSION" --skip-setup --skip-pub-get "${pin[@]}" || return $?
+  fi
   [[ -x "$PROJECT_ROOT/.fvm/flutter_sdk/bin/flutter" ]] || { jobs_error 'FVM 未生成可用的工程 SDK 链接。'; return 1; }
   JOBS_SDK_PATH="${PROJECT_ROOT}/.fvm/flutter_sdk"
   JOBS_SDK_PATH="${JOBS_SDK_PATH:A}"
   [[ "$JOBS_SDK_PATH" == "${JOBS_FVM_CACHE:A}/versions/"* ]] || { jobs_error 'FVM 链接未指向所选隔离缓存。'; return 1; }
   JOBS_FVM_VERSION="${JOBS_SDK_PATH:t}"
   JOBS_SDK_COMMIT="$(jobs_git -C "$JOBS_SDK_PATH" rev-parse HEAD)" || return $?
-  "$JOBS_SDK_PATH/bin/flutter" --version || return $?
+  jobs_command_sdk 'Flutter / Dart 初始化' "$JOBS_SDK_PATH" "$JOBS_SDK_REF" "$JOBS_SDK_PATH/bin/flutter" --version || return $?
   if [[ "$JOBS_SDK_FAMILY" == harmony ]]; then
     local build_help=""
     build_help="$("$JOBS_SDK_PATH/bin/flutter" build -h)" || return $?
@@ -318,12 +347,15 @@ jobs_prepare_project() {
     platform="$REPLY"
     case "$platform" in
       '') ;;
-      ios|android|macos|web) "$flutter" precache "--$platform" || return $? ;;
+      ios|android|macos|web) jobs_command_sdk_platform "$JOBS_SDK_PATH" "$JOBS_SDK_REF" "$flutter" "$platform" || return $? ;;
       *) jobs_error '预缓存目标无效。'; return 1 ;;
     esac
   fi
   jobs_config runtime "$PROJECT_ROOT" "$JOBS_SDK_FAMILY" "$JOBS_SDK_REF" "$JOBS_FVM_VERSION" \
     "$JOBS_SDK_COMMIT" "$JOBS_SDK_PATH" "${JOBS_TOOL_ROOT:-}" "${JOBS_JAVA_HOME:-}" || return $?
+  if [[ "$JOBS_SDK_FAMILY" == harmony && -d "$PROJECT_ROOT/ohos" ]]; then
+    jobs_command_sdk_platform "$JOBS_SDK_PATH" "$JOBS_SDK_REF" "$flutter" ohos || return $?
+  fi
   "$flutter" doctor -v || jobs_note '⚠ doctor 报告了未就绪项，请按输出处理；不等同于构建成功。'
   "$flutter" pub get || return $?
   if [[ "$JOBS_SDK_FAMILY" == harmony && ! -d "$PROJECT_ROOT/ohos" ]]; then return 0; fi

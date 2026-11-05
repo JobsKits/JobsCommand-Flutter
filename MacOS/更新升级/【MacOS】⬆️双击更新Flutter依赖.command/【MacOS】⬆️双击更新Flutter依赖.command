@@ -12,6 +12,78 @@
 # 仅渲染自述：标题红色加粗，编号正文蓝色常规字重；非彩色终端输出纯文本。
 # >>> Jobs Homebrew install choice >>>
 # 输出安装诊断，避免混入返回的命令路径。
+# JOBS_FLUTTER_NETWORK_ADAPTER_BEGIN
+# 捕获真实入口参数；后续切换工程目录不影响随包模块定位。
+JOBS_FLUTTER_NETWORK_ENTRY_FILE=$0
+JOBS_FLUTTER_NETWORK_ENTRY_BASE=$PWD
+JOBS_FLUTTER_NETWORK_TASK_CACHE=
+JOBS_FLUTTER_NETWORK_TASK_LOG=
+# 只把SDK命令交给随包子进程，不把代理或源写回当前Shell。
+jobs_flutter_sdk_command() {
+    local entry=$JOBS_FLUTTER_NETWORK_ENTRY_FILE link= directory= adapter= network= count=0
+    case "$entry" in
+        /*) ;;
+        *) entry=$JOBS_FLUTTER_NETWORK_ENTRY_BASE/$entry ;;
+    esac
+    while [ -L "$entry" ]; do
+        count=$((count + 1))
+        [ "$count" -lt 40 ] || return 1
+        link=$(readlink "$entry") || return 1
+        case "$link" in
+            /*) entry=$link ;;
+            *) entry=$(dirname -- "$entry")/$link ;;
+        esac
+    done
+    directory=$(CDPATH= cd -P -- "$(dirname -- "$entry")" && pwd) || return 1
+    adapter=$directory/Scripts/【MacOS】FlutterSDK命令适配.sh/【MacOS】FlutterSDK命令适配.sh
+    network=$directory/Scripts/【MacOS】FlutterSDK网络选路.zsh/【MacOS】FlutterSDK网络选路.zsh
+    [ -f "$adapter" ] && [ -f "$network" ] || {
+        printf '%s\n' '✖ 缺少随包SDK网络资源；请保留入口旁完整Scripts目录。' >&2
+        return 1
+    }
+    if [ -z "$JOBS_FLUTTER_NETWORK_TASK_CACHE" ]; then
+        JOBS_FLUTTER_NETWORK_TASK_CACHE=$(/bin/zsh "$network" --cache-dir) || return $?
+        JOBS_FLUTTER_NETWORK_TASK_LOG=$JOBS_FLUTTER_NETWORK_TASK_CACHE/entry-network.log
+    fi
+    JOBS_FLUTTER_ROUTE_CACHE_DIR="$JOBS_FLUTTER_NETWORK_TASK_CACHE" \
+    JOBS_FLUTTER_ROUTE_LOG="$JOBS_FLUTTER_NETWORK_TASK_LOG" \
+        /bin/sh "$adapter" "$@"
+}
+# 既有选择值仅接受原来的两个Flutter执行器，不eval用户字符串。
+jobs_flutter_sdk_selected() {
+    local selected=$1
+    shift
+    case "$selected" in
+        'fvm flutter') jobs_flutter_sdk_command fvm flutter "$@" ;;
+        flutter) jobs_flutter_sdk_command flutter "$@" ;;
+        *) printf '%s\n' '✖ 未识别原Flutter执行器，未执行任何SDK或业务。' >&2; return 2 ;;
+    esac
+}
+# 显式准备SDK，把下载进度送stderr，业务stdout保留给原命令。
+jobs_flutter_sdk_bootstrap() {
+    jobs_flutter_sdk_command "$@" --version >&2
+}
+# 明确的平台SDK在业务前单独获取，失败不重放build/run。
+jobs_flutter_sdk_platform() {
+    local platform="$1"; shift
+    jobs_flutter_sdk_bootstrap "$@" || return $?
+    jobs_flutter_sdk_command "$@" precache "--$platform" >&2
+}
+# 真机入口保留原run参数；只按当前已连接真机的真实JSON确定平台。
+jobs_flutter_sdk_run_release_device() {
+    local devices="" platform=""
+    jobs_flutter_sdk_bootstrap "$@" || return $?
+    devices="$(jobs_flutter_sdk_command "$@" devices --machine --device-timeout 5)" || return $?
+    platform="$(print -r -- "$devices" | /usr/bin/osascript -l JavaScript -e 'ObjC.import("Foundation"); function run(a){var d=$.NSFileHandle.fileHandleWithStandardInput.readDataToEndOfFile;var s=ObjC.unwrap($.NSString.alloc.initWithDataEncoding(d,$.NSUTF8StringEncoding));var rows=JSON.parse(s);if(!Array.isArray(rows))throw Error("设备响应不是数组");var found={};rows.forEach(function(v){if(!v||v.isSupported===false||v.emulator===true)return;var p=String(v.targetPlatform||v.platform||"");if(/^android/.test(p))found.android=1;else if(/^ios/.test(p))found.ios=1;else if(/^(ohos|openharmony)/.test(p))found.ohos=1;});var keys=Object.keys(found);return keys.length===1?keys[0]:"";}')" || return $?
+    if [[ -n "$platform" ]]; then
+        jobs_flutter_sdk_command "$@" precache "--$platform" >&2 || return $?
+    else
+        print -u2 -r -- '真机平台尚未唯一确定，按当前engine代表制品检测通道；原run仅执行一次。'
+    fi
+    JOBS_FLUTTER_ROUTE_MODE=platform jobs_flutter_sdk_command "$@" run --release
+}
+# JOBS_FLUTTER_NETWORK_ADAPTER_END
+
 jobs_brew_note() {
   print -u2 -r -- "ℹ $*"
 }
@@ -454,6 +526,7 @@ run_original_logic() {
       info_echo "📦 使用系统 Flutter 命令"
       flutter_cmd=(flutter)
     fi
+    jobs_flutter_sdk_bootstrap "${flutter_cmd[@]}" || return $?
   }
   # ✅ 判断芯片架构（ARM64 / x86）
   get_cpu_arch() {
@@ -520,7 +593,7 @@ run_original_logic() {
       rm -rf ~/.pub-cache/hosted/pub.dev/*
       success_echo "✅ 已清空缓存"
       info_echo "📦 正在重新拉取依赖..."
-      "${flutter_cmd[@]}" pub get
+      jobs_flutter_sdk_command "${flutter_cmd[@]}" pub get
       success_echo "🎉 全量升级完成！"
       exit 0
     else
@@ -542,7 +615,7 @@ run_original_logic() {
   upgrade_dependencies_interactive() {
     echo ""
     warn_echo "📋 当前依赖状态："
-    "${flutter_cmd[@]}" pub outdated
+    jobs_flutter_sdk_command "${flutter_cmd[@]}" pub outdated
     echo ""
     read "?📈 是否进入逐个升级流程？（回车跳过，输入任意字符执行，其他跳过）" input
     [[ -n "$input" ]] && return
@@ -554,12 +627,12 @@ run_original_logic() {
     for d in "${dependencies[@]}"; do sources["$d"]="dependencies"; done
     for d in "${dev_dependencies[@]}"; do sources["$d"]="dev_dependencies"; done
 
-    transitives=$("${flutter_cmd[@]}" pub outdated --json | grep -oE '"package":"[^"]+"' | cut -d'"' -f4)
+    transitives=$(jobs_flutter_sdk_command "${flutter_cmd[@]}" pub outdated --json | grep -oE '"package":"[^"]+"' | cut -d'"' -f4)
     for t in $transitives; do [[ -z "${sources["$t"]}" ]] && sources["$t"]="transitive"; done
 
     for pkg in ${(k)sources}; do
       echo ""; warn_echo "🔍 正在处理：$pkg（来源：${sources[$pkg]}）"
-      output=$("${flutter_cmd[@]}" pub outdated "$pkg" --json 2>/dev/null)
+      output=$(jobs_flutter_sdk_command "${flutter_cmd[@]}" pub outdated "$pkg" --json 2>/dev/null)
       current=$(echo "$output" | grep -oE '"current":"[^"]+"' | cut -d'"' -f4)
       latest=$(echo "$output" | grep -oE '"latest":"[^"]+"' | cut -d'"' -f4)
 
@@ -607,7 +680,7 @@ run_original_logic() {
     echo ""
     read "?📦 是否执行 flutter pub get？（回车跳过，输入任意字符执行）" input
     if [[ -z "$input" ]]; then
-      "${flutter_cmd[@]}" pub get
+      jobs_flutter_sdk_command "${flutter_cmd[@]}" pub get
       success_echo "✔ 依赖拉取完成"
     else
       warn_echo "⏭️ 已跳过 flutter pub get，请手动执行"
@@ -617,7 +690,7 @@ run_original_logic() {
   main() {
     print_intro                               # ✅ 自述信息
     init_project_dir                          # ✅ 自动识别 Flutter 项目根目录
-    detect_flutter_command                    # ✅ 判断是否使用 FVM，设置 flutter_cmd
+    detect_flutter_command || return $?                    # ✅ 判断是否使用 FVM，设置 flutter_cmd
     install_homebrew                          # ✅ 自动安装或更新 Homebrew
     ensure_fzf_installed                      # ✅ 安装或升级 fzf
     select_upgrade_strategy                   # ✅ fzf 选择升级策略（全清空 or 逐个升级）
@@ -626,7 +699,7 @@ run_original_logic() {
 
     echo ""
     warn_echo "🔁 最终依赖状态如下："
-    "${flutter_cmd[@]}" pub outdated          # ✅ 展示最终状态
+    jobs_flutter_sdk_command "${flutter_cmd[@]}" pub outdated          # ✅ 展示最终状态
     success_echo "🎉 脚本执行完毕"
   }
 

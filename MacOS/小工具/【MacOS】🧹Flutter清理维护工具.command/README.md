@@ -13,6 +13,7 @@
 - [三、运行方式](#jobs-toc-heading-4)
 - [四、风险与能力边界](#jobs-toc-heading-5)
 - [五、日志与核对](#jobs-toc-heading-6)
+  - [Flutter SDK网络获取](#jobs-toc-heading-7)
 
 </details>
 <!-- jobs-toc:end -->
@@ -60,3 +61,7 @@ zsh './【MacOS】🧹Flutter清理维护工具.command'
 菜单导航已做隔离验证及真实 fzf 按键验证；未实际执行清理、依赖升级或安装。
 
 <a id="🔚" href="#前言" style="font-size:17px; color:green; font-weight:bold;">我是有底线的➤点我回到首页</a>
+
+### <span id="jobs-toc-heading-7" data-jobs-toc="v2">Flutter SDK网络获取</span><!-- jobs-toc:heading-end -->
+
+SDK首次自举和预缓存使用随包Scripts检测实际来源与连接路线，获取失败自动重测重试，Ctrl+C/终止信号取消；已有健康SDK复用。SDK网络重试不会重做项目业务；原非SDK失败恢复继续保留，SDK准备失败或取消直接返回。源与代理只作用于当前任务子进程，显式设置含空值保持；移动此包时保留完整Scripts目录。

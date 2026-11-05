@@ -12,6 +12,78 @@
 # 仅渲染自述：标题红色加粗，编号正文蓝色常规字重；非彩色终端输出纯文本。
 # >>> Jobs Homebrew install choice >>>
 # 输出安装诊断，避免混入返回的命令路径。
+# JOBS_FLUTTER_NETWORK_ADAPTER_BEGIN
+# 捕获真实入口参数；后续切换工程目录不影响随包模块定位。
+JOBS_FLUTTER_NETWORK_ENTRY_FILE=$0
+JOBS_FLUTTER_NETWORK_ENTRY_BASE=$PWD
+JOBS_FLUTTER_NETWORK_TASK_CACHE=
+JOBS_FLUTTER_NETWORK_TASK_LOG=
+# 只把SDK命令交给随包子进程，不把代理或源写回当前Shell。
+jobs_flutter_sdk_command() {
+    local entry=$JOBS_FLUTTER_NETWORK_ENTRY_FILE link= directory= adapter= network= count=0
+    case "$entry" in
+        /*) ;;
+        *) entry=$JOBS_FLUTTER_NETWORK_ENTRY_BASE/$entry ;;
+    esac
+    while [ -L "$entry" ]; do
+        count=$((count + 1))
+        [ "$count" -lt 40 ] || return 1
+        link=$(readlink "$entry") || return 1
+        case "$link" in
+            /*) entry=$link ;;
+            *) entry=$(dirname -- "$entry")/$link ;;
+        esac
+    done
+    directory=$(CDPATH= cd -P -- "$(dirname -- "$entry")" && pwd) || return 1
+    adapter=$directory/Scripts/【MacOS】FlutterSDK命令适配.sh/【MacOS】FlutterSDK命令适配.sh
+    network=$directory/Scripts/【MacOS】FlutterSDK网络选路.zsh/【MacOS】FlutterSDK网络选路.zsh
+    [ -f "$adapter" ] && [ -f "$network" ] || {
+        printf '%s\n' '✖ 缺少随包SDK网络资源；请保留入口旁完整Scripts目录。' >&2
+        return 1
+    }
+    if [ -z "$JOBS_FLUTTER_NETWORK_TASK_CACHE" ]; then
+        JOBS_FLUTTER_NETWORK_TASK_CACHE=$(/bin/zsh "$network" --cache-dir) || return $?
+        JOBS_FLUTTER_NETWORK_TASK_LOG=$JOBS_FLUTTER_NETWORK_TASK_CACHE/entry-network.log
+    fi
+    JOBS_FLUTTER_ROUTE_CACHE_DIR="$JOBS_FLUTTER_NETWORK_TASK_CACHE" \
+    JOBS_FLUTTER_ROUTE_LOG="$JOBS_FLUTTER_NETWORK_TASK_LOG" \
+        /bin/sh "$adapter" "$@"
+}
+# 既有选择值仅接受原来的两个Flutter执行器，不eval用户字符串。
+jobs_flutter_sdk_selected() {
+    local selected=$1
+    shift
+    case "$selected" in
+        'fvm flutter') jobs_flutter_sdk_command fvm flutter "$@" ;;
+        flutter) jobs_flutter_sdk_command flutter "$@" ;;
+        *) printf '%s\n' '✖ 未识别原Flutter执行器，未执行任何SDK或业务。' >&2; return 2 ;;
+    esac
+}
+# 显式准备SDK，把下载进度送stderr，业务stdout保留给原命令。
+jobs_flutter_sdk_bootstrap() {
+    jobs_flutter_sdk_command "$@" --version >&2
+}
+# 明确的平台SDK在业务前单独获取，失败不重放build/run。
+jobs_flutter_sdk_platform() {
+    local platform="$1"; shift
+    jobs_flutter_sdk_bootstrap "$@" || return $?
+    jobs_flutter_sdk_command "$@" precache "--$platform" >&2
+}
+# 真机入口保留原run参数；只按当前已连接真机的真实JSON确定平台。
+jobs_flutter_sdk_run_release_device() {
+    local devices="" platform=""
+    jobs_flutter_sdk_bootstrap "$@" || return $?
+    devices="$(jobs_flutter_sdk_command "$@" devices --machine --device-timeout 5)" || return $?
+    platform="$(print -r -- "$devices" | /usr/bin/osascript -l JavaScript -e 'ObjC.import("Foundation"); function run(a){var d=$.NSFileHandle.fileHandleWithStandardInput.readDataToEndOfFile;var s=ObjC.unwrap($.NSString.alloc.initWithDataEncoding(d,$.NSUTF8StringEncoding));var rows=JSON.parse(s);if(!Array.isArray(rows))throw Error("设备响应不是数组");var found={};rows.forEach(function(v){if(!v||v.isSupported===false||v.emulator===true)return;var p=String(v.targetPlatform||v.platform||"");if(/^android/.test(p))found.android=1;else if(/^ios/.test(p))found.ios=1;else if(/^(ohos|openharmony)/.test(p))found.ohos=1;});var keys=Object.keys(found);return keys.length===1?keys[0]:"";}')" || return $?
+    if [[ -n "$platform" ]]; then
+        jobs_flutter_sdk_command "$@" precache "--$platform" >&2 || return $?
+    else
+        print -u2 -r -- '真机平台尚未唯一确定，按当前engine代表制品检测通道；原run仅执行一次。'
+    fi
+    JOBS_FLUTTER_ROUTE_MODE=platform jobs_flutter_sdk_command "$@" run --release
+}
+# JOBS_FLUTTER_NETWORK_ADAPTER_END
+
 jobs_brew_note() {
   print -u2 -r -- "ℹ $*"
 }
@@ -507,6 +579,7 @@ run_original_logic() {
       warn_echo "🧩 检测到 FVM，将使用 fvm flutter。"
       flutter_cmd=(fvm flutter)
     fi
+    jobs_flutter_sdk_bootstrap "${flutter_cmd[@]}" || return $?
   }
   # ✅ 确保 Android SDK 存在
   prepare_android_sdk() {
@@ -548,20 +621,20 @@ run_original_logic() {
   }
   # ✅ 配置 Flutter 使用的 SDK 路径
   configure_flutter_sdk() {
-    "${flutter_cmd[@]}" config --android-sdk "$DEFAULT_SDK"
+    jobs_flutter_sdk_command "${flutter_cmd[@]}" config --android-sdk "$DEFAULT_SDK"
   }
   # ✅ 检查 Flutter 状态
   run_flutter_doctor() {
     echo ""
-    "${flutter_cmd[@]}" doctor --android-licenses
-    "${flutter_cmd[@]}" doctor
+    jobs_flutter_sdk_command "${flutter_cmd[@]}" doctor --android-licenses
+    jobs_flutter_sdk_command "${flutter_cmd[@]}" doctor
   }
   # ✅ 可选执行 pub get
   maybe_run_pub_get() {
     echo ""
     read '?📦 执行 flutter pub get？(回车=执行 / 任意键=跳过) ' run_get
     if [[ -z "$run_get" ]]; then
-      "${flutter_cmd[@]}" pub get
+      jobs_flutter_sdk_command "${flutter_cmd[@]}" pub get
     else
       warn_echo "⏭️ 跳过 pub get。"
     fi
@@ -570,7 +643,7 @@ run_original_logic() {
   main() {
     clear
     resolve_flutter_root                                           # 识别并切换到 Flutter 根目录
-    init_flutter_command                                           # 检查 FVM 使用情况
+    init_flutter_command || return $?                              # 检查 FVM 使用情况
     prepare_android_sdk                                            # 确保 SDK 路径存在
     install_cmdline_tools                                          # 安装 cmdline-tools
     install_sdk_components                                         # 安装必要组件

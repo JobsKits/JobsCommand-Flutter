@@ -38,7 +38,12 @@ class HarmonyPackagingTest < Minitest::Test
       print -r -- 'fixture artifact' > "$FIXTURE_PROJECT/build/ohos/$2/entry-default-signed.$2"
     ZSH
     @definitions = File.join(@root, 'definitions.zsh')
-    File.write(@definitions, File.read(ENTRY).sub(/^main "\$@"\s*\z/, ''))
+    # Business fixtures replace only the network boundary; SDK routing has separate tests.
+    boundary = 'jobs_command_sdk() { shift 3; "$@"; }; jobs_command_sdk_platform() { return 0; }'
+    business_source = File.read(ENTRY).sub('source "${${(%):-%x}:A:h}/Scripts/【MacOS】FlutterSDK网络适配.zsh/【MacOS】FlutterSDK网络适配.zsh" || return 1', boundary)
+    @runtime_entry = File.join(@root, 'runtime.command')
+    File.write(@runtime_entry, business_source)
+    File.write(@definitions, business_source.sub(/^main "\$@"\s*\z/, ''))
     @env = {
       'PATH' => "#{@tools}:/usr/bin:/bin:/usr/sbin:/sbin", 'DEVECO_SDK_HOME' => File.join(@root, 'sdk'),
       'DEVECO_STUDIO_HOME' => '', 'TOOL_HOME' => '', 'HOS_SDK_HOME' => '', 'JAVA_HOME' => '', 'NODE_HOME' => '',
@@ -79,7 +84,7 @@ class HarmonyPackagingTest < Minitest::Test
     output = +''
     result = nil
     Timeout.timeout(15) do
-      PTY.spawn(@env.merge('FLUTTER_OHOS_SDK' => @sdk), '/bin/zsh', ENTRY) do |reader, writer, pid|
+      PTY.spawn(@env.merge('FLUTTER_OHOS_SDK' => @sdk), '/bin/zsh', @runtime_entry) do |reader, writer, pid|
         writer.write("\n#{@project}\n")
         begin
           loop { output << reader.readpartial(4096) }

@@ -1,4 +1,5 @@
 # Project workflow, loaded by the .command entrypoint. No work runs when sourced.
+source "${${(%):-%x}:A:h}/【MacOS】FlutterSDK网络适配.zsh/【MacOS】FlutterSDK网络适配.zsh" || return 1
 JOBS_HARMONY_REPO='https://gitcode.com/CPF-Flutter/flutter_flutter.git'
 JOBS_HARMONY_REF='3.35.7+ohos-1.0.5'
 
@@ -133,6 +134,7 @@ jobs_ensure_fvm() {
     rehash
     JOBS_FVM_BIN="$(command -v fvm)" || return 1
   fi
+  jobs_command_fvm_runtime "$JOBS_FVM_BIN" || return $?
   jobs_run "$JOBS_FVM_BIN" --version || { jobs_error "FVM 不健康：$JOBS_FVM_BIN；请修复后重试。"; return 1; }
   local help_text=""
   help_text="$("$JOBS_FVM_BIN" use --help)" || return $?
@@ -145,9 +147,19 @@ jobs_git() {
   GIT_TERMINAL_PROMPT=0 /usr/bin/git -c http.lowSpeedLimit=1024 -c http.lowSpeedTime=60 "$@"
 }
 # 把明确 ref 解析成不可变 commit，拒绝不存在或同名 tag / 分支。
+# 失败尝试的部分stdout只作诊断，避免污染成功后的ref机器解析。
+jobs_harmony_remote_once() {
+  local remote_output="" remote_code=0
+  remote_output="$(jobs_git ls-remote "$JOBS_SDK_REPO" "refs/tags/$JOBS_SDK_REF" "refs/tags/$JOBS_SDK_REF^{}" "refs/heads/$JOBS_SDK_REF")" || remote_code=$?
+  if (( remote_code )); then
+    [[ -z "$remote_output" ]] || print -u2 -r -- "$remote_output"
+    return "$remote_code"
+  fi
+  print -r -- "$remote_output"
+}
 jobs_resolve_harmony_commit() {
   local remote="" sha="" ref="" tag="" peeled="" branch=""
-  remote="$(jobs_git ls-remote "$JOBS_SDK_REPO" "refs/tags/$JOBS_SDK_REF" "refs/tags/$JOBS_SDK_REF^{}" "refs/heads/$JOBS_SDK_REF")" || return $?
+  remote="$(JOBS_SDK_GIT_REF=HEAD jobs_command_sdk_git '鸿蒙 SDK ref 获取' '' "$JOBS_SDK_REF" jobs_harmony_remote_once)" || return $?
   while IFS=$'\t' read -r sha ref; do
     case "$ref" in
       "refs/tags/$JOBS_SDK_REF") tag="$sha" ;;
@@ -158,6 +170,8 @@ jobs_resolve_harmony_commit() {
   [[ -z "$tag" || -z "$branch" ]] || { jobs_error '远端有同名 tag 与分支，请选无歧义的版本。'; return 1; }
   JOBS_SDK_COMMIT="${peeled:-${tag:-$branch}}"
   [[ "$JOBS_SDK_COMMIT" =~ '^[0-9a-f]{40}$' ]] || { jobs_error '远端不存在所选 ref，未下载 SDK。'; return 1; }
+  JOBS_SDK_GIT_REF="refs/heads/$JOBS_SDK_REF"
+  [[ -z "$tag" ]] || JOBS_SDK_GIT_REF="refs/tags/$JOBS_SDK_REF"
   JOBS_FVM_VERSION="custom_jobs_ohos_$JOBS_SDK_COMMIT"
 }
 # 原子发布完整 SDK，仅复用来源、commit 与源码状态均匹配的缓存。
@@ -197,6 +211,15 @@ os.rename(sys.argv[1], sys.argv[2])
 PY
 )
 # 只绑定项目 FVM，不执行 fvm global 或写 Flutter 全局 PATH。
+# 已有缓存先作本地校验；来源冲突或源码修改立即返回，不反复下载覆盖。
+jobs_prepare_harmony_source() {
+  local target="$JOBS_FVM_CACHE/versions/$JOBS_FVM_VERSION"
+  if [[ -e "$target" || -L "$target" ]]; then
+    jobs_clone_harmony
+  else
+    jobs_command_sdk_git '鸿蒙 SDK 源码获取' '' "$JOBS_SDK_REF" jobs_clone_harmony
+  fi
+}
 jobs_setup_sdk_impl() {
   cd -- "$PROJECT_ROOT" || return 1
   JOBS_FVM_CACHE="$HOME/Library/Caches/JobsFlutter/fvm/$JOBS_SDK_FAMILY"
@@ -212,7 +235,7 @@ jobs_setup_sdk_impl() {
   jobs_config fvm "$PROJECT_ROOT" "$JOBS_FVM_CACHE" "$JOBS_SDK_REPO" || return $?
   # Explicit environment agrees with project config, overriding inherited FVM globals.
   export FVM_CACHE_PATH="$JOBS_FVM_CACHE" FVM_FLUTTER_URL="$JOBS_SDK_REPO" FVM_USE_GIT_CACHE=false
-  jobs_clone_harmony || return $?
+  jobs_prepare_harmony_source || return $?
   # use installs missing versions itself. Installing stable first would duplicate the pinned SDK.
   jobs_config binding-check "$PROJECT_ROOT" || return $?
   jobs_run "$JOBS_FVM_BIN" use "$JOBS_FVM_VERSION" --skip-setup --skip-pub-get || return $?
@@ -222,7 +245,7 @@ jobs_setup_sdk_impl() {
   [[ "$JOBS_SDK_PATH" == "${JOBS_FVM_CACHE:A}/versions/"* ]] || { jobs_error 'FVM 链接未指向所选隔离缓存。'; return 1; }
   JOBS_FVM_VERSION="${JOBS_SDK_PATH:t}"
   JOBS_SDK_COMMIT="$(jobs_git -C "$JOBS_SDK_PATH" rev-parse HEAD)" || return $?
-  jobs_run "$JOBS_SDK_PATH/bin/flutter" --version || return $?
+  jobs_command_sdk 'Flutter / Dart 初始化' "$JOBS_SDK_PATH" "$JOBS_SDK_REF" "$JOBS_SDK_PATH/bin/flutter" --version || return $?
   if [[ "$JOBS_SDK_FAMILY" == harmony ]]; then
     local build_help=""
     build_help="$("$JOBS_SDK_PATH/bin/flutter" build -h)" || return $?
@@ -417,6 +440,7 @@ jobs_prepare_project() {
   [[ -d "$PROJECT_ROOT/ohos" && ! -L "$PROJECT_ROOT/ohos" && -f "$PROJECT_ROOT/ohos/build-profile.json5" && -f "$PROJECT_ROOT/ohos/oh-package.json5" ]] || {
     jobs_error '已有 ohos/ 结构不完整；保留原文件，请在 DevEco 修复，不重新生成覆盖。'; return 1
   }
+  jobs_command_sdk_platform "$JOBS_SDK_PATH" "$JOBS_SDK_REF" "$flutter" ohos || return $?
   jobs_run "$flutter" pub get || return $?
   jobs_run_in_ohos "$JOBS_OHPM_BIN" install || return $?
   jobs_run_in_ohos "$JOBS_HVIGOR_BIN" --version || { jobs_error 'Hvigor 健康检查失败，请核对工程插件和配套工具版本。'; return 1; }

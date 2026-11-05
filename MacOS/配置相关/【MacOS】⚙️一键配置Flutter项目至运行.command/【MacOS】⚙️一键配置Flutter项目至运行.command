@@ -641,7 +641,7 @@ main() {
   if [[ -r "$SCRIPT_DIR/README.md" ]]; then cat "$SCRIPT_DIR/README.md" | jobs_intro_style auto; fi
   print -r -- 'Flutter / 鸿蒙环境准备' | jobs_intro_style title
   print -r -- '1、选择安装范围和工程后，更新 Homebrew；需要时确认安装 Python 与独立 FVM。' | jobs_intro_style body
-  print -r -- '2、Flutter 默认通过项目 FVM 管理；全局模式必须精确输入 YES。' | jobs_intro_style body
+  print -r -- '2、Flutter 默认由项目 FVM 管理；SDK 下载先检测本次网络，失败持续重试至成功或 Ctrl+C；全局模式须精确 YES。' | jobs_intro_style body
   print -r -- '3、鸿蒙工具、镜像、工程生成和运行分别提示；会改工程配置和依赖，建议先提交代码。' | jobs_intro_style body
   jobs_read '已了解用途，回车继续；任意非空输入 / Ctrl+C 取消：' || return $?
   [[ -z "$REPLY" ]] || return 130

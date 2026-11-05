@@ -189,4 +189,11 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s Tests -p 'test_*.py' -
 
 离线验证使用临时工程与假工具，不安装真实 SDK、CLT 或镜像，也不改真实工程。真实 HAP 编译、签名、设备安装及热重载仍需在目标工程完成；仓库 ref 的联网核实不替代运行验收。
 
+
+<span id="sdk-network-routing"></span>
+
+Flutter SDK 获取前会检测本次网络：日志说明 Flutter / Dart / engine 身份、实际来源和选路依据；公共制品比较官方、可信 CFUG 镜像与本机已有代理，显式来源及代理配置保留。鸿蒙或私有仓库只检查原 Git / 制品来源，不把公共发布版测速结果用于不同 SDK。源码与 Dart / 引擎分阶段获取，SDK 下载失败重新测路并持续重试至成功或 Ctrl+C，子进程退出后恢复调用方环境，不改系统代理或永久配置。
+
+运行和打包前先检查 `precache --ohos` 能力并补齐平台资源；没有该能力时明确停止。依赖解析、构建和运行失败保留原退出码，SDK 重试不重复这些业务动作。完整复制本目录（含 `Scripts`）即可迁移；网络适配隔离验证见 [SDK 网络适配测试](./Tests/test_sdk_network_adapter.py/README.md)，不进行真实 SDK 下载或设备运行。
+
 <a id="🔚" href="#前言" style="font-size:17px; color:green; font-weight:bold;">我是有底线的➤点我回到首页</a>

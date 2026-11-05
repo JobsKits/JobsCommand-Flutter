@@ -1,6 +1,57 @@
 #!/bin/zsh
 
+
+
 # 仅渲染自述：标题红色加粗，编号正文蓝色常规字重；非彩色终端输出纯文本。
+# JOBS_FLUTTER_NETWORK_ADAPTER_BEGIN
+# 捕获真实入口参数；后续切换工程目录不影响随包模块定位。
+JOBS_FLUTTER_NETWORK_ENTRY_FILE=$0
+JOBS_FLUTTER_NETWORK_ENTRY_BASE=$PWD
+JOBS_FLUTTER_NETWORK_TASK_CACHE=
+JOBS_FLUTTER_NETWORK_TASK_LOG=
+# 只把SDK命令交给随包子进程，不把代理或源写回当前Shell。
+jobs_flutter_sdk_command() {
+    local entry=$JOBS_FLUTTER_NETWORK_ENTRY_FILE link= directory= adapter= network= count=0
+    case "$entry" in
+        /*) ;;
+        *) entry=$JOBS_FLUTTER_NETWORK_ENTRY_BASE/$entry ;;
+    esac
+    while [ -L "$entry" ]; do
+        count=$((count + 1))
+        [ "$count" -lt 40 ] || return 1
+        link=$(readlink "$entry") || return 1
+        case "$link" in
+            /*) entry=$link ;;
+            *) entry=$(dirname -- "$entry")/$link ;;
+        esac
+    done
+    directory=$(CDPATH= cd -P -- "$(dirname -- "$entry")" && pwd) || return 1
+    adapter=$directory/Scripts/【MacOS】FlutterSDK命令适配.sh/【MacOS】FlutterSDK命令适配.sh
+    network=$directory/Scripts/【MacOS】FlutterSDK网络选路.zsh/【MacOS】FlutterSDK网络选路.zsh
+    [ -f "$adapter" ] && [ -f "$network" ] || {
+        printf '%s\n' '✖ 缺少随包SDK网络资源；请保留入口旁完整Scripts目录。' >&2
+        return 1
+    }
+    if [ -z "$JOBS_FLUTTER_NETWORK_TASK_CACHE" ]; then
+        JOBS_FLUTTER_NETWORK_TASK_CACHE=$(/bin/zsh "$network" --cache-dir) || return $?
+        JOBS_FLUTTER_NETWORK_TASK_LOG=$JOBS_FLUTTER_NETWORK_TASK_CACHE/entry-network.log
+    fi
+    JOBS_FLUTTER_ROUTE_CACHE_DIR="$JOBS_FLUTTER_NETWORK_TASK_CACHE" \
+    JOBS_FLUTTER_ROUTE_LOG="$JOBS_FLUTTER_NETWORK_TASK_LOG" \
+        /bin/sh "$adapter" "$@"
+}
+# 既有选择值仅接受原来的两个Flutter执行器，不eval用户字符串。
+jobs_flutter_sdk_selected() {
+    local selected=$1
+    shift
+    case "$selected" in
+        'fvm flutter') jobs_flutter_sdk_command fvm flutter "$@" ;;
+        flutter) jobs_flutter_sdk_command flutter "$@" ;;
+        *) printf '%s\n' '✖ 未识别原Flutter执行器，未执行任何SDK或业务。' >&2; return 2 ;;
+    esac
+}
+# JOBS_FLUTTER_NETWORK_ADAPTER_END
+
 jobs_intro_style() {
   local intro_color=0
   if [ -t 1 ] && [ -n "${TERM:-}" ] && [ "${TERM:-}" != dumb ] &&
@@ -261,7 +312,9 @@ prepare_package_config() {
   if (( RUN_PUB_GET == 1 )); then
     if ask_any_to_run "是否执行 flutter pub get 以刷新依赖解析文件？"; then
       info_echo "正在执行 flutter pub get..."
-      "${FLUTTER_CMD[@]}" pub get 2>&1 | tee -a "$LOG_FILE"
+      jobs_flutter_sdk_command "${FLUTTER_CMD[@]}" pub get 2>&1 | tee -a "$LOG_FILE"
+      local sdk_status=${pipestatus[1]}
+      (( sdk_status == 0 )) || return "$sdk_status"
       success_echo "flutter pub get 执行完成。"
     else
       note_echo "已跳过 flutter pub get。"
@@ -490,8 +543,8 @@ write_package_manifest() {
     echo "Zip path: $ZIP_PATH"
   } > "$STAGE/manifest/project_info.txt"
 
-  ("${FLUTTER_CMD[@]}" --version || true) > "$STAGE/manifest/flutter_version.txt" 2>&1
-  ("${FLUTTER_CMD[@]}" pub deps --style=compact || true) > "$STAGE/manifest/flutter_pub_deps_compact.txt" 2>&1
+  jobs_flutter_sdk_command "${FLUTTER_CMD[@]}" --version > "$STAGE/manifest/flutter_version.txt" 2>&1
+  jobs_flutter_sdk_command "${FLUTTER_CMD[@]}" pub deps --style=compact > "$STAGE/manifest/flutter_pub_deps_compact.txt" 2>&1
 
   cat > "$STAGE/README.txt" <<'README'
 目录说明：

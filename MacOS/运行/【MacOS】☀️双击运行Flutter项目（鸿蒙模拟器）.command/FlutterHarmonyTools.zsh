@@ -5,6 +5,8 @@
 # - 影响范围：解析工程依赖、执行 Hvigor 构建并写入构建目录；签名沿用工程配置。
 # - 运行提示：先打印内置自述；终端回车确认，Ctrl+C / EOF 取消；--help / --check 不构建；缺少工具链时停止。
 
+source "${${(%):-%x}:A:h}/Scripts/【MacOS】FlutterSDK网络适配.zsh/【MacOS】FlutterSDK网络适配.zsh" || return 1
+
 SCRIPT_SOURCE="$0"
 SCRIPT_PATH=""
 SCRIPT_DIR=""
@@ -89,7 +91,7 @@ show_script_intro_and_wait() {
   intro_line body '1、用途：构建已有 Flutter 鸿蒙工程，默认 release，一次生成 HAP 安装包和 APP 发布包。'
   intro_line body '2、依赖：鸿蒙适配 Flutter → Dart / 鸿蒙 SDK → Node / ohpm / Hvigor / Java。'
   intro_line body '3、影响：联网解析依赖、执行工程构建与现有签名配置，写入缓存和构建目录。'
-  intro_line body '4、策略：不自动安装、升级工具链，不创建 ohos 平台，不修改证书或系统环境配置。'
+  intro_line body '4、策略：已有 Flutter 缺失的 Dart / 引擎先检测网络并自动补齐，失败持续重试，Ctrl+C 结束；不升级工具链、不创建 ohos、不修改证书或系统配置。'
   intro_line body '5、先确认工程根目录，再回车开始；Ctrl+C / EOF 取消，--check 只检查工程清单。'
   intro_line body "日志：$LOG_FILE"
   intro_line title '===================================================='
@@ -415,7 +417,7 @@ check_build_toolchain() {
     error_echo '缺少 hvigorw，请把 DevEco tools/hvigor/bin 加入 PATH。'
     return 1
   fi
-  run_step 'Flutter 健康检查' "${FLUTTER_CMD[@]}" --version || return $?
+  jobs_command_sdk 'Flutter / Dart 初始化' "${FLUTTER_CMD[1]:A:h:h}" "" "${FLUTTER_CMD[@]}" --version || return $?
   local target="" help_text=""
   for target in "${BUILD_TARGETS[@]}"; do
     if ! help_text="$("${FLUTTER_CMD[@]}" build "$target" --help 2>&1)"; then
@@ -485,6 +487,7 @@ run_build_flow() {
   choose_flutter_sdk || return $?
   prepare_deveco_environment || return $?
   check_build_toolchain || return $?
+  jobs_command_sdk_platform "${FLUTTER_CMD[1]:A:h:h}" "" "${FLUTTER_CMD[1]}" ohos || return $?
   info_echo '依赖来源：沿用工程 pubspec.yaml / 锁文件和当前 Pub、ohpm 软件源配置。'
   run_step 'flutter pub get' "${FLUTTER_CMD[@]}" pub get || return $?
   local target=""

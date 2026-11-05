@@ -54,7 +54,7 @@
 
 ## 三、<span id="outputs">执行、产物与失败</span> <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
 
-前置检查通过后依次执行 `flutter pub get`、`flutter build hap --release`、`flutter build app --release`；指定其它模式时两步保持一致。依赖沿用工程锁文件与既有软件源，构建及依赖缓存会写入。脚本不清理工程、不安装或升级工具链、不生成签名材料、不提交或推送。
+前置检查通过后依次执行 `flutter pub get`、`flutter build hap --release`、`flutter build app --release`；指定其它模式时两步保持一致。依赖沿用工程锁文件与既有软件源，构建及依赖缓存会写入。脚本不清理工程、不升级工具链、不生成签名材料、不提交或推送；已有 Flutter 缺失的 Dart / 引擎及鸿蒙平台资源会自动补齐。
 
 逐步检查 Flutter 汇总目录 `build/ohos/`、`ohos/build/` 及 `ohos/*/build/` 内最终输出目录中的非空产物。每类至少有一个本轮写入的包才通过；已有旧包保留并明确提示，不计为本轮成功。因此增量构建若完全复用旧文件且没有更新产物时间，也会停止，请核对工具实际输出后重新构建。任一步失败保留其退出码并停止，第二步失败时保留已经生成的 HAP，整体不会报告成功。
 
@@ -71,5 +71,12 @@ ruby './Tests/harmony_packaging_test.rb'
 ```
 
 真实 DevEco 编译、证书与设备安装仍需在目标工程验收。Windows 对应入口见[双端打包目录](../../../WindowsOS/打包相关/README.md)；返回[本端打包说明](../README.md)。
+
+
+<span id="sdk-network-routing"></span>
+
+Flutter SDK 获取前会检测本次网络：日志说明 Flutter / Dart / engine 身份、实际来源和选路依据；公共制品比较官方、可信 CFUG 镜像与本机已有代理，显式来源及代理配置保留。鸿蒙或私有仓库只检查原 Git / 制品来源，不把公共发布版测速结果用于不同 SDK。源码与 Dart / 引擎分阶段获取，SDK 下载失败重新测路并持续重试至成功或 Ctrl+C，子进程退出后恢复调用方环境，不改系统代理或永久配置。
+
+运行和打包前先检查 `precache --ohos` 能力并补齐平台资源；没有该能力时明确停止。依赖解析、构建和运行失败保留原退出码，SDK 重试不重复这些业务动作。完整复制本目录（含 `Scripts`）即可迁移；网络适配隔离验证见 [SDK 网络适配测试](./Tests/test_sdk_network_adapter.py/README.md)，不进行真实 SDK 下载或设备运行。
 
 <a id="🔚" href="#前言" style="font-size:17px; color:green; font-weight:bold;">我是有底线的➤点我回到首页</a>

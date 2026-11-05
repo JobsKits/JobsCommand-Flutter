@@ -1,4 +1,6 @@
 #!/bin/zsh
+
+
 # 脚本自述：
 # - 脚本名称：【MacOS】⚙️双击安装Flutter.SDK.command
 # - 核心用途：执行“⚙️双击安装Flutter.SDK”对应的移动端项目自动化任务。
@@ -12,6 +14,55 @@
 # 仅渲染自述：标题红色加粗，编号正文蓝色常规字重；非彩色终端输出纯文本。
 # >>> Jobs Homebrew install choice >>>
 # 输出安装诊断，避免混入返回的命令路径。
+# JOBS_FLUTTER_NETWORK_ADAPTER_BEGIN
+# 捕获真实入口参数；后续切换工程目录不影响随包模块定位。
+JOBS_FLUTTER_NETWORK_ENTRY_FILE=$0
+JOBS_FLUTTER_NETWORK_ENTRY_BASE=$PWD
+JOBS_FLUTTER_NETWORK_TASK_CACHE=
+JOBS_FLUTTER_NETWORK_TASK_LOG=
+# 只把SDK命令交给随包子进程，不把代理或源写回当前Shell。
+jobs_flutter_sdk_command() {
+    local entry=$JOBS_FLUTTER_NETWORK_ENTRY_FILE link= directory= adapter= network= count=0
+    case "$entry" in
+        /*) ;;
+        *) entry=$JOBS_FLUTTER_NETWORK_ENTRY_BASE/$entry ;;
+    esac
+    while [ -L "$entry" ]; do
+        count=$((count + 1))
+        [ "$count" -lt 40 ] || return 1
+        link=$(readlink "$entry") || return 1
+        case "$link" in
+            /*) entry=$link ;;
+            *) entry=$(dirname -- "$entry")/$link ;;
+        esac
+    done
+    directory=$(CDPATH= cd -P -- "$(dirname -- "$entry")" && pwd) || return 1
+    adapter=$directory/Scripts/【MacOS】FlutterSDK命令适配.sh/【MacOS】FlutterSDK命令适配.sh
+    network=$directory/Scripts/【MacOS】FlutterSDK网络选路.zsh/【MacOS】FlutterSDK网络选路.zsh
+    [ -f "$adapter" ] && [ -f "$network" ] || {
+        printf '%s\n' '✖ 缺少随包SDK网络资源；请保留入口旁完整Scripts目录。' >&2
+        return 1
+    }
+    if [ -z "$JOBS_FLUTTER_NETWORK_TASK_CACHE" ]; then
+        JOBS_FLUTTER_NETWORK_TASK_CACHE=$(/bin/zsh "$network" --cache-dir) || return $?
+        JOBS_FLUTTER_NETWORK_TASK_LOG=$JOBS_FLUTTER_NETWORK_TASK_CACHE/entry-network.log
+    fi
+    JOBS_FLUTTER_ROUTE_CACHE_DIR="$JOBS_FLUTTER_NETWORK_TASK_CACHE" \
+    JOBS_FLUTTER_ROUTE_LOG="$JOBS_FLUTTER_NETWORK_TASK_LOG" \
+        /bin/sh "$adapter" "$@"
+}
+# 既有选择值仅接受原来的两个Flutter执行器，不eval用户字符串。
+jobs_flutter_sdk_selected() {
+    local selected=$1
+    shift
+    case "$selected" in
+        'fvm flutter') jobs_flutter_sdk_command fvm flutter "$@" ;;
+        flutter) jobs_flutter_sdk_command flutter "$@" ;;
+        *) printf '%s\n' '✖ 未识别原Flutter执行器，未执行任何SDK或业务。' >&2; return 2 ;;
+    esac
+}
+# JOBS_FLUTTER_NETWORK_ADAPTER_END
+
 jobs_brew_note() {
   print -u2 -r -- "ℹ $*"
 }
@@ -533,34 +584,33 @@ run_original_logic() {
   }
   # ✅ 官方解压安装
   install_official() {
-    echo ""
-    note_echo "📂 请拖入你希望安装 Flutter 的目标文件夹（如 ~/development）："
-    read -r target_dir
+    local target_dir='' archive=''
+    note_echo '📂 请拖入Flutter安装目标文件夹：'
+    read -r target_dir || return 130
     target_dir="${target_dir/#\~/$HOME}"
-    mkdir -p "$target_dir"
-    cd "$target_dir"
-
-    info_echo "🌐 下载 Flutter SDK 中..."
-    curl -O https://storage.googleapis.com/flutter_infra_release/releases/stable/macos/flutter_macos_latest-stable.zip
-
-    info_echo "📦 解压..."
-    unzip -q flutter_macos_latest-stable.zip
-    rm flutter_macos_latest-stable.zip
-
-    success_echo "✅ Flutter SDK 解压完成"
+    [[ -n "$target_dir" ]] || return 130
+    mkdir -p "$target_dir" || return $?
+    cd "$target_dir" || return $?
+    target_dir="$PWD"
+    archive="$(mktemp "$target_dir/.JobsFlutterSDK.XXXXXXXX")" || return 1
+    info_echo "🌐 按stable当前版本/实际架构获取精确SDK归档：$archive"
+    jobs_flutter_sdk_command --official-archive stable "$archive" || return $?
+    unzip -q "$archive" || return $?
+    rm -- "$archive"
+    jobs_flutter_sdk_command "$target_dir/flutter/bin/flutter" --version || return $?
+    success_echo '✅ 官方SDK归档已校验并补齐运行环境'
     open "$target_dir/flutter"
   }
   # ✅ Brew 安装 Flutter
   install_brew() {
+    local brew_bin="$(command -v brew)" operation=install
     if command -v flutter >/dev/null 2>&1; then
-      info_echo "🔄 已检测到 Flutter，尝试升级..."
-      ask_run "升级 flutter？" && brew upgrade flutter || true
-    else
-      info_echo "📦 开始安装 Flutter..."
-      brew install flutter
+      ask_run '升级flutter？' || return 0
+      operation=upgrade
     fi
-    success_echo "✅ 安装完成，执行 flutter doctor 检查配置"
-    flutter doctor
+    jobs_flutter_sdk_command --brew-cask "$brew_bin" "$operation" || return $?
+    jobs_flutter_sdk_command flutter doctor || return $?
+    success_echo '✅ Flutter安装与环境检查完成'
   }
   # ✅ FVM 安装 Flutter（项目根目录）
   install_fvm() {
@@ -587,7 +637,7 @@ run_original_logic() {
     command -v fvm >/dev/null 2>&1 || brew install fvm || return 1
 
     info_echo "🔍 选择 Flutter 版本；← 返回安装方式，Esc / Ctrl+C 取消。"
-    versions="$(fvm releases | awk '/^stable|beta|dev|master/ {print $1}')" || return 1
+    versions="$(jobs_flutter_sdk_command fvm releases | awk '/^stable|beta|dev|master/ {print $1}')" || return $?
     available_versions=("${(@f)versions}")
     output="$(printf '%s\n' stable "${(@f)versions}" | awk 'NF && !seen[$0]++' | env -u FZF_DEFAULT_OPTS -u FZF_DEFAULT_OPTS_FILE fzf --expect=left --prompt='选择 Flutter 版本 > ' --height=60% --reverse --header='← 返回安装方式；回车确认；Esc / Ctrl+C 取消')" || result=$?
     if (( result == 0 || result == 1 )) && [[ "${output%%$'\n'*}" == left ]]; then
@@ -604,11 +654,11 @@ run_original_logic() {
     [[ "$version" == stable ]] || (( ${available_versions[(Ie)$version]} > 0 )) || return 1
 
     highlight_echo "⬇️ 安装 Flutter $version ..."
-    fvm install "$version" || return 1
-    fvm use "$version" || return 1
+    jobs_flutter_sdk_command fvm install "$version" || return $?
+    jobs_flutter_sdk_command fvm use "$version" || return $?
 
     success_echo "✅ 安装完成，执行 flutter doctor 检查配置"
-    fvm flutter doctor
+    jobs_flutter_sdk_command fvm flutter doctor || return $?
   }
   # ✅ 写入环境变量到 .bash_profile
   write_env_to_profile() {
@@ -730,7 +780,7 @@ initialize_script_runtime() {
 main() {
   show_script_intro_and_wait # 展示内置自述并完成防误触确认。
   initialize_script_runtime # 初始化日志和脚本运行状态。
-  run_original_logic "$@" # 执行安装选择与业务，并保留取消或失败状态。
+  run_original_logic "$@" || return $? # 执行安装选择与业务，并保留取消或失败状态。
 }
 
 main "$@"

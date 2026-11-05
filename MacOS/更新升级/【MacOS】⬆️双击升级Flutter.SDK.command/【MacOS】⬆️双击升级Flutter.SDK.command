@@ -1,4 +1,6 @@
 #!/bin/zsh
+
+
 # 脚本自述：
 # - 脚本名称：【MacOS】⬆️双击升级Flutter.SDK.command
 # - 核心用途：执行“⬆️双击升级Flutter.SDK”对应的移动端项目自动化任务。
@@ -12,6 +14,55 @@
 # 仅渲染自述：标题红色加粗，编号正文蓝色常规字重；非彩色终端输出纯文本。
 # >>> Jobs Homebrew install choice >>>
 # 输出安装诊断，避免混入返回的命令路径。
+# JOBS_FLUTTER_NETWORK_ADAPTER_BEGIN
+# 捕获真实入口参数；后续切换工程目录不影响随包模块定位。
+JOBS_FLUTTER_NETWORK_ENTRY_FILE=$0
+JOBS_FLUTTER_NETWORK_ENTRY_BASE=$PWD
+JOBS_FLUTTER_NETWORK_TASK_CACHE=
+JOBS_FLUTTER_NETWORK_TASK_LOG=
+# 只把SDK命令交给随包子进程，不把代理或源写回当前Shell。
+jobs_flutter_sdk_command() {
+    local entry=$JOBS_FLUTTER_NETWORK_ENTRY_FILE link= directory= adapter= network= count=0
+    case "$entry" in
+        /*) ;;
+        *) entry=$JOBS_FLUTTER_NETWORK_ENTRY_BASE/$entry ;;
+    esac
+    while [ -L "$entry" ]; do
+        count=$((count + 1))
+        [ "$count" -lt 40 ] || return 1
+        link=$(readlink "$entry") || return 1
+        case "$link" in
+            /*) entry=$link ;;
+            *) entry=$(dirname -- "$entry")/$link ;;
+        esac
+    done
+    directory=$(CDPATH= cd -P -- "$(dirname -- "$entry")" && pwd) || return 1
+    adapter=$directory/Scripts/【MacOS】FlutterSDK命令适配.sh/【MacOS】FlutterSDK命令适配.sh
+    network=$directory/Scripts/【MacOS】FlutterSDK网络选路.zsh/【MacOS】FlutterSDK网络选路.zsh
+    [ -f "$adapter" ] && [ -f "$network" ] || {
+        printf '%s\n' '✖ 缺少随包SDK网络资源；请保留入口旁完整Scripts目录。' >&2
+        return 1
+    }
+    if [ -z "$JOBS_FLUTTER_NETWORK_TASK_CACHE" ]; then
+        JOBS_FLUTTER_NETWORK_TASK_CACHE=$(/bin/zsh "$network" --cache-dir) || return $?
+        JOBS_FLUTTER_NETWORK_TASK_LOG=$JOBS_FLUTTER_NETWORK_TASK_CACHE/entry-network.log
+    fi
+    JOBS_FLUTTER_ROUTE_CACHE_DIR="$JOBS_FLUTTER_NETWORK_TASK_CACHE" \
+    JOBS_FLUTTER_ROUTE_LOG="$JOBS_FLUTTER_NETWORK_TASK_LOG" \
+        /bin/sh "$adapter" "$@"
+}
+# 既有选择值仅接受原来的两个Flutter执行器，不eval用户字符串。
+jobs_flutter_sdk_selected() {
+    local selected=$1
+    shift
+    case "$selected" in
+        'fvm flutter') jobs_flutter_sdk_command fvm flutter "$@" ;;
+        flutter) jobs_flutter_sdk_command flutter "$@" ;;
+        *) printf '%s\n' '✖ 未识别原Flutter执行器，未执行任何SDK或业务。' >&2; return 2 ;;
+    esac
+}
+# JOBS_FLUTTER_NETWORK_ADAPTER_END
+
 jobs_brew_note() {
   print -u2 -r -- "ℹ $*"
 }
@@ -487,24 +538,14 @@ run_original_logic() {
   }
   # 解析并返回 get sdk path from fvm 所需信息。
   get_sdk_path_from_fvm() {
-    fvm flutter --version --verbose 2>/dev/null \
-      | /usr/bin/grep "Flutter root" \
-      | /usr/bin/awk -F'at ' '{print $2}' \
-      | /usr/bin/xargs || true
+    if [[ -d .fvm/flutter_sdk ]]; then (cd .fvm/flutter_sdk && pwd -P)
+    elif [[ -n "${commands[flutter]:-}" ]]; then print -r -- "${commands[flutter]:A:h:h}"
+    else return 1; fi
   }
   # 解析并返回 get sdk path from system 所需信息。
   get_sdk_path_from_system() {
-    local target_path
-    target_path=$(flutter --version --verbose 2>/dev/null \
-      | /usr/bin/grep "Flutter root" \
-      | /usr/bin/awk -F'at ' '{print $2}' \
-      | /usr/bin/xargs || true)
-    if [[ -z "$target_path" ]]; then
-      for p in /opt/homebrew/Caskroom/flutter/*/flutter /usr/local/Caskroom/flutter/*/flutter; do
-        [[ -x "$p/bin/flutter" ]] && target_path="$p" && break
-      done
-    fi
-    echo "$target_path"
+    [[ -n "${commands[flutter]:-}" ]] || return 1
+    print -r -- "${commands[flutter]:A:h:h}"
   }
   # 检查 check sdk git changes 所需条件，不满足时阻止继续执行。
   check_sdk_git_changes() {
@@ -539,27 +580,28 @@ run_original_logic() {
   }
   # ✅ 执行升级
   perform_upgrade() {
-    local sdk_cmd="$1"
-    local sdk_path="$2"
-
+    local sdk_cmd="$1" sdk_path="$2" choice_result=0 channel=''
+    [[ -x "$sdk_path/bin/flutter" ]] || return 2
+    if [[ ( "$sdk_cmd" == 'fvm flutter' || "$sdk_path" == */fvm/versions/* || "$sdk_path" == */.fvm/versions/* ) &&
+          "${sdk_path:t}" =~ '^v?[0-9]+\.[0-9]+\.[0-9]+' ]]; then
+      cecho yellow '固定FVM版本缓存保留pin；请先fvm install新版本，再切换项目。'
+      return 2
+    fi
     if check_sdk_git_changes "$sdk_path"; then
-      prompt_git_action "$sdk_path"
-      [[ $? -eq 2 ]] && "$sdk_cmd" upgrade --force && return
+      prompt_git_action "$sdk_path" || choice_result=$?
+      if (( choice_result == 2 )); then
+        jobs_flutter_sdk_command "$sdk_path/bin/flutter" upgrade --force
+        return $?
+      fi
+      (( choice_result == 0 )) || return "$choice_result"
     fi
-
-    if [[ "$sdk_path" == *"/Caskroom/flutter/"* ]]; then
-      cecho blue "🍺 检测到 Flutter 是通过 Homebrew 安装，使用 brew 升级方式"
-      brew upgrade flutter || {
-        cecho red "❌ brew upgrade flutter 失败"
-        exit 1
-      }
-      return
+    if [[ "$sdk_path" == *'/Caskroom/flutter/'* ]]; then
+      jobs_flutter_sdk_command --brew-cask "$(command -v brew)" upgrade
+      return $?
     fi
-
-    local channel=$(select_channel)
-    [[ -n "$channel" ]] && "$sdk_cmd" channel "$channel"
-    cecho yellow "🚀 开始升级 Flutter SDK..."
-    "$sdk_cmd" upgrade
+    channel="$(select_channel)" || return $?
+    [[ -z "$channel" ]] || jobs_flutter_sdk_command "$sdk_path/bin/flutter" channel "$channel" || return $?
+    jobs_flutter_sdk_command "$sdk_path/bin/flutter" upgrade
   }
   # ✅ 判断 flutter 命令来源与 SDK 路径
   detect_flutter_cmd_and_sdk_path() {
@@ -590,7 +632,7 @@ run_original_logic() {
         cecho red "❌ fallback 也失败，终止"
         cecho yellow "📋 flutter --version --verbose 输出如下（供调试）："
         echo "--------------------"
-        flutter --version --verbose
+        jobs_flutter_sdk_command flutter --version --verbose || return $?
         echo "--------------------"
         exit 1
       fi
@@ -606,8 +648,8 @@ run_original_logic() {
     check_and_set_homebrew_mirror               # ✅ 检查 Homebrew 源可达性，必要时切换为国内镜像
     ensure_brew                                 # ✅ 自检 Homebrew，如未安装则自动安装并升级
     ensure_fzf                                  # ✅ 检查并安装 fzf 工具（用于 channel 选择等交互）
-    detect_flutter_cmd_and_sdk_path             # ✅ 检测 flutter 是否通过 FVM 管理，并获取 SDK 路径
-    perform_upgrade "$flutter_cmd" "$sdk_path"  # ✅ 执行 Flutter SDK 升级流程（支持 FVM / 系统 flutter）
+    detect_flutter_cmd_and_sdk_path || return $? # ✅ 检测 flutter 是否通过 FVM 管理，并获取 SDK 路径
+    perform_upgrade "$flutter_cmd" "$sdk_path" || return $? # ✅ 执行 Flutter SDK 升级流程（支持 FVM / 系统 flutter）
 
     echo ""
     cecho green "✅ Flutter SDK 升级完成"         # ✅ 最终成功提示
@@ -627,7 +669,7 @@ initialize_script_runtime() {
 main() {
   show_script_intro_and_wait # 展示脚本内置自述，并按运行入口完成防误触确认。
   initialize_script_runtime # 初始化 Shell 选项、日志、依赖和入口运行状态。
-  run_original_logic "$@" # 执行 run_original_logic 对应的核心业务步骤。
+  run_original_logic "$@" || return $? # 执行 run_original_logic 对应的核心业务步骤。
   success_echo "脚本执行结束。日志：$LOG_FILE" # 输出脚本执行结果、摘要和日志位置。
 }
 

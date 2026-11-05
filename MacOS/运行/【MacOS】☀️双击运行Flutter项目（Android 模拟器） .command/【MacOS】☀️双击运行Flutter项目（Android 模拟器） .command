@@ -1,4 +1,6 @@
 #!/bin/zsh
+
+
 # 脚本自述：
 # - 脚本名称：【MacOS】☀️双击运行Flutter项目（Android 模拟器） .command
 # - 核心用途：执行“☀️双击运行Flutter项目（Android 模拟器）”对应的移动端项目自动化任务。
@@ -12,6 +14,76 @@
 # 仅渲染自述：标题红色加粗，编号正文蓝色常规字重；非彩色终端输出纯文本。
 # >>> Jobs Homebrew install choice >>>
 # 输出安装诊断，避免混入返回的命令路径。
+# JOBS_FLUTTER_NETWORK_ADAPTER_BEGIN
+# 捕获真实入口参数；后续切换工程目录不影响随包模块定位。
+JOBS_FLUTTER_NETWORK_ENTRY_FILE=$0
+JOBS_FLUTTER_NETWORK_ENTRY_BASE=$PWD
+JOBS_FLUTTER_NETWORK_TASK_CACHE=
+JOBS_FLUTTER_NETWORK_TASK_LOG=
+# 只把SDK命令交给随包子进程，不把代理或源写回当前Shell。
+jobs_flutter_sdk_command() {
+    local entry=$JOBS_FLUTTER_NETWORK_ENTRY_FILE link= directory= adapter= network= count=0
+    case "$entry" in
+        /*) ;;
+        *) entry=$JOBS_FLUTTER_NETWORK_ENTRY_BASE/$entry ;;
+    esac
+    while [ -L "$entry" ]; do
+        count=$((count + 1))
+        [ "$count" -lt 40 ] || return 1
+        link=$(readlink "$entry") || return 1
+        case "$link" in
+            /*) entry=$link ;;
+            *) entry=$(dirname -- "$entry")/$link ;;
+        esac
+    done
+    directory=$(CDPATH= cd -P -- "$(dirname -- "$entry")" && pwd) || return 1
+    adapter=$directory/Scripts/【MacOS】FlutterSDK命令适配.sh/【MacOS】FlutterSDK命令适配.sh
+    network=$directory/Scripts/【MacOS】FlutterSDK网络选路.zsh/【MacOS】FlutterSDK网络选路.zsh
+    [ -f "$adapter" ] && [ -f "$network" ] || {
+        printf '%s\n' '✖ 缺少随包SDK网络资源；请保留入口旁完整Scripts目录。' >&2
+        return 1
+    }
+    if [ -z "$JOBS_FLUTTER_NETWORK_TASK_CACHE" ]; then
+        JOBS_FLUTTER_NETWORK_TASK_CACHE=$(/bin/zsh "$network" --cache-dir) || return $?
+        JOBS_FLUTTER_NETWORK_TASK_LOG=$JOBS_FLUTTER_NETWORK_TASK_CACHE/entry-network.log
+    fi
+    JOBS_FLUTTER_NETWORK_ADAPTER_PATH=$adapter
+    JOBS_FLUTTER_ROUTE_CACHE_DIR="$JOBS_FLUTTER_NETWORK_TASK_CACHE" \
+    JOBS_FLUTTER_ROUTE_LOG="$JOBS_FLUTTER_NETWORK_TASK_LOG" \
+        /bin/sh "$adapter" "$@"
+}
+# 既有选择值仅接受原来的两个Flutter执行器，不eval用户字符串。
+jobs_flutter_sdk_selected() {
+    local selected=$1
+    shift
+    case "$selected" in
+        'fvm flutter') jobs_flutter_sdk_command fvm flutter "$@" ;;
+        flutter) jobs_flutter_sdk_command flutter "$@" ;;
+        *) printf '%s\n' '✖ 未识别原Flutter执行器，未执行任何SDK或业务。' >&2; return 2 ;;
+    esac
+}
+# 既有两个Android SDK安装点持续获取，退出0还须验证真正的文件。
+jobs_command_android_install() {
+  local package="$1" sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+  [[ "$sdk" == /* && -d "$sdk" ]] || { print -u2 '✖ Android SDK根目录未就绪。'; return 2; }
+  local retry="${JOBS_FLUTTER_NETWORK_ADAPTER_PATH:h}/../【MacOS】SDK获取重试.zsh/【MacOS】SDK获取重试.zsh"
+  source "$retry" || return 1
+  local sdk_log="$JOBS_FLUTTER_NETWORK_TASK_CACHE/android-sdk.log"
+  jobs_sdk_retry "Android SDK $package" "$sdk_log" jobs_command_android_install_once "$sdk" "$package" "$sdk_log"
+}
+jobs_command_android_install_once() {
+  local sdk="$1" package="$2" sdk_log="$3" result=0
+  command sdkmanager "$package" 2>&1 | /usr/bin/tee -a "$sdk_log"
+  result=${pipestatus[1]}
+  (( result == 0 )) || return "$result"
+  case "$package" in
+    build-tools\;*) [[ -x "$sdk/build-tools/${package#*;}/aapt2" ]] ;;
+    platforms\;*) [[ -f "$sdk/platforms/${package#*;}/android.jar" ]] ;;
+    *) return 2 ;;
+  esac
+}
+# JOBS_FLUTTER_NETWORK_ADAPTER_END
+
 jobs_brew_note() {
   print -u2 -r -- "ℹ $*"
 }
@@ -475,8 +547,10 @@ run_original_logic() {
   get_or_start_android_emulator() {
     # ✅ 全局声明变量 device_id
     typeset -g device_id
+    local devices_output=''
 
-    device_id=$(eval "${flutter_cmd[@]}" devices | grep -iE 'emulator|android' | awk -F '•' '{print $2}' | head -n1 | xargs)
+    devices_output="$(jobs_flutter_sdk_command "${flutter_cmd[@]}" devices)" || return $?
+    device_id=$(printf '%s\n' "$devices_output" | grep -iE 'emulator|android' | awk -F '•' '{print $2}' | head -n1 | xargs)
 
     if [[ -n "$device_id" ]]; then
       success_echo "📱 已找到 Android 模拟器设备：$device_id"
@@ -504,7 +578,8 @@ run_original_logic() {
 
     local timeout=60
     while [[ $timeout -gt 0 ]]; do
-      device_id=$(eval "${flutter_cmd[@]}" devices | grep -iE 'emulator|android' | awk -F '•' '{print $2}' | head -n1 | xargs)
+      devices_output="$(jobs_flutter_sdk_command "${flutter_cmd[@]}" devices)" || return $?
+      device_id=$(printf '%s\n' "$devices_output" | grep -iE 'emulator|android' | awk -F '•' '{print $2}' | head -n1 | xargs)
       if [[ -n "$device_id" ]]; then
         success_echo "✅ 模拟器启动成功：$device_id"
         return 0
@@ -715,7 +790,7 @@ run_original_logic() {
   # ✅ Android 构建环境完整性检查
   check_android_environment() {
     warm_echo "🔍 正在检查 Android 构建环境..."
-    eval "$flutter_cmd --version"
+    jobs_flutter_sdk_command "${flutter_cmd[@]}" --version || return $?
 
     # === JDK 检查 ===
     if ! command -v java &>/dev/null; then
@@ -756,7 +831,7 @@ run_original_logic() {
     # === build-tools 检查 ===
     if [[ ! -d "$ANDROID_HOME/build-tools" ]] || [[ -z "$(ls "$ANDROID_HOME/build-tools")" ]]; then
       warn_echo "⚠️ 未检测到任何 build-tools，尝试安装中..."
-      sdkmanager "build-tools;34.0.0" || warn_echo "⚠️ build-tools 安装可能失败，请手动检查"
+      jobs_command_android_install "build-tools;34.0.0" || return $?
     else
       latest_build_tools=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n1)
       success_echo "✅ 已检测到 build-tools：$latest_build_tools"
@@ -765,7 +840,7 @@ run_original_logic() {
     # === platforms 检查 ===
     if [[ ! -d "$ANDROID_HOME/platforms" ]] || [[ -z "$(ls "$ANDROID_HOME/platforms")" ]]; then
       warn_echo "⚠️ 未检测到任何 Android 平台 SDK，尝试安装中..."
-      sdkmanager "platforms;android-34" || warn_echo "⚠️ Android 平台 SDK 安装可能失败，请手动检查"
+      jobs_command_android_install "platforms;android-34" || return $?
     else
       latest_platform=$(ls "$ANDROID_HOME/platforms" | sort -V | tail -n1)
       success_echo "✅ 已检测到平台 SDK：$latest_platform"
@@ -773,8 +848,10 @@ run_original_logic() {
 
     # === flutter doctor 全量输出 ===
     note_echo "🩺 正在执行 flutter doctor 检查环境..."
-    "${flutter_cmd[@]}" doctor
-    "${flutter_cmd[@]}" doctor | tee -a "$LOG_FILE"
+    jobs_flutter_sdk_command "${flutter_cmd[@]}" precache --android || return $?
+    jobs_flutter_sdk_command "${flutter_cmd[@]}" doctor | tee -a "$LOG_FILE"
+    local doctor_result=${pipestatus[1]}
+    (( doctor_result == 0 )) || return "$doctor_result"
   
     # === Gradle Wrapper 检查 ===
     local wrapper_file="android/gradle/wrapper/gradle-wrapper.properties"
@@ -805,8 +882,8 @@ run_original_logic() {
   # ✅ Flutter 命令检测
   detect_flutter_cmd() {
     script_path="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
-    local fvm_config_path="$script_path/.fvm/fvm_config.json"
-    if command -v fvm >/dev/null 2>&1 && [[ -f "$fvm_config_path" ]]; then
+    local fvm_config_path="$PWD/.fvm/fvm_config.json"
+    if command -v fvm >/dev/null 2>&1 && { [[ -f "$fvm_config_path" ]] || [[ -f "$PWD/.fvmrc" ]]; }; then
       flutter_cmd=("fvm" "flutter")
       info_echo "🧩 检测到 FVM 项目，使用命令：fvm flutter"
     else
@@ -904,6 +981,7 @@ run_original_logic() {
     done
 
     cd "$flutter_root" || { error_echo "无法进入项目目录：$flutter_root"; exit 1; }
+    flutter_project_root="$flutter_root"
     success_echo "✅ 项目路径：$flutter_root"
     success_echo "🎯 入口文件：$entry_file"
   }
@@ -919,7 +997,7 @@ run_original_logic() {
     fi
 
     note_echo "📦 自动执行：flutter pub upgrade"
-    eval "${flutter_cmd[@]}" pub upgrade
+    jobs_flutter_sdk_command "${flutter_cmd[@]}" pub upgrade || return $?
 
     local yaml_path="$flutter_project_root/pubspec.yaml"
     if grep -q "connectivity:" "$yaml_path"; then
@@ -930,7 +1008,7 @@ run_original_logic() {
         highlight_echo "🔁 自动替换 connectivity → connectivity_plus"
         sed -i '' 's/^\s*connectivity:/  connectivity_plus:/g' "$yaml_path"
       fi
-      eval "${flutter_cmd[@]}" pub get
+      jobs_flutter_sdk_command "${flutter_cmd[@]}" pub get || return $?
     else
       info_echo "ℹ️ 未检测到 connectivity，无需替换"
     fi
@@ -938,7 +1016,7 @@ run_original_logic() {
   # ✅ 执行 flutter run
   run_flutter() {
     note_echo "🧹 自动执行：flutter clean"
-    eval "${flutter_cmd[@]}" clean
+    jobs_flutter_sdk_command "${flutter_cmd[@]}" clean || return $?
 
     replace_connectivity_dependency  # 询问是否 pub upgrade 并替换依赖
 
@@ -960,25 +1038,28 @@ run_original_logic() {
     # ================================== 前台/后台运行选择 ==================================
     echo ""
     read "?🎮 是否后台运行？按回车前台运行，输入任意字符后台运行（关闭终端不影响）: " run_mode
+    jobs_flutter_sdk_command "${flutter_cmd[@]}" precache --android || return $?
     if [[ -z "$run_mode" ]]; then
         # ✅ 回车 → 前台运行
-        "${cmd[@]}"
-        if [[ $? -ne 0 ]]; then
+        local run_result=0
+        jobs_flutter_sdk_command "${cmd[@]}" || run_result=$?
+        case "$run_result" in 129|130|131|137|143) return "$run_result" ;; esac
+        if (( run_result != 0 )); then
           warn_echo "⚠️ 构建失败，执行自动修复流程..."
           note_echo "🧹 清除项目构建产物和 pubspec.lock..."
           rm -rf "$flutter_project_root/.dart_tool"
           rm -rf "$flutter_project_root/build"
           rm -f "$flutter_project_root/pubspec.lock"
 
-          eval "${flutter_cmd[@]}" clean
-          eval "${flutter_cmd[@]}" pub get
+          jobs_flutter_sdk_command "${flutter_cmd[@]}" clean || return $?
+          jobs_flutter_sdk_command "${flutter_cmd[@]}" pub get || return $?
 
           note_echo "🔁 正在重试 flutter run..."
-          "${cmd[@]}"
+          jobs_flutter_sdk_command "${cmd[@]}"
       fi
     else
       # ❗ 任意字符 → 前台运行
-      nohup "${cmd[@]}" > /tmp/flutter_run.log 2>&1 &
+      nohup /bin/sh "$JOBS_FLUTTER_NETWORK_ADAPTER_PATH" "${cmd[@]}" > /tmp/flutter_run.log 2>&1 &
       disown
       success_echo "✅ Flutter 已后台运行，日志写入：/tmp/flutter_run.log"
     fi
@@ -1006,7 +1087,7 @@ run_original_logic() {
       init_logging                             # ✅ 日志输出（日志文件名 == 脚本文件名）
       detect_flutter_cmd                       # ✅ Flutter 命令检测
       show_intro                               # ✅ 自述信息
-      get_or_start_android_emulator || exit 1  # ✅ 启动 Android 模拟器
+      get_or_start_android_emulator || return $?  # ✅ 启动 Android 模拟器
 
       install_homebrew                         # ✅ 自检安装：🍺Homebrew
       install_jenv                             # ✅ 自检安装：🍺Homebrew.jenv
@@ -1032,7 +1113,7 @@ main() {
   # 初始化本次运行使用的日志文件。
   initialize_script_runtime
   # 执行 run_original_logic 对应的核心业务步骤。
-  run_original_logic "$@"
+  run_original_logic "$@" || return $?
   # 输出脚本执行结果、摘要和日志位置。
   success_echo "脚本执行结束。日志：$LOG_FILE"
 }

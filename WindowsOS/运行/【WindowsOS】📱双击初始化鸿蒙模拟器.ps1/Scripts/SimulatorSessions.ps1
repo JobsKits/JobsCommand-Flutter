@@ -45,18 +45,10 @@ function Start-JobsHarmonySimulator {
     return [pscustomobject]@{ Name = $selected; Emulator = $check.Emulator }
 }
 function Invoke-JobsSimulatorFlutterQuery {
-    param([string]$Flutter, [string]$Project, [string[]]$Arguments, [int]$TimeoutSeconds = 30)
-    # 在独立 PowerShell 进程内调用 .bat，使用编码后的结构化数据保持路径与 argv 边界。
-    $payload = @{ File=$Flutter; Project=$Project; Arguments=$Arguments } | ConvertTo-Json -Depth 4 -Compress
-    $data = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($payload))
-    $command = '$ErrorActionPreference="Continue"; $d=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("' + $data + '"))|ConvertFrom-Json; Set-Location -LiteralPath $d.Project; $a=[string[]]@($d.Arguments); $global:LASTEXITCODE=-1; & ([string]$d.File) @a; exit $LASTEXITCODE'
-    $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command))
-    $hostFile = (Get-Process -Id $PID).Path
-    $module = Import-JobsFeature 'Packager'
-    return & $module {
-        param($file, $code, $project, $limit)
-        Invoke-JobsProcess -FilePath $file -Arguments @('-NoLogo','-NoProfile','-EncodedCommand',$code) -WorkingDirectory $project -TimeoutSeconds $limit
-    } $hostFile $encoded $Project $TimeoutSeconds
+    param([string]$Flutter,[string]$Project,[string[]]$Arguments,[int]$TimeoutSeconds=30)
+    if(-not(Get-Command Import-JobsSdkDownloadRoute -ErrorAction SilentlyContinue)){. (Join-Path $PSScriptRoot 'SdkDownloadOutput.ps1')}
+    Import-JobsSdkDownloadRoute
+    return Invoke-JobsSdkRoutedCommand $Flutter $Arguments $Project $TimeoutSeconds
 }
 function Get-JobsHarmonyEmulatorDevices {
     param([string]$Json)

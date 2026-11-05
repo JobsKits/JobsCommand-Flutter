@@ -588,7 +588,7 @@ show_script_intro_and_wait() {
   jobs_intro_line title '━━━━━━━━━━ Flutter／鸿蒙项目配置至运行 ━━━━━━━━━━'
   jobs_intro_line body '1、针对现有 Flutter 工程，使用鸿蒙适配 Flutter SDK；应用业务仍用 Dart 编写。'
   jobs_intro_line body '2、仅支持 Apple Silicon Mac；准备 Homebrew、Python、FVM、DevEco CLT、JDK 与所选模拟器镜像。'
-  jobs_intro_line body '3、SDK 仅绑定所选工程；缺工具时确认安装，健康工具复用。保留原 Flutter 入口。'
+  jobs_intro_line body '3、SDK 仅绑定所选工程；下载前检测网络，失败持续重试至成功或 Ctrl+C。缺工具时确认安装，健康工具复用。'
   jobs_intro_line body '4、会写工程配置、解析依赖、生成构建缓存；缺 ohos/ 时须精确 YES 才生成。先保存工程。'
   jobs_intro_line body '5、CLT 缺失时可从 SDL 第三方镜像下载约 2.03 GB；校验固定摘要，镜像由官方 Emulator 下载。'
   jobs_intro_line body '6、许可须本人阅读确认；证书、开发者账号、原生插件适配与 SDK API 匹配须在 DevEco 核对。'

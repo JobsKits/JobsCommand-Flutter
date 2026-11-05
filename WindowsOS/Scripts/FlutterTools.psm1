@@ -4,6 +4,7 @@
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'SimulatorSessions.ps1')
+. (Join-Path $PSScriptRoot 'SdkDownloadOutput.ps1')
 
 function Write-JobsMessage {
     param([string]$Message)
@@ -46,6 +47,12 @@ function Invoke-JobsCommand {
         foreach ($value in @($Executable) + $Arguments) {
             if ($value -match '[&|<>^%!"\r\n]') { throw '批处理入口参数含 cmd 特殊字符，拒绝继续；请将工具链放在普通路径。' }
         }
+    }
+    if ([IO.Path]::GetFileName($Executable) -match '^(flutter|dart|fvm)(\.(bat|cmd|exe))?$') {
+        Import-JobsSdkDownloadRoute
+        $result = Invoke-JobsSdkRoutedCommand $Executable $Arguments (Get-Location).ProviderPath 1800
+        if ($result.ExitCode -ne 0) { throw ('SDK/Flutter命令失败，退出码 '+$result.ExitCode+'：'+$Executable) }
+        return
     }
     $previous = $ErrorActionPreference
     try {
@@ -175,6 +182,8 @@ function Start-JobsFlutterProject {
     Push-Location -LiteralPath $Project
     try {
         $oldPreference=$ErrorActionPreference
+        Import-JobsSdkDownloadRoute
+        Initialize-JobsSdkCommandPrerequisites $flutter @('devices','--machine') $Project
         try { $ErrorActionPreference='Continue'; $raw = & $flutter devices --machine; $deviceExit=$LASTEXITCODE } finally { $ErrorActionPreference=$oldPreference }
         if ($deviceExit -ne 0) { throw '无法查询 Flutter 设备。' }
         $devices = @((($raw -join [Environment]::NewLine) | ConvertFrom-Json) | Where-Object {
@@ -191,36 +200,39 @@ function Start-JobsFlutterProject {
         if (-not $Device) { $Device = Select-JobsItem '选择运行目标' @($devices | ForEach-Object { $_.id }) }
         if ($Device -notin @($devices | ForEach-Object { $_.id })) { throw '指定设备不在当前平台列表中。' }
         Invoke-JobsCommand $flutter @('pub','get')
+        Initialize-JobsSdkCommandPrerequisites $flutter @('run','-d',$Device) $Project $Kind
         Invoke-JobsCommand $flutter @('run','-d',$Device)
     } finally { Pop-Location }
 }
 function Install-JobsFlutterSdk {
     param([string]$Destination, [string]$Version)
     if (-not $Destination) { $Destination = Join-Path ([Environment]::GetFolderPath('UserProfile')) 'develop' }
-    $Destination = [IO.Path]::GetFullPath($Destination)
-    $sdk = Join-Path $Destination 'flutter'
-    if (Test-Path -LiteralPath $sdk) { throw ('目标已存在，拒绝覆盖：' + $sdk) }
-    $index = 'https://storage.googleapis.com/flutter_infra_release/releases/releases_windows.json'
-    Write-JobsMessage ('来源：官方 Flutter Windows 发布清单 ' + $index)
-    $metadata = Invoke-RestMethod -Uri $index -TimeoutSec 60
-    $release = $null
-    if ($Version) { $release = $metadata.releases | Where-Object { $_.version -eq $Version -and $_.channel -eq 'stable' } | Select-Object -First 1 }
-    else { $release = $metadata.releases | Where-Object { $_.hash -eq $metadata.current_release.stable } | Select-Object -First 1 }
-    if (-not $release -or -not $release.sha256 -or $release.archive -notmatch '^stable/windows/[^/]+\.zip$') { throw '发布清单无匹配稳定版本或缺少校验值。' }
-    $url = 'https://storage.googleapis.com/flutter_infra_release/releases/' + $release.archive
-    Confirm-JobsChange ('下载 ' + $url + '；版本 ' + $release.version + '；安装至 ' + $sdk)
-    $stage = Join-Path ([IO.Path]::GetTempPath()) ('JobsFlutterSdk-' + [guid]::NewGuid().ToString('N'))
-    [void][IO.Directory]::CreateDirectory($stage)
-    try {
-        $zip = Join-Path $stage 'flutter.zip'
-        Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing -TimeoutSec 3600
-        if ((Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash -ine $release.sha256) { throw '下载文件 SHA-256 校验失败。' }
+    $Destination=[IO.Path]::GetFullPath($Destination);$sdk=Join-Path $Destination 'flutter'
+    if(Test-Path -LiteralPath $sdk){throw ('目标已存在，拒绝覆盖：'+$sdk)}
+    $stage=Join-Path ([IO.Path]::GetTempPath()) ('JobsFlutterSdk-'+[guid]::NewGuid().ToString('N'))
+    [void][IO.Directory]::CreateDirectory($stage);$complete=$false
+    try{
+        $index='https://storage.googleapis.com/flutter_infra_release/releases/releases_windows.json'
+        Write-JobsMessage ('来源：官方Windows发布清单 '+$index+'；SDK缺失时自动准备，Ctrl+C结束。')
+        $manifest=Join-Path $stage 'releases.json';Receive-JobsSdkWebFile $index $manifest 60
+        $metadata=Get-Content -LiteralPath $manifest -Raw -Encoding UTF8|ConvertFrom-Json -ErrorAction Stop
+        $arch=if($env:PROCESSOR_ARCHITECTURE-ceq'ARM64'){'arm64'}else{'x64'}
+        $channel=if($Version-in@('stable','beta','dev','master')){$Version}else{'stable'}
+        $releases=@($metadata.releases|Where-Object{$_.channel-ceq$channel-and$_.archive-match'^(stable|beta|dev|master)/windows/[^/]+\.zip$'-and$(if($_.PSObject.Properties['dart_sdk_arch']){$_.dart_sdk_arch-ceq$arch}else{$arch-ceq'x64'})})
+        $release=if($Version-and$Version-notin@('stable','beta','dev','master')){$releases|Where-Object{$_.version-ceq$Version}|Select-Object -First 1}else{$releases|Where-Object{$_.hash-ceq$metadata.current_release.$channel}|Select-Object -First 1}
+        if(-not$release-or$release.sha256-cnotmatch'^[a-fA-F0-9]{64}$'){throw ('发布清单没有所需版本/架构或可信摘要：'+$Version+' / '+$arch)}
+        $baseUri=$null;if(-not[Uri]::TryCreate([string]$metadata.base_url,[UriKind]::Absolute,[ref]$baseUri)-or$baseUri.Scheme-cne'https'){throw '发布清单base_url不是有效HTTPS来源。'}
+        if($metadata.base_url-cnotin@('https://storage.googleapis.com/flutter_infra_release/releases','https://storage.flutter-io.cn/flutter_infra_release/releases')){
+            if(-not$env:FLUTTER_STORAGE_BASE_URL-or$baseUri.Authority-cne([Uri]$env:FLUTTER_STORAGE_BASE_URL).Authority){throw '发布清单来源与已选命名空间不符，未自动改源。'}
+        }
+        $url=$metadata.base_url.TrimEnd('/')+'/'+$release.archive
+        Write-JobsMessage (Protect-JobsSdkRouteText ('下载Flutter '+$release.version+' / '+$arch+'；来源：'+$url+'；安装至：'+$sdk))
+        $zip=Join-Path $stage 'flutter.zip';Receive-JobsSdkWebFile $url $zip 3600 -ExpectedSha256 $release.sha256
         Expand-Archive -LiteralPath $zip -DestinationPath (Join-Path $stage 'unpacked')
-        [void][IO.Directory]::CreateDirectory($Destination)
-        Move-Item -LiteralPath (Join-Path $stage 'unpacked/flutter') -Destination $sdk
-        Write-JobsMessage ('安装完成，将此目录加入用户 Path：' + (Join-Path $sdk 'bin'))
-        return $sdk
-    } finally { if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force } }
+        if(-not[IO.File]::Exists((Join-Path $stage 'unpacked/flutter/bin/flutter.bat'))){throw '可信SDK归档缺少bin/flutter，未发布到目标目录。'}
+        [void][IO.Directory]::CreateDirectory($Destination);Move-Item -LiteralPath (Join-Path $stage 'unpacked/flutter') -Destination $sdk
+        $complete=$true;Write-JobsMessage ('安装完成，将此目录加入用户Path：'+(Join-Path $sdk 'bin'));return $sdk
+    }finally{if($complete){Remove-Item -LiteralPath $stage -Recurse -Force}else{Write-JobsMessage ('SDK下载现场保留：'+$stage)}}
 }
 function Initialize-JobsFlutterBootstrap {
     if(Get-Command dart -ErrorAction SilentlyContinue){return}
@@ -495,12 +507,15 @@ function Invoke-JobsTask {
                 Push-Location -LiteralPath $root
                 try {
                     $oldPreference=$ErrorActionPreference
+                    Import-JobsSdkDownloadRoute
+                    Initialize-JobsSdkCommandPrerequisites $sdk @('devices','--machine') $root
                     try {$ErrorActionPreference='Continue';$listing=& $sdk devices --machine;$deviceExit=$LASTEXITCODE} finally {$ErrorActionPreference=$oldPreference}
                     if($deviceExit -ne 0){throw '鸿蒙设备查询失败。'}
                     $devices=@((($listing -join [Environment]::NewLine)|ConvertFrom-Json)|Where-Object {$_.targetPlatform -match 'ohos|harmony'})
                     $device=$Options.Device
                     if(-not $device){$device=Select-JobsItem '选择鸿蒙设备' @($devices|ForEach-Object {$_.id})}
                     if($device -notin @($devices|ForEach-Object {$_.id})){throw '指定鸿蒙设备不可用。'}
+                    Initialize-JobsSdkCommandPrerequisites $sdk @('run','-d',$device) $root 'ohos'
                     Invoke-JobsCommand $sdk @('pub','get'); Invoke-JobsCommand $sdk @('run','-d',$device)
                 } finally { Pop-Location }
             }

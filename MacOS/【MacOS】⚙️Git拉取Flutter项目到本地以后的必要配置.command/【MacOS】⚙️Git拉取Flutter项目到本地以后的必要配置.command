@@ -1,4 +1,6 @@
 #!/bin/zsh
+
+
 # 脚本自述：
 # - 脚本名称：【MacOS】⚙️Git拉取Flutter项目到本地以后的必要配置.command
 # - 核心用途：执行“⚙️Git拉取Flutter项目到本地以后的必要配置”对应的 Git / Sourcetree 自动化操作。
@@ -12,6 +14,55 @@
 # 仅渲染自述：标题红色加粗，编号正文蓝色常规字重；非彩色终端输出纯文本。
 # >>> Jobs Homebrew install choice >>>
 # 输出安装诊断，避免混入返回的命令路径。
+# JOBS_FLUTTER_NETWORK_ADAPTER_BEGIN
+# 捕获真实入口参数；后续切换工程目录不影响随包模块定位。
+JOBS_FLUTTER_NETWORK_ENTRY_FILE=$0
+JOBS_FLUTTER_NETWORK_ENTRY_BASE=$PWD
+JOBS_FLUTTER_NETWORK_TASK_CACHE=
+JOBS_FLUTTER_NETWORK_TASK_LOG=
+# 只把SDK命令交给随包子进程，不把代理或源写回当前Shell。
+jobs_flutter_sdk_command() {
+    local entry=$JOBS_FLUTTER_NETWORK_ENTRY_FILE link= directory= adapter= network= count=0
+    case "$entry" in
+        /*) ;;
+        *) entry=$JOBS_FLUTTER_NETWORK_ENTRY_BASE/$entry ;;
+    esac
+    while [ -L "$entry" ]; do
+        count=$((count + 1))
+        [ "$count" -lt 40 ] || return 1
+        link=$(readlink "$entry") || return 1
+        case "$link" in
+            /*) entry=$link ;;
+            *) entry=$(dirname -- "$entry")/$link ;;
+        esac
+    done
+    directory=$(CDPATH= cd -P -- "$(dirname -- "$entry")" && pwd) || return 1
+    adapter=$directory/Scripts/【MacOS】FlutterSDK命令适配.sh/【MacOS】FlutterSDK命令适配.sh
+    network=$directory/Scripts/【MacOS】FlutterSDK网络选路.zsh/【MacOS】FlutterSDK网络选路.zsh
+    [ -f "$adapter" ] && [ -f "$network" ] || {
+        printf '%s\n' '✖ 缺少随包SDK网络资源；请保留入口旁完整Scripts目录。' >&2
+        return 1
+    }
+    if [ -z "$JOBS_FLUTTER_NETWORK_TASK_CACHE" ]; then
+        JOBS_FLUTTER_NETWORK_TASK_CACHE=$(/bin/zsh "$network" --cache-dir) || return $?
+        JOBS_FLUTTER_NETWORK_TASK_LOG=$JOBS_FLUTTER_NETWORK_TASK_CACHE/entry-network.log
+    fi
+    JOBS_FLUTTER_ROUTE_CACHE_DIR="$JOBS_FLUTTER_NETWORK_TASK_CACHE" \
+    JOBS_FLUTTER_ROUTE_LOG="$JOBS_FLUTTER_NETWORK_TASK_LOG" \
+        /bin/sh "$adapter" "$@"
+}
+# 既有选择值仅接受原来的两个Flutter执行器，不eval用户字符串。
+jobs_flutter_sdk_selected() {
+    local selected=$1
+    shift
+    case "$selected" in
+        'fvm flutter') jobs_flutter_sdk_command fvm flutter "$@" ;;
+        flutter) jobs_flutter_sdk_command flutter "$@" ;;
+        *) printf '%s\n' '✖ 未识别原Flutter执行器，未执行任何SDK或业务。' >&2; return 2 ;;
+    esac
+}
+# JOBS_FLUTTER_NETWORK_ADAPTER_END
+
 jobs_brew_note() {
   print -u2 -r -- "ℹ $*"
 }
@@ -922,11 +973,11 @@ run_original_logic() {
     # 你可以把 stable 换成你想固定的版本号，比如 3.24.5
     local channel_or_version="stable"
 
-    fvm install "$channel_or_version"
-    fvm use "$channel_or_version"
+    jobs_flutter_sdk_command fvm install "$channel_or_version" || return $?
+    jobs_flutter_sdk_command fvm use "$channel_or_version" || return $?
 
     success_echo "FVM 已绑定到项目：$channel_or_version"
-    gray_echo "当前项目 Flutter：$(fvm flutter --version | head -n 1 || true)"
+    gray_echo "当前项目 Flutter：$(jobs_flutter_sdk_command fvm flutter --version | head -n 1 || true)"
   }
   # ================================== 写入项目级 VSCode 设置，让 VSCode 跟随 .fvm/flutter_sdk ==================================
   ensure_vscode_settings() {
@@ -1014,7 +1065,7 @@ main() {
   show_script_intro_and_wait # 先说明业务与环境准备范围并确认。
   jobs_flutterclone_python_prepare_runtime # 业务确认后使用内嵌函数准备 Homebrew Python。
   initialize_script_runtime # 初始化 Shell 选项、日志、依赖和入口运行状态。
-  run_original_logic "$@" # 执行 run_original_logic 对应的核心业务步骤。
+  run_original_logic "$@" || return $? # 执行 run_original_logic 对应的核心业务步骤。
   success_echo "脚本执行结束。日志：$LOG_FILE" # 输出脚本执行结果、摘要和日志位置。
 }
 

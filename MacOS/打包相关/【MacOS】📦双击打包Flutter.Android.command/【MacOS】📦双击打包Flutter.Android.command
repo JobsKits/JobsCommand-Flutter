@@ -12,6 +12,78 @@
 # 仅渲染自述：标题红色加粗，编号正文蓝色常规字重；非彩色终端输出纯文本。
 # >>> Jobs Homebrew install choice >>>
 # 输出安装诊断，避免混入返回的命令路径。
+# JOBS_FLUTTER_NETWORK_ADAPTER_BEGIN
+# 捕获真实入口参数；后续切换工程目录不影响随包模块定位。
+JOBS_FLUTTER_NETWORK_ENTRY_FILE=$0
+JOBS_FLUTTER_NETWORK_ENTRY_BASE=$PWD
+JOBS_FLUTTER_NETWORK_TASK_CACHE=
+JOBS_FLUTTER_NETWORK_TASK_LOG=
+# 只把SDK命令交给随包子进程，不把代理或源写回当前Shell。
+jobs_flutter_sdk_command() {
+    local entry=$JOBS_FLUTTER_NETWORK_ENTRY_FILE link= directory= adapter= network= count=0
+    case "$entry" in
+        /*) ;;
+        *) entry=$JOBS_FLUTTER_NETWORK_ENTRY_BASE/$entry ;;
+    esac
+    while [ -L "$entry" ]; do
+        count=$((count + 1))
+        [ "$count" -lt 40 ] || return 1
+        link=$(readlink "$entry") || return 1
+        case "$link" in
+            /*) entry=$link ;;
+            *) entry=$(dirname -- "$entry")/$link ;;
+        esac
+    done
+    directory=$(CDPATH= cd -P -- "$(dirname -- "$entry")" && pwd) || return 1
+    adapter=$directory/Scripts/【MacOS】FlutterSDK命令适配.sh/【MacOS】FlutterSDK命令适配.sh
+    network=$directory/Scripts/【MacOS】FlutterSDK网络选路.zsh/【MacOS】FlutterSDK网络选路.zsh
+    [ -f "$adapter" ] && [ -f "$network" ] || {
+        printf '%s\n' '✖ 缺少随包SDK网络资源；请保留入口旁完整Scripts目录。' >&2
+        return 1
+    }
+    if [ -z "$JOBS_FLUTTER_NETWORK_TASK_CACHE" ]; then
+        JOBS_FLUTTER_NETWORK_TASK_CACHE=$(/bin/zsh "$network" --cache-dir) || return $?
+        JOBS_FLUTTER_NETWORK_TASK_LOG=$JOBS_FLUTTER_NETWORK_TASK_CACHE/entry-network.log
+    fi
+    JOBS_FLUTTER_ROUTE_CACHE_DIR="$JOBS_FLUTTER_NETWORK_TASK_CACHE" \
+    JOBS_FLUTTER_ROUTE_LOG="$JOBS_FLUTTER_NETWORK_TASK_LOG" \
+        /bin/sh "$adapter" "$@"
+}
+# 既有选择值仅接受原来的两个Flutter执行器，不eval用户字符串。
+jobs_flutter_sdk_selected() {
+    local selected=$1
+    shift
+    case "$selected" in
+        'fvm flutter') jobs_flutter_sdk_command fvm flutter "$@" ;;
+        flutter) jobs_flutter_sdk_command flutter "$@" ;;
+        *) printf '%s\n' '✖ 未识别原Flutter执行器，未执行任何SDK或业务。' >&2; return 2 ;;
+    esac
+}
+# 显式准备SDK，把下载进度送stderr，业务stdout保留给原命令。
+jobs_flutter_sdk_bootstrap() {
+    jobs_flutter_sdk_command "$@" --version >&2
+}
+# 明确的平台SDK在业务前单独获取，失败不重放build/run。
+jobs_flutter_sdk_platform() {
+    local platform="$1"; shift
+    jobs_flutter_sdk_bootstrap "$@" || return $?
+    jobs_flutter_sdk_command "$@" precache "--$platform" >&2
+}
+# 真机入口保留原run参数；只按当前已连接真机的真实JSON确定平台。
+jobs_flutter_sdk_run_release_device() {
+    local devices="" platform=""
+    jobs_flutter_sdk_bootstrap "$@" || return $?
+    devices="$(jobs_flutter_sdk_command "$@" devices --machine --device-timeout 5)" || return $?
+    platform="$(print -r -- "$devices" | /usr/bin/osascript -l JavaScript -e 'ObjC.import("Foundation"); function run(a){var d=$.NSFileHandle.fileHandleWithStandardInput.readDataToEndOfFile;var s=ObjC.unwrap($.NSString.alloc.initWithDataEncoding(d,$.NSUTF8StringEncoding));var rows=JSON.parse(s);if(!Array.isArray(rows))throw Error("设备响应不是数组");var found={};rows.forEach(function(v){if(!v||v.isSupported===false||v.emulator===true)return;var p=String(v.targetPlatform||v.platform||"");if(/^android/.test(p))found.android=1;else if(/^ios/.test(p))found.ios=1;else if(/^(ohos|openharmony)/.test(p))found.ohos=1;});var keys=Object.keys(found);return keys.length===1?keys[0]:"";}')" || return $?
+    if [[ -n "$platform" ]]; then
+        jobs_flutter_sdk_command "$@" precache "--$platform" >&2 || return $?
+    else
+        print -u2 -r -- '真机平台尚未唯一确定，按当前engine代表制品检测通道；原run仅执行一次。'
+    fi
+    JOBS_FLUTTER_ROUTE_MODE=platform jobs_flutter_sdk_command "$@" run --release
+}
+# JOBS_FLUTTER_NETWORK_ADAPTER_END
+
 jobs_brew_note() {
   print -u2 -r -- "ℹ $*"
 }
@@ -711,6 +783,7 @@ run_original_logic() {
       flutter_cmd=("flutter")
       info_echo "📦 使用系统 flutter"
     fi
+    jobs_flutter_sdk_bootstrap "${flutter_cmd[@]}" || return $?
   }
   # ✅ Java 环境配置
   fix_jenv_java_version() {
@@ -787,11 +860,14 @@ run_original_logic() {
   }
   # ✅ 使用指定 JAVA_HOME 执行 Flutter 命令，确保构建环境一致
   run_flutter_with_java() {
+    if [[ "${1:-}" == build ]]; then
+      JAVA_HOME="$JAVA_HOME" PATH="$JAVA_HOME/bin:$PATH" jobs_flutter_sdk_platform android "${flutter_cmd[@]}" || return $?
+    fi
     JAVA_HOME="$JAVA_HOME" \
     PATH="$JAVA_HOME/bin:$PATH" \
     FVM_JAVA_HOME="$JAVA_HOME" \
     JAVA_TOOL_OPTIONS="" \
-    env JAVA_HOME="$JAVA_HOME" PATH="$JAVA_HOME/bin:$PATH" "${flutter_cmd[@]}" "$@"
+    jobs_flutter_sdk_command "${flutter_cmd[@]}" "$@"
   }
   # ✅ 打开输出目录
   open_output_folder() {
@@ -822,11 +898,11 @@ run_original_logic() {
   # ✅ 执行 flutter clean🧹 与 pub get
   maybe_flutter_clean_and_get() {
     if confirm_step "flutter clean"; then
-      "${flutter_cmd[@]}" clean
+      jobs_flutter_sdk_command "${flutter_cmd[@]}" clean
     fi
 
     if confirm_step "flutter pub get"; then
-      "${flutter_cmd[@]}" pub get
+      jobs_flutter_sdk_command "${flutter_cmd[@]}" pub get
     fi
   }
   # ✅ 在 Flutter 根目录下的 plugins/htprotect 执行 flutter pub get
@@ -844,7 +920,7 @@ run_original_logic() {
     if confirm_step "在 plugins/htprotect 执行 flutter pub get"; then
       pushd "$plugin_dir" >/dev/null || { error_echo "❌ 进入目录失败：$plugin_dir"; return 1; }
       # 继承当前 JAVA_HOME 与 flutter_cmd（支持 FVM）
-      JAVA_HOME="$JAVA_HOME" PATH="$JAVA_HOME/bin:$PATH" "${flutter_cmd[@]}" pub get \
+      JAVA_HOME="$JAVA_HOME" PATH="$JAVA_HOME/bin:$PATH" jobs_flutter_sdk_command "${flutter_cmd[@]}" pub get \
         && success_echo "✅ plugins/htprotect 依赖拉取完成" \
         || { error_echo "✖ plugins/htprotect pub get 失败"; popd >/dev/null; return 1; }
       popd >/dev/null
@@ -860,7 +936,7 @@ run_original_logic() {
 
     {
       color_echo "🩺 运行 flutter doctor -v 检查环境..."
-      "${flutter_cmd[@]}" doctor -v | tee -a "$log_file"
+      jobs_flutter_sdk_command "${flutter_cmd[@]}" doctor -v | tee -a "$log_file"
     }
 
     {
@@ -900,16 +976,18 @@ run_original_logic() {
 
     {
       color_echo "📦 实际使用的 Android SDK 路径："
-      "${flutter_cmd[@]}" config --machine | grep -o '"androidSdkPath":"[^"]*"' | cut -d':' -f2- | tr -d '"' | tee -a "$log_file"
+      jobs_flutter_sdk_command "${flutter_cmd[@]}" config --machine | grep -o '"androidSdkPath":"[^"]*"' | cut -d':' -f2- | tr -d '"' | tee -a "$log_file"
     }
 
     {
+      jobs_flutter_sdk_platform android "${flutter_cmd[@]}" || return $?
       success_echo "🚀 构建命令：${flutter_cmd[*]} build $build_target ${flavor_name:+--flavor $flavor_name} --$build_mode"
-      "${flutter_cmd[@]}" build $build_target ${flavor_name:+--flavor $flavor_name} --$build_mode | tee -a "$log_file"
+      jobs_flutter_sdk_command "${flutter_cmd[@]}" build $build_target ${flavor_name:+--flavor $flavor_name} --$build_mode | tee -a "$log_file"
     }
   }
   # ✅ 执行构建阶段
   run_flutter_build() {
+    setopt LOCAL_OPTIONS PIPE_FAIL
     local log_file="/tmp/flutter_build_log.txt"
     success_echo "🚀 开始构建：${flutter_cmd[*]} build $build_target ${flavor_name:+--flavor $flavor_name} --$build_mode"
     run_flutter_with_java build "$build_target" ${flavor_name:+--flavor "$flavor_name"} --"$build_mode" | tee -a "$log_file"
@@ -922,13 +1000,13 @@ run_original_logic() {
       install_fzf                                 # ✅ 自检 Homebrew.fzf
       resolve_flutter_root                        # ✅ 获取 Flutter 根目录
       select_build_plan || return $?              # 完成目标、模式与 JDK 选择；子层左键返回，取消停止。
-      detect_flutter_command                      # ✅ 判断是否使用 FVM
+      detect_flutter_command || return $?         # ✅ 判断是否使用 FVM
       configure_java_env || return $?             # 选定计划后才安装 JDK 并保存配置。
     
       print_env_diagnostics                       # ✅ 第一阶段：环境信息检查
       maybe_flutter_clean_and_get                 # ✅ 第二阶段：flutter clean 与 pub get
       ensure_htprotect_pub_get                    # ✅ 插件 htprotect 依赖拉取
-      run_flutter_build                           # ✅ 第三阶段：执行构建
+      run_flutter_build || return $?              # ✅ 第三阶段：执行构建
     
       open_output_folder                          # ✅ 打开构建产物目录
       success_echo "🎉 构建完成，日志保存在 /tmp/flutter_build_log.txt"

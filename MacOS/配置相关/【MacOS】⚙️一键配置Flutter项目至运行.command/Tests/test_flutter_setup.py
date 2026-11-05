@@ -18,6 +18,19 @@ spec = importlib.util.spec_from_file_location('config', ROOT / 'Scripts/project_
 config = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(config)
 
+# Generated projects own copied helpers. Keep the real adapter/retry wrappers and
+# intercept only their network boundary in existing business/configuration tests.
+_original_project_runtime = config.project_runtime
+
+
+def project_runtime_offline_fixture(root, *args):
+    _original_project_runtime(root, *args)
+    core = Path(root) / '.jobs-flutter/【MacOS】FlutterSDK网络选路.zsh/【MacOS】FlutterSDK网络选路.zsh'
+    core.write_text(core.read_text() + '\njobs_flutter_route_prepare() { return 0; }\n')
+
+
+config.project_runtime = project_runtime_offline_fixture
+
 
 class SetupTests(unittest.TestCase):
     def setUp(self):
@@ -34,7 +47,7 @@ class SetupTests(unittest.TestCase):
         self.temp.cleanup()
 
     def zsh(self, code, data='', expected=0):
-        source = f'source {shlex.quote(str(ENTRY))}\nJOBS_PYTHON_BIN="$TEST_PYTHON"\n' + code
+        source = f'source {shlex.quote(str(ENTRY))}\nJOBS_PYTHON_BIN="$TEST_PYTHON"\n' + 'jobs_command_sdk() { shift 3; "$@"; }\njobs_command_sdk_platform() { return 0; }\njobs_command_fvm_runtime() { return 0; }\n' + code
         result = subprocess.run(['/bin/zsh', '-c', source], input=data, text=True,
                                 capture_output=True, cwd=self.base, env=self.env, timeout=15)
         self.assertEqual(result.returncode, expected, result.stdout + result.stderr)

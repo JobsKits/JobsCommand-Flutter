@@ -1,4 +1,6 @@
 #!/bin/zsh
+
+
 # 脚本自述：
 # - 脚本名称：【MacOS】⚙️Flutter 项目组件预下载.command
 # - 核心用途：执行“⚙️Flutter 项目组件预下载”对应的移动端项目自动化任务。
@@ -12,6 +14,55 @@
 # 仅渲染自述：标题红色加粗，编号正文蓝色常规字重；非彩色终端输出纯文本。
 # >>> Jobs Homebrew install choice >>>
 # 输出安装诊断，避免混入返回的命令路径。
+# JOBS_FLUTTER_NETWORK_ADAPTER_BEGIN
+# 捕获真实入口参数；后续切换工程目录不影响随包模块定位。
+JOBS_FLUTTER_NETWORK_ENTRY_FILE=$0
+JOBS_FLUTTER_NETWORK_ENTRY_BASE=$PWD
+JOBS_FLUTTER_NETWORK_TASK_CACHE=
+JOBS_FLUTTER_NETWORK_TASK_LOG=
+# 只把SDK命令交给随包子进程，不把代理或源写回当前Shell。
+jobs_flutter_sdk_command() {
+    local entry=$JOBS_FLUTTER_NETWORK_ENTRY_FILE link= directory= adapter= network= count=0
+    case "$entry" in
+        /*) ;;
+        *) entry=$JOBS_FLUTTER_NETWORK_ENTRY_BASE/$entry ;;
+    esac
+    while [ -L "$entry" ]; do
+        count=$((count + 1))
+        [ "$count" -lt 40 ] || return 1
+        link=$(readlink "$entry") || return 1
+        case "$link" in
+            /*) entry=$link ;;
+            *) entry=$(dirname -- "$entry")/$link ;;
+        esac
+    done
+    directory=$(CDPATH= cd -P -- "$(dirname -- "$entry")" && pwd) || return 1
+    adapter=$directory/Scripts/【MacOS】FlutterSDK命令适配.sh/【MacOS】FlutterSDK命令适配.sh
+    network=$directory/Scripts/【MacOS】FlutterSDK网络选路.zsh/【MacOS】FlutterSDK网络选路.zsh
+    [ -f "$adapter" ] && [ -f "$network" ] || {
+        printf '%s\n' '✖ 缺少随包SDK网络资源；请保留入口旁完整Scripts目录。' >&2
+        return 1
+    }
+    if [ -z "$JOBS_FLUTTER_NETWORK_TASK_CACHE" ]; then
+        JOBS_FLUTTER_NETWORK_TASK_CACHE=$(/bin/zsh "$network" --cache-dir) || return $?
+        JOBS_FLUTTER_NETWORK_TASK_LOG=$JOBS_FLUTTER_NETWORK_TASK_CACHE/entry-network.log
+    fi
+    JOBS_FLUTTER_ROUTE_CACHE_DIR="$JOBS_FLUTTER_NETWORK_TASK_CACHE" \
+    JOBS_FLUTTER_ROUTE_LOG="$JOBS_FLUTTER_NETWORK_TASK_LOG" \
+        /bin/sh "$adapter" "$@"
+}
+# 既有选择值仅接受原来的两个Flutter执行器，不eval用户字符串。
+jobs_flutter_sdk_selected() {
+    local selected=$1
+    shift
+    case "$selected" in
+        'fvm flutter') jobs_flutter_sdk_command fvm flutter "$@" ;;
+        flutter) jobs_flutter_sdk_command flutter "$@" ;;
+        *) printf '%s\n' '✖ 未识别原Flutter执行器，未执行任何SDK或业务。' >&2; return 2 ;;
+    esac
+}
+# JOBS_FLUTTER_NETWORK_ADAPTER_END
+
 jobs_brew_note() {
   print -u2 -r -- "ℹ $*"
 }
@@ -544,13 +595,15 @@ run_original_logic() {
   }
   # ✅ 检测 Flutter 环境变量
   detect_flutter_env() {
-    if [[ -d ".fvm" ]]; then
+    if [[ -d ".fvm" || -f .fvmrc ]]; then
       success_echo "✅ 检测到 FVM 管理项目"
-      CMD_PREFIX="fvm "
+      PRECACHE_FLUTTER=(fvm flutter)
+      jobs_flutter_sdk_command "${PRECACHE_FLUTTER[@]}" --version >/dev/null || return $?
       FLUTTER_BIN="$(realpath .fvm/flutter_sdk/bin/flutter)"
     else
       info_echo "ℹ️ 使用全局 Flutter"
-      CMD_PREFIX=""
+      PRECACHE_FLUTTER=(flutter)
+      jobs_flutter_sdk_command "${PRECACHE_FLUTTER[@]}" --version >/dev/null || return $?
       FLUTTER_BIN="$(command -v flutter)"
     fi
 
@@ -574,7 +627,7 @@ run_original_logic() {
 
     if [[ "$mode" == "1" ]]; then
       info_echo "🚀 下载全部平台工具..."
-      eval "${CMD_PREFIX}flutter precache --universal"
+      jobs_flutter_sdk_command "${PRECACHE_FLUTTER[@]}" precache --universal || return $?
     else
       while true; do
         success_echo "✅ 请选择需要下载的平台（空格多选，回车确认）"
@@ -601,7 +654,8 @@ run_original_logic() {
       done
 
       info_echo "🚀 下载所选平台工具：$platforms"
-      eval "${CMD_PREFIX}flutter precache $platforms"
+      local -a platform_args=(${=platforms})
+      jobs_flutter_sdk_command "${PRECACHE_FLUTTER[@]}" precache "${platform_args[@]}" || return $?
     fi
   }
   # ✅ 下载完成提示
@@ -624,9 +678,9 @@ run_original_logic() {
     install_coreutils            # 🔧 自检安装 Homebrew.coreutils（提供 realpath）
     install_fzf                  # 🔍 自检安装 Homebrew.fzf 工具
     ensure_flutter_project_root  # 📁 验证 Flutter 项目根目录
-    detect_flutter_env           # 🧭 检测是否为 FVM 管理的 Flutter 项目，并设置缓存路径
+    detect_flutter_env || return $? # 🧭 检测是否为 FVM 管理的 Flutter 项目，并设置缓存路径
     backup_flutter_cache         # 💾 备份现有缓存目录
-    run_precache                 # 🚀 下载 Flutter 平台工具（全选或 fzf 多选）
+    run_precache || return $? # 🚀 下载 Flutter 平台工具（全选或 fzf 多选）
     show_result                  # 📂 展示缓存目录并提示打开
   }
 
@@ -646,7 +700,7 @@ main() {
   # 初始化 Shell 选项、日志、依赖和入口运行状态。
   initialize_script_runtime
   # 执行 run_original_logic 对应的核心业务步骤。
-  run_original_logic "$@"
+  run_original_logic "$@" || return $?
   # 输出脚本执行结果、摘要和日志位置。
   success_echo "脚本执行结束。日志：$LOG_FILE"
 }

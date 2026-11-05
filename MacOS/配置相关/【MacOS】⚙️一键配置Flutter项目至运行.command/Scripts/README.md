@@ -10,6 +10,7 @@
 - [🔥 前言](#%E5%89%8D%E8%A8%80)
 - [一、职责与调用](#jobs-toc-heading-2)
 - [二、输入输出与边界](#jobs-toc-heading-3)
+- [生成的工程命令入口](#jobs-toc-heading-4)
 
 </details>
 <!-- jobs-toc:end -->
@@ -37,3 +38,10 @@
 `profile` 会持久修改调用方授权的 Shell 配置；`runtime` 生成工程专属环境与启动器，不能把它当全局环境配置器。检查结果需分别核对 SDK、doctor、依赖、设备与实际 App 运行，缺工具或创建成功均不代表已构建运行。
 
 <a id="🔚" href="#前言" style="font-size:17px; color:green; font-weight:bold;">我是有底线的➤点我回到首页</a>
+
+
+## <span id="jobs-toc-heading-4" data-jobs-toc="v2">生成的工程命令入口</span><!-- jobs-toc:heading-end -->
+
+`project_config.py` 为 `.jobs-flutter/flutter` 同时复制网络适配器与选路模块，资源都从生成入口自身相对定位，工程整体移动后可继续使用，不依赖原配置包位置。`--version`、`precache`、SDK升级保留SDK获取持续重试和取消码；普通业务先准备Dart，明确构建目标或设备平台再预缓存对应SDK，最后仅执行一次原业务并返回原码。平台未确定时，只检测当前engine代表制品通道，业务失败不重放。
+
+生成的环境文件仅在当前进程尚未设置时应用此前保存的SDK/Pub源，当前显式空值也优先；AUTO探测结果及代理不写入工程配置。对应新增离线回归位于 `Tests/test_generated_sdk_launcher.py/`，保留真实适配与重试包装，仅以替身隔离网络和SDK。

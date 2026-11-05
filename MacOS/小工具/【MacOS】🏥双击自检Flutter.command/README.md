@@ -13,6 +13,7 @@
 - [三、运行方式](#jobs-toc-heading-4)
 - [四、风险与能力边界](#jobs-toc-heading-5)
 - [五、日志与核对](#jobs-toc-heading-6)
+  - [Flutter SDK网络获取](#jobs-toc-heading-7)
 
 </details>
 <!-- jobs-toc:end -->
@@ -56,3 +57,7 @@ zsh './【MacOS】🏥双击自检Flutter.command'
 完成后核对：终端诊断输出和运行日志。核对实际目标、终端输出和退出状态；发现错误时保留日志，先确认停止阶段与现存产物再重试。
 
 <a id="🔚" href="#前言" style="font-size:17px; color:green; font-weight:bold;">我是有底线的➤点我回到首页</a>
+
+### <span id="jobs-toc-heading-7" data-jobs-toc="v2">Flutter SDK网络获取</span><!-- jobs-toc:heading-end -->
+
+SDK首次自举和预缓存使用随包Scripts检测实际来源与连接路线，获取失败自动重测重试，Ctrl+C/终止信号取消；已有健康SDK复用。原工程pub/run/analyze等业务仅执行一次，失败不会换全局SDK再执行第二次。源与代理只作用于当前任务子进程，显式设置含空值保持；移动此包时保留完整Scripts目录。

@@ -13,6 +13,7 @@
 - [三、运行方式](#jobs-toc-heading-4)
 - [四、风险与能力边界](#jobs-toc-heading-5)
 - [五、日志与核对](#jobs-toc-heading-6)
+  - [SDK网络与获取](#jobs-toc-heading-7)
 
 </details>
 <!-- jobs-toc:end -->
@@ -57,3 +58,7 @@ zsh './【MacOS】⬆️双击升级Flutter.SDK.command'
 完成后核对：对应 SDK 工作树及工具版本。核对实际目标、终端输出和退出状态；发现错误时保留日志，先确认停止阶段与现存产物再重试。
 
 <a id="🔚" href="#前言" style="font-size:17px; color:green; font-weight:bold;">我是有底线的➤点我回到首页</a>
+
+### <span id="jobs-toc-heading-7" data-jobs-toc="v2">SDK网络与获取</span><!-- jobs-toc:heading-end -->
+
+SDK获取前按实际目标/供应商进行网络检测，SDK失败持续重试，Ctrl+C/终止信号取消；FVM保留原仓库并分离Git与SDK自举，官方归档按真实版本/架构校验SHA256，Brew保留原始下载URL和摘要。SDK环境先准备，构建与run只执行一次，失败保留原码。模块仅修改当前任务子进程环境；移动此包需保留完整Scripts目录。

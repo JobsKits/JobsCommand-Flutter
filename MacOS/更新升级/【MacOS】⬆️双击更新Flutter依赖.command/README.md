@@ -13,6 +13,7 @@
 - [三、运行方式](#jobs-toc-heading-4)
 - [四、风险与能力边界](#jobs-toc-heading-5)
 - [五、日志与核对](#jobs-toc-heading-6)
+  - [Flutter SDK获取前置](#jobs-toc-heading-7)
 
 </details>
 <!-- jobs-toc:end -->
@@ -56,3 +57,8 @@ zsh './【MacOS】⬆️双击更新Flutter依赖.command'
 完成后核对：工程 pubspec.yaml、pubspec.lock 与 Pub 缓存。核对实际目标、终端输出和退出状态；发现错误时保留日志，先确认停止阶段与现存产物再重试。
 
 <a id="🔚" href="#前言" style="font-size:17px; color:green; font-weight:bold;">我是有底线的➤点我回到首页</a>
+
+
+### <span id="jobs-toc-heading-7" data-jobs-toc="v2">Flutter SDK获取前置</span><!-- jobs-toc:heading-end -->
+
+所有实际Flutter调用通过随包SDK适配器：首次Dart/engine补齐先检测来源和网络，失败持续退避重试至成功或用户中断；首个FVM调用也先校验其已确认的外部Dart运行时。明确的平台在build/run前单独预缓存，真实设备平台来自设备JSON；不改全局源、代理、Shell或Git配置。SDK获取重试只作用于前置阶段；原工程业务参数、诊断与恢复流程保持原设计，不由选路额外重放。请随入口保留完整Scripts目录。

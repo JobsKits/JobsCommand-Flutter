@@ -1,4 +1,6 @@
 #!/bin/zsh
+
+
 # 脚本自述：
 # - 脚本名称：【MacOS】⚙️双击安装FVM.command
 # - 核心用途：执行“⚙️双击安装FVM”对应的本机环境配置任务。
@@ -12,6 +14,55 @@
 # 仅渲染自述：标题红色加粗，编号正文蓝色常规字重；非彩色终端输出纯文本。
 # >>> Jobs Homebrew install choice >>>
 # 输出安装诊断，避免混入返回的命令路径。
+# JOBS_FLUTTER_NETWORK_ADAPTER_BEGIN
+# 捕获真实入口参数；后续切换工程目录不影响随包模块定位。
+JOBS_FLUTTER_NETWORK_ENTRY_FILE=$0
+JOBS_FLUTTER_NETWORK_ENTRY_BASE=$PWD
+JOBS_FLUTTER_NETWORK_TASK_CACHE=
+JOBS_FLUTTER_NETWORK_TASK_LOG=
+# 只把SDK命令交给随包子进程，不把代理或源写回当前Shell。
+jobs_flutter_sdk_command() {
+    local entry=$JOBS_FLUTTER_NETWORK_ENTRY_FILE link= directory= adapter= network= count=0
+    case "$entry" in
+        /*) ;;
+        *) entry=$JOBS_FLUTTER_NETWORK_ENTRY_BASE/$entry ;;
+    esac
+    while [ -L "$entry" ]; do
+        count=$((count + 1))
+        [ "$count" -lt 40 ] || return 1
+        link=$(readlink "$entry") || return 1
+        case "$link" in
+            /*) entry=$link ;;
+            *) entry=$(dirname -- "$entry")/$link ;;
+        esac
+    done
+    directory=$(CDPATH= cd -P -- "$(dirname -- "$entry")" && pwd) || return 1
+    adapter=$directory/Scripts/【MacOS】FlutterSDK命令适配.sh/【MacOS】FlutterSDK命令适配.sh
+    network=$directory/Scripts/【MacOS】FlutterSDK网络选路.zsh/【MacOS】FlutterSDK网络选路.zsh
+    [ -f "$adapter" ] && [ -f "$network" ] || {
+        printf '%s\n' '✖ 缺少随包SDK网络资源；请保留入口旁完整Scripts目录。' >&2
+        return 1
+    }
+    if [ -z "$JOBS_FLUTTER_NETWORK_TASK_CACHE" ]; then
+        JOBS_FLUTTER_NETWORK_TASK_CACHE=$(/bin/zsh "$network" --cache-dir) || return $?
+        JOBS_FLUTTER_NETWORK_TASK_LOG=$JOBS_FLUTTER_NETWORK_TASK_CACHE/entry-network.log
+    fi
+    JOBS_FLUTTER_ROUTE_CACHE_DIR="$JOBS_FLUTTER_NETWORK_TASK_CACHE" \
+    JOBS_FLUTTER_ROUTE_LOG="$JOBS_FLUTTER_NETWORK_TASK_LOG" \
+        /bin/sh "$adapter" "$@"
+}
+# 既有选择值仅接受原来的两个Flutter执行器，不eval用户字符串。
+jobs_flutter_sdk_selected() {
+    local selected=$1
+    shift
+    case "$selected" in
+        'fvm flutter') jobs_flutter_sdk_command fvm flutter "$@" ;;
+        flutter) jobs_flutter_sdk_command flutter "$@" ;;
+        *) printf '%s\n' '✖ 未识别原Flutter执行器，未执行任何SDK或业务。' >&2; return 2 ;;
+    esac
+}
+# JOBS_FLUTTER_NETWORK_ADAPTER_END
+
 jobs_brew_note() {
   print -u2 -r -- "ℹ $*"
 }
@@ -593,17 +644,19 @@ run_original_logic() {
     if ! command -v dart &>/dev/null; then
       note_echo "📦 未检测到 dart，正在通过 Homebrew 安装..."
       brew tap dart-lang/dart || warn_echo "⚠️ tap dart-lang/dart 失败（已存在或网络异常）"
-      brew install dart || { error_echo "❌ dart 安装失败"; exit 1; }
+      jobs_flutter_sdk_command --brew-dart "$(command -v brew)" install || { local sdk_result=$?; error_echo "❌ dart 安装失败"; return "$sdk_result"; }
       success_echo "✅ dart 安装成功"
     else
       info_echo "🔄 dart 已安装，路径为：$(which dart)"
       brew tap dart-lang/dart || warn_echo "⚠️ tap dart-lang/dart 失败（可能已存在）"
       if brew outdated | grep -q "^dart\$"; then
         highlight_echo "⬆️ 检测到 dart 有更新，正在升级..."
-        if brew upgrade dart; then
+        if jobs_flutter_sdk_command --brew-dart "$(command -v brew)" upgrade; then
           success_echo "✅ dart 升级成功"
         else
+          local dart_result=$?
           error_echo "❌ dart 升级失败"
+          return "$dart_result"
         fi
       else
         success_echo "✅ dart 已是最新版（无需升级）"
@@ -615,11 +668,11 @@ run_original_logic() {
     if ! command -v fvm &>/dev/null; then
       note_echo "📦 未检测到 fvm，正在通过 dart pub global 安装..."
       dart pub global deactivate fvm
-      dart pub global activate fvm || { error_echo "❌ fvm 安装失败"; exit 1; }
+      jobs_flutter_sdk_command dart pub global activate fvm || { local sdk_result=$?; error_echo "❌ fvm 安装失败"; return "$sdk_result"; }
       success_echo "✅ fvm 安装成功"
     else
       info_echo "🔄 fvm 已安装，正在升级..."
-      dart pub global activate fvm
+      jobs_flutter_sdk_command dart pub global activate fvm || return $?
       success_echo "✅ fvm 已是最新版"
     fi
     inject_shellenv_block "fvm_env" 'export PATH="$HOME/.pub-cache/bin:$PATH"'
@@ -634,7 +687,8 @@ run_original_logic() {
   }
   # 封装 fetch_stable_versions 对应的独立处理逻辑。
   fetch_stable_versions() {
-    curl -s https://storage.googleapis.com/flutter_infra_release/releases/releases_macos.json |
+    setopt LOCAL_OPTIONS PIPE_FAIL
+    jobs_flutter_sdk_command --releases |
       jq -r '.releases[] | select(.channel=="stable") | .version' |
       sort -V | uniq | tac
   }
@@ -648,16 +702,17 @@ run_original_logic() {
     else
       choices="$versions"
     fi
-    local raw=$(echo "$choices" | fzf --prompt="🎯 选择 Flutter 版本：" --height=50% --border --ansi)
+    local raw=''
+    raw=$(echo "$choices" | fzf --prompt="🎯 选择 Flutter 版本：" --height=50% --border --ansi) || return $?
     echo "$raw" | sed 's/^✅ //' | grep -Eo '^[0-9]+\.[0-9]+\.[0-9]+$'
   }
   # 封装 prepare_flutter_versions 对应的独立处理逻辑。
   prepare_flutter_versions() {
     CURRENT_VERSION=$(get_current_configured_version)
-    VERSIONS=$(fetch_stable_versions)
+    VERSIONS=$(fetch_stable_versions) || return $?
     [[ -z "$VERSIONS" ]] && error_echo "❌ 无法获取 Flutter 版本列表" && exit 1
-    SELECTED_VERSION=$(select_flutter_version "$CURRENT_VERSION" "$VERSIONS")
-    [[ -z "$SELECTED_VERSION" ]] && SELECTED_VERSION=$(echo "$VERSIONS" | head -n1)
+    SELECTED_VERSION=$(select_flutter_version "$CURRENT_VERSION" "$VERSIONS") || return $?
+    [[ -n "$SELECTED_VERSION" ]] || return 130
   }
   # 封装 write_fvm_config 对应的独立处理逻辑。
   write_fvm_config() {
@@ -671,8 +726,8 @@ run_original_logic() {
   # 执行对应的环境配置或同步处理。
   install_flutter_version() {
     local version="$1"
-    fvm install "$version"
-    fvm use "$version"
+    jobs_flutter_sdk_command fvm install "$version" || return $?
+    jobs_flutter_sdk_command fvm use "$version" || return $?
   }
   # 封装 write_flutter_alias 对应的独立处理逻辑。
   write_flutter_alias() {
@@ -723,10 +778,13 @@ run_original_logic() {
   }
   # 执行已经拆分完成的独立业务步骤。
   run_optional_commands() {
-    ask_feature_toggle "是否执行 flutter clean？" && fvm flutter clean
-    ask_feature_toggle "是否执行 flutter pub get？" && fvm flutter pub get
-    ask_feature_toggle "是否执行 flutter doctor？" && fvm flutter doctor
-    ask_feature_toggle "是否执行 flutter analyze？" && fvm flutter analyze
+    local action=''
+    for action in clean 'pub get' doctor analyze; do
+      if ask_feature_toggle "是否执行flutter $action？"; then
+        jobs_flutter_sdk_command fvm flutter ${=action} || return $?
+      fi
+    done
+    return 0
   }
   # 封装 show_final_summary 对应的独立处理逻辑。
   show_final_summary() {
@@ -761,13 +819,13 @@ run_original_logic() {
     # ===== 工具依赖自检（用户可选择执行/跳过） =====
     ask_run "安装/更新 Homebrew？"   && install_homebrew   # ✅ 回车跳过，输入任意字符后执行 Homebrew 安装/更新
     ask_run "安装/升级 jq？"         && install_jq         # ✅ 回车跳过，输入任意字符后执行 jq 安装/升级
-    ask_run "安装/升级 dart？"       && install_dart       # ✅ 回车跳过，输入任意字符后执行 dart 安装/升级
-    ask_run "安装/升级 fvm？"        && install_fvm        # ✅ 回车跳过，输入任意字符后执行 fvm 安装/升级
+    if ask_run "安装/升级 dart？"; then install_dart || return $?; fi # ✅ 回车跳过，输入任意字符后执行 dart 安装/升级
+    if ask_run "安装/升级 fvm？"; then install_fvm || return $?; fi # ✅ 回车跳过，输入任意字符后执行 fvm 安装/升级
 
     # ===== Flutter 版本管理流程 =====
-    prepare_flutter_versions                             # ✅ 获取当前配置版本 + 在线稳定版本列表，并通过 fzf 选择
+    prepare_flutter_versions || return $? # ✅ 获取当前配置版本 + 在线稳定版本列表，并通过 fzf 选择
     write_fvm_config "$SELECTED_VERSION"                 # ✅ 写入 .fvmrc 与 .fvm/fvm_config.json 配置
-    install_flutter_version "$SELECTED_VERSION"          # ✅ fvm 安装并切换到选中的 Flutter 版本
+    install_flutter_version "$SELECTED_VERSION" || return $? #          # ✅ fvm 安装并切换到选中的 Flutter 版本
     write_flutter_alias                                  # ✅ 写 flutter() 函数别名，方便直接调用
 
     # ===== 项目状态检查 =====
@@ -775,7 +833,7 @@ run_original_logic() {
     check_duplicate_dependencies                         # ✅ 检查 pubspec.yaml 是否有重复依赖（dependencies 与 dev_dependencies）
 
     # ===== 可选操作 =====
-    run_optional_commands                                # ✅ 额外交互：flutter clean / pub get / doctor / analyze（回车跳过、y 执行）
+    run_optional_commands || return $? # ✅ 额外交互：flutter clean / pub get / doctor / analyze（回车跳过、y 执行）
 
     # ===== 总结信息输出 =====
     show_final_summary "$SELECTED_VERSION"               # ✅ 展示最终 Flutter 环境配置总结
@@ -797,7 +855,7 @@ main() {
   # 初始化 Shell 选项、日志、依赖和入口运行状态。
   initialize_script_runtime
   # 执行 run_original_logic 对应的核心业务步骤。
-  run_original_logic "$@"
+  run_original_logic "$@" || return $?
   # 输出脚本执行结果、摘要和日志位置。
   success_echo "脚本执行结束。日志：$LOG_FILE"
 }
