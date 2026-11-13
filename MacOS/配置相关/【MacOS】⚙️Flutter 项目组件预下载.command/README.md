@@ -57,6 +57,8 @@ zsh './【MacOS】⚙️Flutter 项目组件预下载.command'
 
 完成后核对：SDK bin/cache 与当前用户 .flutter_cache_backups 中按工程命名的备份。核对实际目标、终端输出和退出状态；发现错误时保留日志，先确认停止阶段与现存产物再重试。
 
+**终端配色保护：** 独立运行时，在支持完整保存与恢复配色的交互终端中临时使用黑底白字及统一强调色；正常结束、失败或可捕获中断后恢复进入前的配色，不修改终端全局偏好或 Shell 启动配置。不支持完整保护、无交互终端、`NO_COLOR`、既有纯文本模式和 Sourcetree 场景不切换配色，并沿用纯文本输出约定。强制终止（如 `kill -9`）无法由脚本自身保证恢复，请使用运行时显示的独立恢复入口。
+
 <a id="🔚" href="#前言" style="font-size:17px; color:green; font-weight:bold;">我是有底线的➤点我回到首页</a>
 
 ### <span id="jobs-toc-heading-7" data-jobs-toc="v2">Flutter SDK网络获取</span><!-- jobs-toc:heading-end -->

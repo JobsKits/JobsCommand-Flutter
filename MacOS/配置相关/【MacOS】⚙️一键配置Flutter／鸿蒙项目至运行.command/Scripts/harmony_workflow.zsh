@@ -1,4 +1,180 @@
 # Project workflow, loaded by the .command entrypoint. No work runs when sourced.
+# JOBS_INPUT_CHOICE_STYLE_BEGIN
+# 只展示提示选项；不读取答案、不改变默认值、返回码或业务环境。
+jobs_prompt_color_ready() {
+  [ -z "${NO_COLOR+x}" ] && [ -n "${TERM:-}" ] && [ "${TERM:-}" != dumb ] &&
+    [ "${PLAIN_OUTPUT:-0}" != 1 ] && [ "${IS_SOURCETREE_RUNTIME:-0}" != 1 ]
+}
+# 原生 awk 分段着色；任意/非空输入优先，括号内外沿用同一个选项。
+jobs_prompt_format() {
+  /usr/bin/awk -v color="${1:-0}" -v lines="${2:-0}" -v keep="${3:-0}" '
+    function typedEnter(value, start, prefix) {
+      prefix = substr(value, 1, start - 1)
+      gsub(/[“”‘’「」『』"]/, "", prefix)
+      gsub(sprintf("%c", 39), "", prefix)
+      if (prefix ~ /(空格|[Ss][Pp][Aa][Cc][Ee])[[:space:]]*(后|再|并|[Tt][Hh][Ee][Nn])?[[:space:]]*$/) return 1
+      return prefix ~ /(输入|键入|填写|[Tt]ype)[^；;|]*[[:alnum:]_+-]+[[:space:]]*(后|再|并)?[[:space:]]*$/
+    }
+    function greenPosition(value, token, start) {
+      if (match(value, /(直接|仅|只需|只|按下|按)?[[:space:]]*(回车|回車)/)) {
+        start = RSTART
+        return typedEnter(value, start) ? 0 : start
+      }
+      if (!match(value, /(^|[^[:alnum:]_])([Ee][Nn][Tt][Ee][Rr]|[Rr][Ee][Tt][Uu][Rr][Nn])([^[:alnum:]_]|$)/)) return 0
+      start = RSTART
+      token = substr(value, RSTART, RLENGTH)
+      match(token, /[Ee][Nn][Tt][Ee][Rr]|[Rr][Ee][Tt][Uu][Rr][Nn]/)
+      start += RSTART - 1
+      return typedEnter(value, start) ? 0 : start
+    }
+    function segment(value, inherited, start, kind, prefix, body, red, green, connector, left, right, splitAt) {
+      if (value == "") return value
+      kind = inherited
+      start = 1
+      if (!kind) {
+        if (match(value, /(输入)?(任意|任何)(非空)?(字符|内容|输入|键)|非空(字符|内容|输入)?|其它输入|其他输入|[Tt]ype (anything|any[^ ]*)|[Pp]ress any key/)) {
+          red = RSTART
+        }
+        green = greenPosition(value)
+        if (red && green && green < red) {
+          left = substr(value, 1, red - 1)
+          right = substr(value, red)
+          connector = ""
+          if (match(left, /(或者|或)[[:space:]]*$/)) {
+            connector = substr(left, RSTART)
+            left = substr(left, 1, RSTART - 1)
+          }
+          return segment(left, 0) connector segment(right, 31)
+        }
+        if (red && green && red < green && match(value, /或[[:space:]]*(直接|仅|只需|只|按下|按)?(回车|回車)/)) {
+          splitAt = RSTART
+          return segment(substr(value, 1, splitAt - 1), 31) "或" segment(substr(value, splitAt + length("或")), 0)
+        }
+        if (red) {
+          kind = 31
+          start = red
+        } else if (green) {
+          kind = 32
+          start = green
+        }
+      }
+      if (!kind || !color) return value
+      prefix = substr(value, 1, start - 1)
+      body = substr(value, start)
+      return prefix esc "[1;" kind "m" body esc "[0m"
+    }
+    function render(value, output, part, boundary, inherited, kind, consumed, depth, original) {
+      original = value
+      gsub(esc "\\[[0-9;]*m", "", value)
+      if (color && keep && !greenPosition(value) && value !~ /(任意|任何|非空|其它输入|其他输入|[Tt]ype (anything|any[^ ]*)|[Pp]ress any key)/) return original
+      output = ""
+      inherited = 0
+      depth = 0
+      while (match(value, /[；;\/|，,、？?：:=＝（）()\[\]【】]/)) {
+        part = substr(value, 1, RSTART - 1)
+        boundary = substr(value, RSTART, RLENGTH)
+        consumed = RSTART + RLENGTH
+        output = output segment(part, inherited) boundary
+        if (boundary ~ /[（(\[【]/) {
+          depth++
+          if (part ~ /(任意|任何|非空|其它输入|其他输入|[Tt]ype (anything|any[^ ]*)|[Pp]ress any key)/) inherited = 31
+          else if (greenPosition(part)) inherited = 32
+        } else if (boundary ~ /[）)\]】]/) {
+          if (depth) depth--
+        } else if (boundary ~ /[：:=＝]/) {
+          if (!inherited) {
+            if (part ~ /(任意|任何|非空|其它输入|其他输入)/) inherited = 31
+            else if (greenPosition(part)) inherited = 32
+          }
+        } else if (!depth) inherited = 0
+        value = substr(value, consumed)
+      }
+      return output segment(value, inherited)
+    }
+    BEGIN { esc = sprintf("%c", 27); first = 1 }
+    {
+      if (lines == 2) {
+        if (!first) printf "%s\n", render(pending)
+        pending = $0
+        first = 0
+        next
+      }
+      if (!lines && !first) printf "\n"
+      printf "%s", render($0)
+      if (lines) printf "\n"
+      first = 0
+    }
+    END {
+      if (lines == 2 && !first) {
+        sub(sprintf("%c", 1) "$", "", pending)
+        printf "%s", render(pending)
+      }
+    }
+  '
+}
+# read 的命令替换会使 stdout 成为管道，按输入与提示所在 stderr 判断终端。
+jobs_prompt_render() {
+  local jobs_prompt_color=0
+  if [ -t 0 ] && [ -t 2 ] && jobs_prompt_color_ready; then jobs_prompt_color=1; fi
+  printf "%s" "$1" | jobs_prompt_format "$jobs_prompt_color" 0
+}
+# 仅放在显示链末端；tee 在此函数之前接收纯文本，不把 ANSI 写入日志。
+jobs_prompt_stream() {
+  local jobs_prompt_color=0
+  if [ -t 1 ] && jobs_prompt_color_ready; then jobs_prompt_color=1; fi
+  jobs_prompt_format "$jobs_prompt_color" 1 1
+}
+# 显示管道保留原末尾换行；只删除本轮追加的最后一个结束标记。
+jobs_prompt_filter() {
+  local jobs_prompt_color=0
+  if [ -t 1 ] && jobs_prompt_color_ready; then jobs_prompt_color=1; fi
+  { /bin/cat; printf '\001'; } | jobs_prompt_format "$jobs_prompt_color" 2 1
+}
+# 仅包装原 printf/echo/print 展示，原参数、尾换行与显示命令退出码保持不变。
+jobs_prompt_output() {
+  local jobs_prompt_status=0 jobs_prompt_stderr=0 jobs_prompt_arg="" jobs_prompt_previous=""
+  if [ "${1:-}" = print ]; then
+    for jobs_prompt_arg in "$@"; do
+      case "$jobs_prompt_arg" in -?*u2*|-u2) jobs_prompt_stderr=1 ;; esac
+      if [ "$jobs_prompt_previous" = -u ] && [ "$jobs_prompt_arg" = 2 ]; then jobs_prompt_stderr=1; fi
+      jobs_prompt_previous="$jobs_prompt_arg"
+      [ "$jobs_prompt_arg" != -- ] || break
+    done
+  fi
+  if [ -n "${ZSH_VERSION:-}" ]; then
+    if [ "$jobs_prompt_stderr" = 1 ]; then
+      "$@" 2>&1 | jobs_prompt_filter >&2
+      jobs_prompt_status=$(( ${pipestatus[1]} != 0 ? ${pipestatus[1]} : ${pipestatus[2]} ))
+    else
+      "$@" | jobs_prompt_filter
+      jobs_prompt_status=$(( ${pipestatus[1]} != 0 ? ${pipestatus[1]} : ${pipestatus[2]} ))
+    fi
+  elif [ -n "${BASH_VERSION:-}" ]; then
+    "$@" | jobs_prompt_filter
+    jobs_prompt_status=$(( ${PIPESTATUS[0]} != 0 ? ${PIPESTATUS[0]} : ${PIPESTATUS[1]} ))
+  else
+    "$@" | jobs_prompt_filter
+    jobs_prompt_status=$?
+  fi
+  return "$jobs_prompt_status"
+}
+# 仅替换日志 primitive 的 tee：磁盘同步追加纯文，终端保留非选项原色。
+jobs_prompt_tee() {
+  local jobs_prompt_log="$1" jobs_prompt_line="" jobs_prompt_newline=0
+  while :; do
+    jobs_prompt_line=""
+    if IFS= read -r jobs_prompt_line; then jobs_prompt_newline=1; else jobs_prompt_newline=0; [ -n "$jobs_prompt_line" ] || break; fi
+    if [ "$jobs_prompt_newline" = 1 ]; then
+      { printf '%s\n' "$jobs_prompt_line"; printf '\001'; } | jobs_prompt_format 0 2 >> "$jobs_prompt_log" || return $?
+      printf '%s\n' "$jobs_prompt_line" | jobs_prompt_filter || return $?
+    else
+      { printf '%s' "$jobs_prompt_line"; printf '\001'; } | jobs_prompt_format 0 2 >> "$jobs_prompt_log" || return $?
+      printf '%s' "$jobs_prompt_line" | jobs_prompt_filter || return $?
+    fi
+  done
+}
+# JOBS_INPUT_CHOICE_STYLE_END
+
 source "${${(%):-%x}:A:h}/【MacOS】FlutterSDK网络适配.zsh/【MacOS】FlutterSDK网络适配.zsh" || return 1
 JOBS_HARMONY_REPO='https://gitcode.com/CPF-Flutter/flutter_flutter.git'
 JOBS_HARMONY_REF='3.35.7+ohos-1.0.5'
@@ -55,7 +231,7 @@ jobs_read() {
 }
 # 可选附加动作默认跳过。
 jobs_optional() {
-  jobs_read "$1（回车跳过；任意非空输入执行）：" || return 130
+  jobs_read "$(jobs_prompt_render "$1（回车跳过；任意非空输入执行）：")" || return 130
   [[ -n "$REPLY" ]]
 }
 # 解开 Finder 拖入路径的引号和反斜杠，不执行路径内命令。
@@ -114,7 +290,7 @@ jobs_choose_sdk() {
   typeset -g JOBS_SDK_FAMILY=harmony JOBS_SDK_REPO="$JOBS_HARMONY_REPO" JOBS_INSTALL_MODE=fvm
   jobs_note "鸿蒙 SDK 来源：$JOBS_SDK_REPO"
   while true; do
-    jobs_read "鸿蒙版本 / tag / 分支（回车=${default_ref}）：" || return $?
+    jobs_read "$(jobs_prompt_render "鸿蒙版本 / tag / 分支（回车=${default_ref}）：")" || return $?
     JOBS_SDK_REF="${REPLY:-$default_ref}"
     if [[ "$JOBS_SDK_REF" =~ '^[a-zA-Z0-9][a-zA-Z0-9._+-]*$' && "$JOBS_SDK_REF" != *..* ]]; then
       break
@@ -128,7 +304,7 @@ jobs_ensure_fvm() {
   if [[ -z "$JOBS_FVM_BIN" ]]; then
     jobs_source 'FVM（btwld/fvm tap）' 'https://github.com/btwld/homebrew-fvm' '当前 Homebrew 前缀'
     jobs_note '缺少 FVM，将通过官方文档列出的 btwld/fvm tap 安装独立 FVM。'
-    jobs_read '回车安装 FVM；任意非空输入取消：' || return $?
+    jobs_read "$(jobs_prompt_render '回车安装 FVM；任意非空输入取消：')" || return $?
     [[ -z "$REPLY" ]] || return 130
     jobs_run env HOMEBREW_NO_AUTO_UPDATE=1 "$JOBS_HOMEBREW_BIN" install btwld/fvm/fvm || return $?
     rehash
@@ -230,7 +406,7 @@ jobs_setup_sdk_impl() {
   jobs_note "核实 commit：$JOBS_SDK_COMMIT"
   jobs_note "将下载 / 复用 $JOBS_SDK_FAMILY：$JOBS_SDK_REF；模式：$JOBS_INSTALL_MODE"
   jobs_note "FVM 缓存：$JOBS_FVM_CACHE；工程：$PROJECT_ROOT"
-  jobs_read '回车确认本次 SDK 准备；任意非空输入取消：' || return $?
+  jobs_read "$(jobs_prompt_render '回车确认本次 SDK 准备；任意非空输入取消：')" || return $?
   [[ -z "$REPLY" ]] || return 130
   jobs_config fvm "$PROJECT_ROOT" "$JOBS_FVM_CACHE" "$JOBS_SDK_REPO" || return $?
   # Explicit environment agrees with project config, overriding inherited FVM globals.
@@ -290,7 +466,7 @@ jobs_prepare_harmony() {
   hs_show_intro
   hs_check_host || return $?
   hs_initialize_log || return $?
-  jobs_read '鸿蒙工具：回车准备工具及镜像；输入 device 仅准备工具（使用真机）；其它输入取消：' || return $?
+  jobs_read "$(jobs_prompt_render '鸿蒙工具：回车准备工具及镜像；输入 device 仅准备工具（使用真机）；其它输入取消：')" || return $?
   typeset -g JOBS_DEVICE_MODE="$REPLY"
   case "$REPLY" in
     '') hs_prepare_environment || return $? ;;
@@ -348,7 +524,7 @@ jobs_harmony_environment() {
   fi
   if ! jobs_java_17_ok "$java"; then
     jobs_note "JDK 未就绪（当前候选：${java:-无}）；默认基线需要 JDK 17。"
-    jobs_read '回车通过 Homebrew 准备 openjdk@17；或输入已有 JDK 根目录；q 取消：' || return $?
+    jobs_read "$(jobs_prompt_render '回车通过 Homebrew 准备 openjdk@17；或输入已有 JDK 根目录；q 取消：')" || return $?
     case "$REPLY" in
       '')
         local prefix=''
@@ -451,14 +627,14 @@ jobs_select_and_run() {
   (( JOBS_PLATFORM_READY )) || return 0
   local answer='' devices='' rows='' selected='' i=1
   local -a choices
-  jobs_read '回车选择鸿蒙设备并运行；任意非空输入仅完成配置：' || return $?
+  jobs_read "$(jobs_prompt_render '回车选择鸿蒙设备并运行；任意非空输入仅完成配置：')" || return $?
   [[ -z "$REPLY" ]] || { jobs_note '工程已配置，按选择暂未运行。'; return 0; }
   while true; do
     devices="$("$JOBS_SDK_PATH/bin/flutter" devices --machine)" || { jobs_error '设备查询失败，请核对 HDC / Flutter SDK；可重新运行入口。'; return 1; }
     rows="$(print -r -- "$devices" | jobs_config devices harmony)" || return $?
     if [[ -z "$rows" ]]; then
       jobs_note '暂无鸿蒙设备。请启动已有模拟器，或连接真机并在设备上允许调试。'
-      jobs_read '回车重新加载；s 新建并启动模拟器；q 仅完成配置：' || return $?
+      jobs_read "$(jobs_prompt_render '回车重新加载；s 新建并启动模拟器；q 仅完成配置：')" || return $?
       case "$REPLY" in
         '') continue ;;
         s|S) hs_prepare_environment && hs_select_image && hs_create_and_verify || return $?; continue ;;
@@ -472,7 +648,7 @@ jobs_select_and_run() {
       jobs_note "$i、$selected"
       (( i += 1 ))
     done
-    jobs_read '鸿蒙设备编号（回车=1；r 重新加载；q 仅配置）：' || return $?
+    jobs_read "$(jobs_prompt_render '鸿蒙设备编号（回车=1；r 重新加载；q 仅配置）：')" || return $?
     answer="${REPLY:-1}"
     case "$answer" in
       r|R) continue ;;

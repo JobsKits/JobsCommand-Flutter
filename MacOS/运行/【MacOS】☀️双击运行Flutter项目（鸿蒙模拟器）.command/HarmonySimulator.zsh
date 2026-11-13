@@ -5,6 +5,182 @@
 # - 影响范围：写入 DevEco 默认模拟器实例目录；保留已有设备、镜像、代理和系统配置。
 # - 运行提示：回车授权缺工具时从 SDL 镜像安装 CLT；缺镜像走官方下载，--check 只读，许可展示后本人回车同意。
 
+# JOBS_INPUT_CHOICE_STYLE_BEGIN
+# 只展示提示选项；不读取答案、不改变默认值、返回码或业务环境。
+jobs_prompt_color_ready() {
+  [ -z "${NO_COLOR+x}" ] && [ -n "${TERM:-}" ] && [ "${TERM:-}" != dumb ] &&
+    [ "${PLAIN_OUTPUT:-0}" != 1 ] && [ "${IS_SOURCETREE_RUNTIME:-0}" != 1 ]
+}
+# 原生 awk 分段着色；任意/非空输入优先，括号内外沿用同一个选项。
+jobs_prompt_format() {
+  /usr/bin/awk -v color="${1:-0}" -v lines="${2:-0}" -v keep="${3:-0}" '
+    function typedEnter(value, start, prefix) {
+      prefix = substr(value, 1, start - 1)
+      gsub(/[“”‘’「」『』"]/, "", prefix)
+      gsub(sprintf("%c", 39), "", prefix)
+      if (prefix ~ /(空格|[Ss][Pp][Aa][Cc][Ee])[[:space:]]*(后|再|并|[Tt][Hh][Ee][Nn])?[[:space:]]*$/) return 1
+      return prefix ~ /(输入|键入|填写|[Tt]ype)[^；;|]*[[:alnum:]_+-]+[[:space:]]*(后|再|并)?[[:space:]]*$/
+    }
+    function greenPosition(value, token, start) {
+      if (match(value, /(直接|仅|只需|只|按下|按)?[[:space:]]*(回车|回車)/)) {
+        start = RSTART
+        return typedEnter(value, start) ? 0 : start
+      }
+      if (!match(value, /(^|[^[:alnum:]_])([Ee][Nn][Tt][Ee][Rr]|[Rr][Ee][Tt][Uu][Rr][Nn])([^[:alnum:]_]|$)/)) return 0
+      start = RSTART
+      token = substr(value, RSTART, RLENGTH)
+      match(token, /[Ee][Nn][Tt][Ee][Rr]|[Rr][Ee][Tt][Uu][Rr][Nn]/)
+      start += RSTART - 1
+      return typedEnter(value, start) ? 0 : start
+    }
+    function segment(value, inherited, start, kind, prefix, body, red, green, connector, left, right, splitAt) {
+      if (value == "") return value
+      kind = inherited
+      start = 1
+      if (!kind) {
+        if (match(value, /(输入)?(任意|任何)(非空)?(字符|内容|输入|键)|非空(字符|内容|输入)?|其它输入|其他输入|[Tt]ype (anything|any[^ ]*)|[Pp]ress any key/)) {
+          red = RSTART
+        }
+        green = greenPosition(value)
+        if (red && green && green < red) {
+          left = substr(value, 1, red - 1)
+          right = substr(value, red)
+          connector = ""
+          if (match(left, /(或者|或)[[:space:]]*$/)) {
+            connector = substr(left, RSTART)
+            left = substr(left, 1, RSTART - 1)
+          }
+          return segment(left, 0) connector segment(right, 31)
+        }
+        if (red && green && red < green && match(value, /或[[:space:]]*(直接|仅|只需|只|按下|按)?(回车|回車)/)) {
+          splitAt = RSTART
+          return segment(substr(value, 1, splitAt - 1), 31) "或" segment(substr(value, splitAt + length("或")), 0)
+        }
+        if (red) {
+          kind = 31
+          start = red
+        } else if (green) {
+          kind = 32
+          start = green
+        }
+      }
+      if (!kind || !color) return value
+      prefix = substr(value, 1, start - 1)
+      body = substr(value, start)
+      return prefix esc "[1;" kind "m" body esc "[0m"
+    }
+    function render(value, output, part, boundary, inherited, kind, consumed, depth, original) {
+      original = value
+      gsub(esc "\\[[0-9;]*m", "", value)
+      if (color && keep && !greenPosition(value) && value !~ /(任意|任何|非空|其它输入|其他输入|[Tt]ype (anything|any[^ ]*)|[Pp]ress any key)/) return original
+      output = ""
+      inherited = 0
+      depth = 0
+      while (match(value, /[；;\/|，,、？?：:=＝（）()\[\]【】]/)) {
+        part = substr(value, 1, RSTART - 1)
+        boundary = substr(value, RSTART, RLENGTH)
+        consumed = RSTART + RLENGTH
+        output = output segment(part, inherited) boundary
+        if (boundary ~ /[（(\[【]/) {
+          depth++
+          if (part ~ /(任意|任何|非空|其它输入|其他输入|[Tt]ype (anything|any[^ ]*)|[Pp]ress any key)/) inherited = 31
+          else if (greenPosition(part)) inherited = 32
+        } else if (boundary ~ /[）)\]】]/) {
+          if (depth) depth--
+        } else if (boundary ~ /[：:=＝]/) {
+          if (!inherited) {
+            if (part ~ /(任意|任何|非空|其它输入|其他输入)/) inherited = 31
+            else if (greenPosition(part)) inherited = 32
+          }
+        } else if (!depth) inherited = 0
+        value = substr(value, consumed)
+      }
+      return output segment(value, inherited)
+    }
+    BEGIN { esc = sprintf("%c", 27); first = 1 }
+    {
+      if (lines == 2) {
+        if (!first) printf "%s\n", render(pending)
+        pending = $0
+        first = 0
+        next
+      }
+      if (!lines && !first) printf "\n"
+      printf "%s", render($0)
+      if (lines) printf "\n"
+      first = 0
+    }
+    END {
+      if (lines == 2 && !first) {
+        sub(sprintf("%c", 1) "$", "", pending)
+        printf "%s", render(pending)
+      }
+    }
+  '
+}
+# read 的命令替换会使 stdout 成为管道，按输入与提示所在 stderr 判断终端。
+jobs_prompt_render() {
+  local jobs_prompt_color=0
+  if [ -t 0 ] && [ -t 2 ] && jobs_prompt_color_ready; then jobs_prompt_color=1; fi
+  printf "%s" "$1" | jobs_prompt_format "$jobs_prompt_color" 0
+}
+# 仅放在显示链末端；tee 在此函数之前接收纯文本，不把 ANSI 写入日志。
+jobs_prompt_stream() {
+  local jobs_prompt_color=0
+  if [ -t 1 ] && jobs_prompt_color_ready; then jobs_prompt_color=1; fi
+  jobs_prompt_format "$jobs_prompt_color" 1 1
+}
+# 显示管道保留原末尾换行；只删除本轮追加的最后一个结束标记。
+jobs_prompt_filter() {
+  local jobs_prompt_color=0
+  if [ -t 1 ] && jobs_prompt_color_ready; then jobs_prompt_color=1; fi
+  { /bin/cat; printf '\001'; } | jobs_prompt_format "$jobs_prompt_color" 2 1
+}
+# 仅包装原 printf/echo/print 展示，原参数、尾换行与显示命令退出码保持不变。
+jobs_prompt_output() {
+  local jobs_prompt_status=0 jobs_prompt_stderr=0 jobs_prompt_arg="" jobs_prompt_previous=""
+  if [ "${1:-}" = print ]; then
+    for jobs_prompt_arg in "$@"; do
+      case "$jobs_prompt_arg" in -?*u2*|-u2) jobs_prompt_stderr=1 ;; esac
+      if [ "$jobs_prompt_previous" = -u ] && [ "$jobs_prompt_arg" = 2 ]; then jobs_prompt_stderr=1; fi
+      jobs_prompt_previous="$jobs_prompt_arg"
+      [ "$jobs_prompt_arg" != -- ] || break
+    done
+  fi
+  if [ -n "${ZSH_VERSION:-}" ]; then
+    if [ "$jobs_prompt_stderr" = 1 ]; then
+      "$@" 2>&1 | jobs_prompt_filter >&2
+      jobs_prompt_status=$(( ${pipestatus[1]} != 0 ? ${pipestatus[1]} : ${pipestatus[2]} ))
+    else
+      "$@" | jobs_prompt_filter
+      jobs_prompt_status=$(( ${pipestatus[1]} != 0 ? ${pipestatus[1]} : ${pipestatus[2]} ))
+    fi
+  elif [ -n "${BASH_VERSION:-}" ]; then
+    "$@" | jobs_prompt_filter
+    jobs_prompt_status=$(( ${PIPESTATUS[0]} != 0 ? ${PIPESTATUS[0]} : ${PIPESTATUS[1]} ))
+  else
+    "$@" | jobs_prompt_filter
+    jobs_prompt_status=$?
+  fi
+  return "$jobs_prompt_status"
+}
+# 仅替换日志 primitive 的 tee：磁盘同步追加纯文，终端保留非选项原色。
+jobs_prompt_tee() {
+  local jobs_prompt_log="$1" jobs_prompt_line="" jobs_prompt_newline=0
+  while :; do
+    jobs_prompt_line=""
+    if IFS= read -r jobs_prompt_line; then jobs_prompt_newline=1; else jobs_prompt_newline=0; [ -n "$jobs_prompt_line" ] || break; fi
+    if [ "$jobs_prompt_newline" = 1 ]; then
+      { printf '%s\n' "$jobs_prompt_line"; printf '\001'; } | jobs_prompt_format 0 2 >> "$jobs_prompt_log" || return $?
+      printf '%s\n' "$jobs_prompt_line" | jobs_prompt_filter || return $?
+    else
+      { printf '%s' "$jobs_prompt_line"; printf '\001'; } | jobs_prompt_format 0 2 >> "$jobs_prompt_log" || return $?
+      printf '%s' "$jobs_prompt_line" | jobs_prompt_filter || return $?
+    fi
+  done
+}
+# JOBS_INPUT_CHOICE_STYLE_END
+
 HS_BIN=""
 HS_LOG=""
 HS_CHECK=0
@@ -47,11 +223,11 @@ hs_intro_line() {
 hs_show_intro() {
   hs_intro_line title '━━━━━━━━━━ 新建 Harmony 模拟器 ━━━━━━━━━━'
   hs_intro_line body '1、仅支持 Apple Silicon macOS 与具备 -create / -imageList 的官方 DevEco Emulator（6.1.0 Beta1+）。'
-  hs_intro_line body '2、缺系统镜像时自动读取官方清单，回车选择最新稳定版手机镜像并下载；随后创建唯一实例并启动。'
-  hs_intro_line body '3、下载或启动前展示工具随附的许可原文，回车表示本人同意；任意非空输入取消。不改代理或 Shell 配置。'
-  hs_intro_line body '4、回车授权缺工具时从 SDL 第三方镜像免登录下载 Mac ARM64 CLT（约 2.03 GB），校验后新增独立目录；健康工具不升级。'
+  jobs_prompt_output hs_intro_line body '2、缺系统镜像时自动读取官方清单，回车选择最新稳定版手机镜像并下载；随后创建唯一实例并启动。'
+  jobs_prompt_output hs_intro_line body '3、下载或启动前展示工具随附的许可原文，回车表示本人同意；任意非空输入取消。不改代理或 Shell 配置。'
+  jobs_prompt_output hs_intro_line body '4、回车授权缺工具时从 SDL 第三方镜像免登录下载 Mac ARM64 CLT（约 2.03 GB），校验后新增独立目录；健康工具不升级。'
   hs_intro_line body '   华为官网下载工具需登录；SDL 替代工具包下载，系统镜像由官方 Emulator 下载（可能数 GB），保留已有设备与镜像。'
-  hs_intro_line body '5、交互入口回车继续，q / Ctrl+C 取消；--prepare 仅准备，--check 只读查询，日志在系统临时目录 JobsHarmonySimulator.* 中。'
+  jobs_prompt_output hs_intro_line body '5、交互入口回车继续，q / Ctrl+C 取消；--prepare 仅准备，--check 只读查询，日志在系统临时目录 JobsHarmonySimulator.* 中。'
 }
 
 hs_help() {
@@ -275,7 +451,7 @@ hs_install_clt() {
 # 将用户选择保留在本次进程；路径只作为参数，不执行 shell 展开或命令。
 hs_read_tool_location() {
   local location=""
-  IFS= read -r 'location?粘贴 DevEco .app / CLT 目录或 Emulator 文件路径（回车返回）：' || return 130
+  IFS= read -r "location?$(jobs_prompt_render '粘贴 DevEco .app / CLT 目录或 Emulator 文件路径（回车返回）：')" || return 130
   [[ -n "$location" ]] || return 0
   location="${(Q)location}"
   [[ "$location" != '~/'* ]] || location="$HOME/${location#\~/}"
@@ -301,7 +477,7 @@ hs_preparation_prompt() {
     hs_log '1、从 SDL 镜像安装 Mac ARM64 CLT 6.1.1.280（约 2.03 GB）'
     hs_log '3、打开华为官方下载页（备选）'
     hs_log '2、指定已经安装 / 解压的 DevEco .app、CLT 目录或 Emulator 文件'
-    hs_log '回车：准备完成，重新检查并继续；q：取消本次操作。'
+    jobs_prompt_output hs_log '回车：准备完成，重新检查并继续；q：取消本次操作。'
     IFS= read -r 'answer?选择：' || return 130
     case "$answer" in
       '') return 0 ;;
@@ -312,7 +488,7 @@ hs_preparation_prompt() {
         ;;
       3)
         /usr/bin/open "$HS_DOWNLOAD_URL" || hs_log "⚠ 自动打开失败，请访问：$HS_DOWNLOAD_URL"
-        hs_log 'ℹ 终端保留在此；完成准备后回车复检。'
+        jobs_prompt_output hs_log 'ℹ 终端保留在此；完成准备后回车复检。'
         ;;
       2)
         result=0
@@ -362,7 +538,7 @@ hs_review_licenses() {
     /bin/cat "$file" || return $?
     print
   done
-  IFS= read -r 'answer?阅读以上全部协议后，回车表示本人同意并继续；任意非空输入取消：' || return 130
+  IFS= read -r "answer?$(jobs_prompt_render '阅读以上全部协议后，回车表示本人同意并继续；任意非空输入取消：')" || return 130
   [[ -z "$answer" ]] || return 130
   hs_run_command -license accept || return $?
   HS_LICENSES_CONFIRMED=1
@@ -381,7 +557,7 @@ hs_install_image() {
   type="${selected%%$'\t'*}"
   version="${${selected#*$'\t'}%%$'\t'*}"
   hs_log "📥 官方 Emulator 下载：$type / $version；目录沿用 DevEco 既有配置。"
-  IFS= read -r 'answer?回车下载此镜像；任意非空输入取消：' || return 130
+  IFS= read -r "answer?$(jobs_prompt_render '回车下载此镜像；任意非空输入取消：')" || return 130
   [[ -z "$answer" ]] || return 130
   hs_review_licenses || return $?
   # 只在用户确认的新镜像安装中跳过重复确认；创建、启动均不使用 -force。
@@ -542,7 +718,7 @@ hs_choose() {
       "$fzf" --no-multi --layout=reverse --height=14 --border --prompt="$prompt > " --header='回车选首项；Esc / Ctrl+C 取消'
     return $?
   fi
-  print -u2 -r -- "$prompt（回车选 1；输入 q 取消）："
+  jobs_prompt_output print -u2 -r -- "$prompt（回车选 1；输入 q 取消）："
   for choice in "${options[@]}"; do
     print -u2 -r -- "$index、$choice"
     index=$((index + 1))
@@ -587,7 +763,7 @@ hs_select_image() {
       suffix=$((suffix + 1))
     done
     print -r -- "ℹ 默认唯一名称：$HS_NAME"
-    IFS= read -r 'answer?模拟器名称（回车使用默认）：' || return 130
+    IFS= read -r "answer?$(jobs_prompt_render '模拟器名称（回车使用默认）：')" || return 130
     [[ -z "$answer" ]] || HS_NAME="$answer"
   fi
   hs_valid_name "$HS_NAME" || { hs_error '名称无效：须以英文字母开头，仅含英文字母、数字、空格、下划线或加号，不能以空格结尾，最长 64 字符，不支持连字符 -。未创建模拟器。'; return 2; }
@@ -645,7 +821,7 @@ hs_create_and_verify() {
   local answer="" result=0 current="" parsed=""
   hs_log "来源：Huawei DevEco Emulator；工具：$HS_BIN"
   hs_log "目标：DevEco 当前默认实例目录；名称：$HS_NAME；设备：$HS_TYPE；镜像：$HS_VERSION"
-  IFS= read -r 'answer?回车确认新建；输入任意字符取消：' || return 130
+  IFS= read -r "answer?$(jobs_prompt_render '回车确认新建；输入任意字符取消：')" || return 130
   [[ -z "$answer" ]] || { hs_log '已取消，未创建模拟器。'; return 0; }
   # 确认期间可能有其它进程创建设备，写入前再检查一次命名冲突。
   current="$(hs_query_output -list -details)" || return $?
@@ -679,7 +855,7 @@ hs_dispatch() {
   if (( ! HS_CHECK )); then
     [[ -t 0 ]] || { hs_error '请在可交互终端运行；无交互时只能使用 --check / --help。'; return 1; }
     local answer=""
-    IFS= read -r 'answer?已了解用途与影响，按回车继续；非空输入 / Ctrl+C 取消：' || return 130
+    IFS= read -r "answer?$(jobs_prompt_render '已了解用途与影响，按回车继续；非空输入 / Ctrl+C 取消：')" || return 130
     [[ -z "$answer" ]] || { hs_log '已取消，未安装工具或创建模拟器。'; return 0; }
   fi
   hs_check_host || return $?

@@ -165,3 +165,6 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s Tests -p 'test_*.py' -
 隔离测试覆盖取消、中断返回码、FVM 元数据与恢复失败、配置类型、入口权限、Git 状态检查、配置块标记，以及真实子进程 Ctrl+C。临时 FVM 绑定测试仅在已有 FVM 时运行。
 
 隔离测试使用临时工程、假的下载 / FVM / Emulator，不安装真实物料。另用本机 FVM 4.3.2 在临时缓存验证 `custom_` SDK 的 `use --skip-setup --skip-pub-get` 能创建正确链接。真实仓库 ref 已通过 `git ls-remote` 核对。该验证范围不包含真实下载 Flutter SDK、CLT 或系统镜像，没有创建真实设备或为真实工程执行构建；实际 HAP 编译、签名与运行仍需在目标工程上验证。
+
+**终端配色保护：** 独立运行时，在支持完整保存与恢复配色的交互终端中临时使用黑底白字及统一强调色；正常结束、失败或可捕获中断后恢复进入前的配色，不修改终端全局偏好或 Shell 启动配置。不支持完整保护、无交互终端、`NO_COLOR`、既有纯文本模式和 Sourcetree 场景不切换配色，并沿用纯文本输出约定。强制终止（如 `kill -9`）无法由脚本自身保证恢复，请使用运行时显示的独立恢复入口。
+
