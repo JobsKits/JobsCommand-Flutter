@@ -482,8 +482,6 @@ function Invoke-JobsSdkAcquire {
             Write-JobsSdkRetryMessage ('{0} 获取成功；共 {1} 次。' -f $Label,$attempt)
             return $result
         }
-        catch [System.Management.Automation.PipelineStoppedException] { throw }
-        catch [System.OperationCanceledException] { throw }
         catch {
             $failure = $_.Exception
             $autoSource = [bool]$failure.Data['JobsSdkAutoSource']
