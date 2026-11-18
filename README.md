@@ -317,10 +317,10 @@ MacOS 目录现有 58 个用户入口，WindowsOS 目录对应 42 个用户入�
 
 ### <span id="jobs-toc-heading-23" data-jobs-toc="v2">[【MacOS】🐦Flutter自动化生产代码.command](<./MacOS/小工具/【MacOS】🐦Flutter自动化生产代码.command/README.md>)</span><!-- jobs-toc:heading-end -->
 
-> **目的：** 按固定顺序生成 Flutter 图标、启动页和本地化代码。
+> **目的：** 默认取消，单选一项 Flutter / Dart 代码生成任务，watch 独立前台运行。
 
 - 验证工程。
-- 执行 flutter clean、pub get、flutter_launcher_icons:main、flutter_native_splash:create、flutter gen-l10n。
+- 选定任务后运行 clean / pub get 和对应生成器；按工程声明准备精确 SDK，Protobuf 才准备锁定工具。
 
 ### <span id="jobs-toc-heading-24" data-jobs-toc="v2">[【MacOS】🔍查询Flutter依赖版本.command](<./MacOS/小工具/【MacOS】🔍查询Flutter依赖版本.command/README.md>)</span><!-- jobs-toc:heading-end -->
 

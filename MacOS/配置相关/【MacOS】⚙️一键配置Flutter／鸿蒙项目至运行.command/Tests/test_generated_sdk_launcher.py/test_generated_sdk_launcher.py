@@ -716,7 +716,7 @@ if action in ('run','build','analyze'): sys.exit(int(os.environ.get('FAKE_BUSINE
         self.forbidden.chmod(0o700)
         self.env['JOBS_FLUTTER_ROUTE_CURL'] = str(self.forbidden)
         self.env['JOBS_FLUTTER_ROUTE_GIT'] = str(self.forbidden)
-        spec = importlib.util.spec_from_file_location('project_config_fixture', PACKAGE / 'Scripts/project_config.py')
+        spec = importlib.util.spec_from_file_location('project_config_fixture', PACKAGE / 'Scripts/project_config.py/project_config.py')
         self.config = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(self.config)
 

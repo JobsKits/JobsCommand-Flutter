@@ -122,7 +122,7 @@ fvm flutter doctor -v
 
 已将源码快照放入 `Scripts/vendor/CreateHarmonySimulator.zsh`，运行时不依赖该绝对路径，也不需要安装 Finder 扩展。上游快照 SHA-256：`6d3f23f6eb32c4b045b5c17da82d693dc271d5a45ef31ffcf0881f6efb4957af`。
 
-本地仅改两处集成接口：`main` 改名 `hs_main`；增加“被 source 时不自动运行”的入口判断。工具发现、校验、许可、下载、实例核验和独立 CLT 的 `sdkPath` 修正保持参考实现。对应回归测试复制到 `Tests/CreateHarmonySimulatorTests.rb`，只调整被测脚本路径。
+本地仅改两处集成接口：`main` 改名 `hs_main`；增加“被 source 时不自动运行”的入口判断。工具发现、校验、许可、下载、实例核验和独立 CLT 的 `sdkPath` 修正保持参考实现。对应回归测试复制到 `Tests/CreateHarmonySimulatorTests.rb/CreateHarmonySimulatorTests.rb`，只调整被测脚本路径。
 
 后续参考脚本升级时：同步快照 → 保留上述两个接口调整 → 同步物料常量和本 README → 跑两套回归。不要在两个工程分别修改同一套下载规则却不记录差异。
 
@@ -154,10 +154,10 @@ fvm flutter doctor -v
 
 ```sh
 /bin/zsh -n './【MacOS】⚙️一键配置Flutter项目至运行.command'
-/bin/zsh -n Scripts/flutter_workflow.zsh
+/bin/zsh -n Scripts/【MacOS】flutter_workflow.zsh/【MacOS】flutter_workflow.zsh
 /bin/zsh -n Scripts/vendor/CreateHarmonySimulator.zsh
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s Tests -p 'test_*.py' -v
-/usr/bin/ruby Tests/CreateHarmonySimulatorTests.rb
+/usr/bin/ruby Tests/CreateHarmonySimulatorTests.rb/CreateHarmonySimulatorTests.rb
 ```
 
 验证基线（2026-10-23）：主流程 **35 项测试通过**；复用模拟器脚本 **58 组 / 457 个断言通过**；zsh / Python 语法检查及 `git diff --check` 通过。

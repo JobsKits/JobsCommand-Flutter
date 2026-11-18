@@ -67,7 +67,7 @@
 隔离回归使用临时工程和假工具，覆盖双产物顺序、失败停止、缺包、旧包、损坏 FVM、中文空格路径及只读检查；不调用真实 Flutter 构建、签名或设备安装：
 
 ```shell
-ruby './Tests/harmony_packaging_test.rb'
+ruby './Tests/harmony_packaging_test.rb/harmony_packaging_test.rb'
 ```
 
 真实 DevEco 编译、证书与设备安装仍需在目标工程验收。Windows 对应入口见[双端打包目录](../../../WindowsOS/打包相关/README.md)；返回[本端打包说明](../README.md)。

@@ -537,7 +537,11 @@ jfs_route_cache_init() {
 jfs_route_note() {
     local output=""
     output="$(print -r -- "$2" | /usr/bin/perl -pe 's{([a-z][a-z0-9+.-]*://)[^\s/@]+@}{$1***@}ig; s{(https?://[^\s?#]+)[?#][^\s]*}{$1?[已省略]}ig; s{\e\[[0-9;?]*[ -/]*[@-~]}{}g')"
-    print -u2 -r -- "$output"
+    if (( ${+functions[jobs_prompt_output]} )); then
+        jobs_prompt_output print -u2 -r -- "$output"
+    else
+        print -u2 -r -- "$output"
+    fi
     [[ -z "$1" ]] || print -r -- "$output" >> "$1"
 }
 # 只回收本轮创建的子树，避免中断后留下SDK下载者。
@@ -700,6 +704,7 @@ jfs_route_sdk_is_official() {
     case "${origin%/}" in https://github.com/flutter/flutter|https://github.com/flutter/flutter.git|git@github.com:flutter/flutter.git|ssh://git@github.com/flutter/flutter.git) return 0 ;; esac
     return 1
 }
+# 含凭证或私有 namespace 的地址不自动换公共镜像，防止泄露仓库标识。
 jfs_route_protect_private_namespace() {
     if (( ${#JFS_BASES}>1 )) && [[ -n "$JFS_REALM" || "${JFS_PUBLIC_EVIDENCE:-0}" != 1 ]]; then
         JFS_BASES=("${JFS_SDK_DEFAULT_BASE:-https://storage.googleapis.com}")
@@ -828,6 +833,7 @@ jfs_route_key() {
 jfs_route_fingerprint() {
     print -rn -- "$1|$2|$3" | /usr/bin/shasum -a 256 | /usr/bin/awk '{print $1}'
 }
+# 读取线路冷却状态，暂避最近已失败的候选而不改变目标地址。
 jfs_route_is_cooling() {
     local route="$1" now="$2" failed_at=""
     [[ -f "$JFS_ROUTE_FAILED_FILE" ]] || return 1

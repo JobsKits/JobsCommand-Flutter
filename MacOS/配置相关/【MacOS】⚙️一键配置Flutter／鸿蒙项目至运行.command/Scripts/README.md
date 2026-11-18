@@ -25,9 +25,9 @@
 
 | 文件 | 职责与入口 |
 | --- | --- |
-| [harmony_workflow.zsh](./harmony_workflow.zsh) | 仅供主入口加载；工程选择、鸿蒙 SDK ref 核实、FVM 原子绑定与失败恢复、构建工具检查、依赖准备和设备运行。 |
-| [project_config.py](./project_config.py) | [**Python**](https://www.python.org/) 3.11+ 标准库模块；安全合并配置、留存备份、恢复绑定、生成工程命令入口和解析设备 JSON。 |
-| [CreateHarmonySimulator.zsh](./CreateHarmonySimulator.zsh) | 用户指定参考核心快照；独立可运行，也可由 workflow 加载以发现 / 下载 CLT、准备镜像、核验并创建实例。 |
+| [harmony_workflow.zsh](./【MacOS】harmony_workflow.zsh/【MacOS】harmony_workflow.zsh) | 仅供主入口加载；工程选择、鸿蒙 SDK ref 核实、FVM 原子绑定与失败恢复、构建工具检查、依赖准备和设备运行。 |
+| [project_config.py](./project_config.py/project_config.py) | [**Python**](https://www.python.org/) 3.11+ 标准库模块；安全合并配置、留存备份、恢复绑定、生成工程命令入口和解析设备 JSON。 |
+| [CreateHarmonySimulator.zsh](./【MacOS】CreateHarmonySimulator.zsh/【MacOS】CreateHarmonySimulator.zsh) | 用户指定参考核心快照；独立可运行，也可由 workflow 加载以发现 / 下载 CLT、准备镜像、核验并创建实例。 |
 
 配置模块由 workflow 传入参数，不把工程路径或 JSON 拼成源码。仅供加载的 workflow 不单独运行，不在加载时安装或读写工程。
 
@@ -38,9 +38,9 @@
 独立使用时仍先显示内置自述，创建入口回车授权；许可单独展示原文并由本人同意：
 
 ```shell
-/bin/zsh './CreateHarmonySimulator.zsh' --help
-/bin/zsh './CreateHarmonySimulator.zsh' --check
-/bin/zsh './CreateHarmonySimulator.zsh' --prepare
+/bin/zsh './【MacOS】CreateHarmonySimulator.zsh/【MacOS】CreateHarmonySimulator.zsh' --help
+/bin/zsh './【MacOS】CreateHarmonySimulator.zsh/【MacOS】CreateHarmonySimulator.zsh' --check
+/bin/zsh './【MacOS】CreateHarmonySimulator.zsh/【MacOS】CreateHarmonySimulator.zsh' --prepare
 ```
 
 此处模拟器 `--check` 会执行只读 CLI 查询，与主入口不执行候选工具的离线 `--check` 范围不同。`--prepare` 会准备工具及镜像，不创建实例。具体物料、环境变量、项目文件、日志及取消恢复边界见[包说明](../README.md)。

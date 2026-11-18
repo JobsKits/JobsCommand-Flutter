@@ -25,7 +25,7 @@ powershell.exe `
   -NoLogo `
   -NoProfile `
   -ExecutionPolicy Bypass `
-  -File .\Portable.Tests.ps1
+  -File .\Portable.Tests.ps1/Portable.Tests.ps1
 ```
 
 使用 `-SkipEntrypoints` 只运行模块夹具；默认还启动独立 PowerShell 进程验证功能映射清单中的 46 个入口各自的 `-Plan` 和 `-Check`。执行策略参数只作用于本次测试进程，不修改用户或机器策略。
@@ -37,7 +37,7 @@ powershell.exe `
   -NoLogo `
   -NoProfile `
   -ExecutionPolicy Bypass `
-  -File .\HarmonyBuild.Tests.ps1
+  -File .\HarmonyBuild.Tests.ps1/HarmonyBuild.Tests.ps1
 ```
 
 覆盖 HAP + APP 的命令顺序、缺 APP 能力停止、依赖或任一构建失败短路、缺失 / 空产物、SDK 路径 / FVM 边界及环境恢复；所有工具均由夹具替代，不执行真实 Flutter 或 DevEco。

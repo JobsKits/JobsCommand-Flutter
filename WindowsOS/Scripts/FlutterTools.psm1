@@ -4,10 +4,20 @@
 
 # Jobs enter-choice emphasis is display-only; input and business decisions stay with callers.
 function Test-JobsEnterChoiceColor {
-    if ((Test-Path Env:NO_COLOR) -or $env:TERM -ieq 'dumb' -or $env:PLAIN_OUTPUT -eq '1') { return $false }
-    $consoleType = [Console]
-    if ($null -eq $consoleType.GetProperty('IsInputRedirected') -or $null -eq $consoleType.GetProperty('IsOutputRedirected')) { return $false }
-    return ($Host.Name -ceq 'ConsoleHost' -and -not [Console]::IsInputRedirected -and -not [Console]::IsOutputRedirected)
+    param([Collections.IDictionary]$Capabilities = $null)
+    if ($null -eq $Capabilities) {
+        try {
+            $environment = [Environment]::GetEnvironmentVariables('Process')
+            $Capabilities = @{ HostName = $Host.Name; InputRedirected = [Console]::IsInputRedirected; OutputRedirected = [Console]::IsOutputRedirected;
+                               ErrorRedirected = [Console]::IsErrorRedirected; NoColorPresent = $environment.Contains('NO_COLOR');
+                               PlainOutput = $env:PLAIN_OUTPUT; Term = $env:TERM; Windows = ([Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT); VirtualTerminal = $false; SourceTree = ($env:IS_SOURCETREE_RUNTIME -eq '1') }
+            if ($null -ne $Host.UI.PSObject.Properties['SupportsVirtualTerminal']) { $Capabilities.VirtualTerminal = $Host.UI.SupportsVirtualTerminal }
+            foreach ($key in $environment.Keys) { if ([string]$key -match '^(?i:SOURCE_?TREE)') { $Capabilities.SourceTree = $true; break } }
+        } catch { return $false }
+    }
+    return ($Capabilities.HostName -eq 'ConsoleHost' -and -not $Capabilities.InputRedirected -and -not $Capabilities.OutputRedirected -and
+            -not $Capabilities.ErrorRedirected -and -not $Capabilities.NoColorPresent -and $Capabilities.PlainOutput -ne '1' -and
+            $Capabilities.Term -ine 'dumb' -and (-not [string]::IsNullOrEmpty($Capabilities.Term) -or ($Capabilities.Contains('Windows') -and $Capabilities.Windows)) -and -not $Capabilities.SourceTree -and $Capabilities.VirtualTerminal)
 }
 # Older hosts keep native colors without sending unsupported bold escape sequences.
 function Test-JobsEnterChoiceBold {
@@ -17,7 +27,7 @@ function Test-JobsEnterChoiceBold {
 # Separate ordinary question text from Enter and arbitrary-input options without changing words.
 function Get-JobsEnterChoiceParts {
     param([string]$Text)
-    $red = '(?:(?:\u8f93\u5165)?(?:\u4efb\u610f(?:\u975e\u7a7a)?(?:\u5b57\u7b26|\u5185\u5bb9|\u6587\u5b57|\u8f93\u5165)?|\u975e\u7a7a(?:\u8f93\u5165|\u5b57\u7b26|\u5185\u5bb9)?|(?:\u5176\u5b83|\u5176\u4ed6)(?:\u975e\u7a7a)?(?:\u8f93\u5165|\u5185\u5bb9|\u5b57\u7b26)?))|(?:any\s+(?:(?:other|non[- ]empty)\s+)?(?:input|text|characters?)|non[- ]empty\s+input)'
+    $red = '(?:(?:\u8f93\u5165)?(?:\u4efb\u610f(?:\u975e\u7a7a)?(?:\u5b57\u7b26|\u5185\u5bb9|\u6587\u5b57|\u8f93\u5165)?|\u975e\u7a7a(?:\u8f93\u5165|\u5b57\u7b26|\u5185\u5bb9)?|(?:\u5176\u5b83|\u5176\u4ed6)(?:\u975e\u7a7a)?(?:\u8f93\u5165|\u5185\u5bb9|\u5b57\u7b26)?))|(?:any\s+(?:(?:other|non[- ]empty)\s+)?(?:input|text|characters?)|non[- ]empty\s+input)|(?:type\s+(?:anything|any\s+(?:characters?|text|input)))'
     $green = '(?:(?:\u76f4\u63a5|\u53ea\u9700|\u4ec5(?:\u9700)?|\u6309(?:\u4e0b)?|\u7a7a)?\s*\u56de\u8f66|(?:press\s+)?\bEnter\b(?!\s+(?:YES|REPAIR|CLEAN|CONTINUE)\b))'
     $pattern = '(?is)(?<red>(?:' + $red + ')[^;\uFF1B\r\n]*?(?=[;\uFF1B\r\n]|\z))|(?<green>(?:' + $green + ')[^;\uFF1B\r\n]*?(?=(?:' + $red + ')|[;\uFF1B\r\n]|\z))'
     $offset = 0
@@ -32,54 +42,202 @@ function Get-JobsEnterChoiceParts {
     if ($offset -lt $Text.Length) { [pscustomobject]@{ Text = $Text.Substring($offset); Color = '' } }
 }
 # Native host text remains plain in information streams and logs; bold control is console-only.
+# 仅将实际询问的主体标成青色；操作选项与分隔符分别保留自身样式。
+function Get-JobsQuestionChoiceParts {
+    param([string]$Text)
+    $plain = [regex]::Replace($Text, '\x1b\[[0-9;]*m', '')
+    $questionBody = $true
+    foreach ($part in @(Get-JobsEnterChoiceParts $plain)) {
+        $isOption = $part.Color -eq 'Red' -or $part.Color -eq 'Green'
+        foreach ($token in [regex]::Matches($part.Text, '[^；;/|，,、？?：:=＝（）()\[\]【】\r\n]+|[；;/|，,、？?：:=＝（）()\[\]【】\r\n]')) {
+            $value = $token.Value
+            $separator = $value -match '^[；;/|，,、？?：:=＝（）()\[\]【】\r\n]$'
+            $color = ''
+            if (-not $separator -and -not [string]::IsNullOrWhiteSpace($value)) {
+                if ($isOption) { $color = $part.Color }
+                elseif ($questionBody) { $color = 'Cyan' }
+            }
+            [pscustomobject]@{ Text = $value; Color = $color }
+        }
+        if ($isOption) { $questionBody = $false }
+    }
+}
+# 识别展示地址边界，保留查询、编码与配对括号。
+function Get-JobsUrlRanges {
+    param([string]$Text)
+    $pattern = '[A-Za-z][A-Za-z0-9+.-]*://[^\s<>"''\x1b]+'
+    $punctuation = '，。；：！？、（）【】《》「」『』“”‘’'
+    $offset = 0
+    while ($offset -lt $Text.Length) {
+        $match = [regex]::Match($Text.Substring($offset), $pattern)
+        if (-not $match.Success) { break }
+        $start = $offset + $match.Index
+        $url = $match.Value
+        foreach ($mark in $punctuation.ToCharArray()) {
+            $at = $url.IndexOf($mark)
+            if ($at -ge 0) { $url = $url.Substring(0, $at) }
+        }
+        while ($url.Length) {
+            $last = $url.Substring($url.Length - 1, 1)
+            $unmatched = $false
+            foreach ($pair in @(@('(', ')'), @('[', ']'), @('{', '}'))) {
+                if ($last -eq $pair[1] -and ([regex]::Matches($url, [regex]::Escape($pair[1]))).Count -gt ([regex]::Matches($url, [regex]::Escape($pair[0]))).Count) { $unmatched = $true }
+            }
+            if ('. , ; : ! ?'.Split(' ') -contains $last -or $unmatched) { $url = $url.Substring(0, $url.Length - 1) }
+            else { break }
+        }
+        [pscustomobject]@{ Start = $start; End = $start + $url.Length }
+        $offset = $start + $url.Length
+    }
+}
+# 暂时遮蔽URL，避免询问分段误识别地址内的Enter。
+function Protect-JobsDisplayUrls {
+    param([string]$Text)
+    $builder = New-Object Text.StringBuilder
+    $tokens = New-Object 'Collections.Generic.List[object]'
+    $offset = 0; $number = 0
+    foreach ($range in @(Get-JobsUrlRanges $Text)) {
+        do { $number++; $token = [string][char]2 + 'U' + $number + [char]3 } while ($Text.Contains($token))
+        [void]$builder.Append($Text.Substring($offset, $range.Start - $offset)).Append($token)
+        $tokens.Add([pscustomobject]@{ Token = $token; Text = $Text.Substring($range.Start, $range.End - $range.Start) })
+        $offset = $range.End
+    }
+    [void]$builder.Append($Text.Substring($offset))
+    [pscustomobject]@{ Text = $builder.ToString(); Tokens = $tokens.ToArray() }
+}
+# 给可见地址标绿下划线，并恢复原SGR上下文。
+function Format-JobsUrlText {
+    param([AllowEmptyString()][string]$Text, [switch]$Color)
+    $control = '\x1b\][^\x1b\x07]*(?:\x07|\x1b\\)|\x1b\[[0-?]*[ -/]*[@-~]'
+    $sgr = '\x1b\[[0-9;:]*m'
+    $value = [regex]::Replace($Text, $control, {
+        param($match)
+        if ($Color -and $match.Value -match ('^' + $sgr + '$')) { return $match.Value }
+        return ''
+    })
+    if (-not $Color) { return $value }
+    $styles = @{}; $visible = New-Object Text.StringBuilder; $offset = 0
+    foreach ($match in [regex]::Matches($value, $sgr)) {
+        [void]$visible.Append($value.Substring($offset, $match.Index - $offset))
+        $index = $visible.Length
+        if (-not $styles.ContainsKey($index)) { $styles[$index] = '' }
+        $styles[$index] += $match.Value
+        $offset = $match.Index + $match.Length
+    }
+    [void]$visible.Append($value.Substring($offset))
+    $plain = $visible.ToString(); $starts = @{}; $ends = @{}
+    foreach ($range in @(Get-JobsUrlRanges $plain)) { $starts[$range.Start] = $true; $ends[$range.End - 1] = $true }
+    $escape = [string][char]27; $active = ''; $inUrl = $false; $output = New-Object Text.StringBuilder
+    for ($index = 0; $index -le $plain.Length; $index++) {
+        if ($styles.ContainsKey($index)) {
+            $tokens = $styles[$index]; [void]$output.Append($tokens)
+            foreach ($match in [regex]::Matches($tokens, $sgr)) {
+                $token = $match.Value; $code = $token.Substring(2, $token.Length - 3)
+                $fields = $code.Split(';'); $reset = $code -eq ''
+                for ($item = 0; $item -lt $fields.Count; $item++) {
+                    if ($fields[$item] -eq '0') { $reset = $true }
+                    if (@('38', '48', '58') -contains $fields[$item] -and $item + 1 -lt $fields.Count) {
+                        if ($fields[$item + 1] -eq '2') { $item += 4 }
+                        elseif ($fields[$item + 1] -eq '5') { $item += 2 }
+                    }
+                }
+                if ($reset) { $active = '' }
+                $active += $token
+            }
+            if ($inUrl) { [void]$output.Append($escape + '[32;4m') }
+        }
+        if ($index -eq $plain.Length) { break }
+        if ($starts.ContainsKey($index)) { [void]$output.Append($escape + '[32;4m'); $inUrl = $true }
+        [void]$output.Append($plain[$index])
+        if ($ends.ContainsKey($index)) { [void]$output.Append($escape + '[0m' + $active); $inUrl = $false }
+    }
+    return $output.ToString()
+}
+# 按现行询问规则合成展示字符串，保持输入原文。
+function Format-JobsDisplayText {
+    param([AllowEmptyString()][string]$Text, [switch]$Question, [switch]$Color, [string]$BaseStyle = '')
+    if (-not $Color) { return (Format-JobsUrlText $Text) }
+    $plain = Format-JobsUrlText $Text
+    $protected = Protect-JobsDisplayUrls $plain
+    $parts = if ($Question) { @(Get-JobsQuestionChoiceParts $protected.Text) } else { @(Get-JobsEnterChoiceParts $protected.Text) }
+    $escape = [string][char]27
+    if (-not $Question -and @($parts | Where-Object { $_.Color }).Count -eq 0) {
+        $result = Format-JobsUrlText ($BaseStyle + $Text) -Color
+    } else {
+        $output = New-Object Text.StringBuilder
+        foreach ($part in $parts) {
+            $code = switch ($part.Color) { 'Red' { 31 } 'Green' { 32 } 'Cyan' { 36 } default { 0 } }
+            if ($code) { [void]$output.Append($escape + '[1;' + $code + 'm' + $part.Text + $escape + '[0m' + $BaseStyle) }
+            else { [void]$output.Append($BaseStyle + $part.Text) }
+        }
+        $formatted = $output.ToString()
+        foreach ($item in $protected.Tokens) { $formatted = $formatted.Replace($item.Token, $item.Text) }
+        $result = Format-JobsUrlText $formatted -Color
+    }
+    if ($BaseStyle) { $result += $escape + '[0m' }
+    return $result
+}
+# 按调用者明确指定的ConsoleColor计算临时展示色。
+function Get-JobsDisplayBaseStyle {
+    param([Collections.IDictionary]$Parameters)
+    $codes = @{ Black=30; DarkBlue=34; DarkGreen=32; DarkCyan=36; DarkRed=31; DarkMagenta=35; DarkYellow=33; Gray=37; DarkGray=90; Blue=94; Green=92; Cyan=96; Red=91; Magenta=95; Yellow=93; White=97 }
+    $style = ''; $escape = [string][char]27
+    if ($Parameters.ContainsKey('ForegroundColor')) { $style += $escape + '[' + $codes[[string]$Parameters.ForegroundColor] + 'm' }
+    if ($Parameters.ContainsKey('BackgroundColor')) { $style += $escape + '[' + ($codes[[string]$Parameters.BackgroundColor] + 10) + 'm' }
+    return $style
+}
 function Write-JobsEnterChoiceText {
     [CmdletBinding()]
-    param([Parameter(Position=0)][AllowNull()][object]$Object, [switch]$NoNewline, [ConsoleColor]$ForegroundColor, [ConsoleColor]$BackgroundColor, [object]$Separator = ' ')
+    param([Parameter(Position=0)][AllowNull()][object]$Object, [switch]$NoNewline, [ConsoleColor]$ForegroundColor, [ConsoleColor]$BackgroundColor, [object]$Separator = ' ', [switch]$Question)
     $text = if ($Object -is [array]) { $Object -join [string]$Separator } else { [string]$Object }
-    if (-not (Test-JobsEnterChoiceColor)) {
-        Write-Host $Object -NoNewline:$NoNewline -Separator $Separator
-        return
-    }
-    $normal = @{}
-    if ($PSBoundParameters.ContainsKey('ForegroundColor')) { $normal.ForegroundColor = $ForegroundColor }
-    if ($PSBoundParameters.ContainsKey('BackgroundColor')) { $normal.BackgroundColor = $BackgroundColor }
-    foreach ($part in @(Get-JobsEnterChoiceParts $text)) {
-        if (-not $part.Color) { Write-Host $part.Text -NoNewline @normal; continue }
-        $bold = Test-JobsEnterChoiceBold
-        if ($bold) { [Console]::Write(([string][char]27) + '[1m') }
-        try { Write-Host $part.Text -ForegroundColor $part.Color -NoNewline }
-        finally { if ($bold) { [Console]::Write(([string][char]27) + '[0m') } }
-    }
-    if (-not $NoNewline) { Write-Host }
+    $plain = Format-JobsUrlText $text
+    if (-not (Test-JobsEnterChoiceColor)) { Write-Host $plain -NoNewline:$NoNewline; return }
+    $baseStyle = Get-JobsDisplayBaseStyle $PSBoundParameters
+    $rendered = Format-JobsDisplayText $text -Question:$Question -Color -BaseStyle $baseStyle
+    $message = New-Object Management.Automation.HostInformationMessage
+    $message.Message = $plain
+    $message.NoNewLine = [bool]$NoNewline
+    if ($PSBoundParameters.ContainsKey('ForegroundColor')) { $message.ForegroundColor = $ForegroundColor }
+    if ($PSBoundParameters.ContainsKey('BackgroundColor')) { $message.BackgroundColor = $BackgroundColor }
+    Write-Information -MessageData $message -Tags 'JobsDisplay' -InformationAction SilentlyContinue
+    [Console]::Write($rendered)
+    if (-not $NoNewline) { [Console]::WriteLine() }
 }
 # Delegate the original reader, including secure input and EOF behavior, after prompt display.
 function Read-JobsEnterChoiceHost {
     [CmdletBinding()]
     param([Parameter(Position=0)][string]$Prompt, [switch]$AsSecureString, [switch]$MaskInput)
-    if ($AsSecureString -or $MaskInput -or -not (Test-JobsEnterChoiceColor) -or @((Get-JobsEnterChoiceParts $Prompt) | Where-Object { $_.Color }).Count -eq 0) {
-        return (Read-Host @PSBoundParameters)
+    if (-not (Test-JobsEnterChoiceColor)) {
+        $plainArguments = @{}
+        foreach ($key in $PSBoundParameters.Keys) { $plainArguments[$key] = $PSBoundParameters[$key] }
+        if ($plainArguments.ContainsKey('Prompt')) { $plainArguments.Prompt = Format-JobsUrlText $Prompt }
+        return (Read-Host @plainArguments)
     }
-    Write-JobsEnterChoiceText ($Prompt + ': ') -NoNewline
-    return (Read-Host)
+    Write-JobsEnterChoiceText ($Prompt + ': ') -NoNewline -Question
+    $readerArguments = @{}
+    foreach ($key in $PSBoundParameters.Keys) {
+        if ($key -ne 'Prompt') { $readerArguments[$key] = $PSBoundParameters[$key] }
+    }
+    return (Read-Host @readerArguments)
 }
 
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot 'SimulatorSessions.ps1')
-. (Join-Path $PSScriptRoot 'SdkDownloadOutput.ps1')
+. (Join-Path $PSScriptRoot 'SimulatorSessions.ps1/SimulatorSessions.ps1')
+. (Join-Path $PSScriptRoot 'SdkDownloadOutput.ps1/SdkDownloadOutput.ps1')
 
 function Write-JobsMessage {
     param([string]$Message)
-    Write-Host ('[Jobs] ' + $Message)
+    Write-JobsEnterChoiceText ('[Jobs] ' + $Message)
 }
 function Confirm-JobsChange {
     param([string]$Message, [string]$Token = 'YES')
     Write-JobsMessage $Message
-    if ((Read-Host ('输入 ' + $Token + ' 继续，其它输入取消')) -cne $Token) { throw '用户取消，操作未继续。' }
+    if ((Read-JobsEnterChoiceHost ('输入 ' + $Token + ' 继续，其它输入取消')) -cne $Token) { throw '用户取消，操作未继续。' }
 }
 function Resolve-JobsDirectory {
     param([string]$Path)
-    if (-not $Path) { $Path = Read-Host '输入或拖入目标目录' }
+    if (-not $Path) { $Path = Read-JobsEnterChoiceHost '输入或拖入目标目录' }
     $Path = $Path.Trim('"')
     $item = Get-Item -LiteralPath $Path -Force
     if (-not $item.PSIsContainer) { throw '目标必须是目录。' }
@@ -120,7 +278,7 @@ function Invoke-JobsCommand {
     try {
         $ErrorActionPreference = 'Continue'
         $global:LASTEXITCODE = -1
-        & $Executable @Arguments 2>&1 | ForEach-Object { Write-Host ([string]$_) }
+        & $Executable @Arguments 2>&1 | ForEach-Object { Write-JobsEnterChoiceText ([string]$_) }
         $code = $LASTEXITCODE
     } finally { $ErrorActionPreference = $previous }
     if ($code -ne 0) { throw ('命令失败，退出码 ' + $code + '：' + $Executable) }
@@ -174,8 +332,8 @@ function Write-JobsText {
 function Select-JobsItem {
     param([string]$Title, [object[]]$Items)
     if ($Items.Count -eq 0) { throw ($Title + '：没有可选项。') }
-    for ($i=0; $i -lt $Items.Count; $i++) { Write-Host ('{0}、{1}' -f ($i+1), $Items[$i]) }
-    $answer = Read-Host ($Title + '，输入序号；留空取消')
+    for ($i=0; $i -lt $Items.Count; $i++) { Write-JobsEnterChoiceText ('{0}、{1}' -f ($i+1), $Items[$i]) }
+    $answer = Read-JobsEnterChoiceHost ($Title + '，输入序号；留空取消')
     $index = 0
     if (-not [int]::TryParse($answer, [ref]$index) -or $index -lt 1 -or $index -gt $Items.Count) { throw '未选择有效项。' }
     return $Items[$index-1]
@@ -220,10 +378,10 @@ function Invoke-JobsAndroidPrepare {
         if($platforms.Count -eq 0 -or $buildTools.Count -eq 0){throw '官方清单缺少稳定 Android Platform 或 Build Tools。'}
         $platform=Read-JobsAndroidChoice '选择工程 compileSdk 所需 Android Platform' $platforms
         $build=Read-JobsAndroidChoice '选择 Android Build Tools' $buildTools
-        Write-Host ('来源：Google Android SDK 官方仓库；目标：'+$sdk+'；安装 '+$platform+' / '+$build)
+        Write-JobsEnterChoiceText ('来源：Google Android SDK 官方仓库；目标：'+$sdk+'；安装 '+$platform+' / '+$build)
         Invoke-JobsAndroidTool $java $tools 'sdkmanager' @(('--sdk_root=' + $sdk), '--licenses') -Interactive
         Invoke-JobsAndroidTool $java $tools 'sdkmanager' @(('--sdk_root=' + $sdk), '--install', $platform, $build) -Interactive
-        Write-Host ('Android SDK 准备完成：' + $sdk)
+        Write-JobsEnterChoiceText ('Android SDK 准备完成：' + $sdk)
     }
 }
 function Start-JobsAndroid {
@@ -317,7 +475,7 @@ function Set-JobsFvm {
     if (-not $Version) {
         $config = Join-Path $Project '.fvmrc'
         if (Test-Path -LiteralPath $config) { $Version = (Get-Content -LiteralPath $config -Raw -Encoding UTF8 | ConvertFrom-Json).flutter }
-        if (-not $Version) { $Version = Read-Host '输入项目 Flutter 版本，例如 stable 或具体版本号' }
+        if (-not $Version) { $Version = Read-JobsEnterChoiceHost '输入项目 Flutter 版本，例如 stable 或具体版本号' }
     }
     if ($Version -notmatch '^(stable|beta|master|[0-9]+\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?)$') { throw '版本格式无效。' }
     Push-Location -LiteralPath $Project
@@ -356,9 +514,9 @@ function Set-JobsWindowsEnvironment {
         Move-Item -LiteralPath $record -Destination ($record + '.restored-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [guid]::NewGuid().ToString('N'))
         return
     }
-    if (-not $Sdk) { $Sdk = Read-Host '输入已有 Android SDK 目录' }
+    if (-not $Sdk) { $Sdk = Read-JobsEnterChoiceHost '输入已有 Android SDK 目录' }
     $Sdk = Resolve-JobsDirectory $Sdk
-    if (-not $Java) { $Java = Read-Host '输入已有 JDK 根目录' }
+    if (-not $Java) { $Java = Read-JobsEnterChoiceHost '输入已有 JDK 根目录' }
     $Java = Resolve-JobsDirectory $Java
     if (-not (Test-Path -LiteralPath (Join-Path $Java 'bin/java.exe'))) { throw 'JDK 缺少 bin/java.exe。' }
     Confirm-JobsChange ('将写入当前用户 Android/JDK 变量：' + $Sdk + '；' + $Java + '。恢复用 -Mode Restore。')
@@ -489,10 +647,10 @@ function Invoke-JobsRecording {
 function Invoke-JobsTask {
     [CmdletBinding()]
     param([string]$Action, [string]$Title, [hashtable]$Options)
-    Write-Host ('=== ' + $Title + ' ===') -ForegroundColor Red
-    Write-Host '范围：Windows Flutter / Android / HarmonyOS / 当前用户配置；写操作会改变所选工程或工具缓存。先核对目标，Ctrl+C 可取消。'
-    Write-Host '使用 -Plan 仅展示入口；-Check 仅检查路径与功能包；执行命令使用独立 argv，不拼接或 eval 用户输入。'
-    if ($Options.Plan) { Write-Host ('计划：' + $Action + '；目标：' + $Options.TargetPath); return }
+    Write-JobsEnterChoiceText ('=== ' + $Title + ' ===') -ForegroundColor Red
+    Write-JobsEnterChoiceText '范围：Windows Flutter / Android / HarmonyOS / 当前用户配置；写操作会改变所选工程或工具缓存。先核对目标，Ctrl+C 可取消。'
+    Write-JobsEnterChoiceText '使用 -Plan 仅展示入口；-Check 仅检查路径与功能包；执行命令使用独立 argv，不拼接或 eval 用户输入。'
+    if ($Options.Plan) { Write-JobsEnterChoiceText ('计划：' + $Action + '；目标：' + $Options.TargetPath); return }
     if ($Options.Check) {
         if ($Options.TargetPath) { [void](Resolve-JobsDirectory $Options.TargetPath) }
         $requiredFeatures = @('Doctor','Codegen','Packager','Android','Harmony')
@@ -501,11 +659,11 @@ function Invoke-JobsTask {
         foreach ($name in $requiredFeatures) {
             if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot ('Features/' + $name + '/Action.psm1')))) { throw ('功能包缺失：' + $name) }
         }
-        Write-Host '入口与随包模块完整；未启动 SDK、联网、安装或修改配置。'; return
+        Write-JobsEnterChoiceText '入口与随包模块完整；未启动 SDK、联网、安装或修改配置。'; return
     }
     if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) { throw '真实操作仅支持 Windows。可以在其它系统使用 -Plan / -Check。' }
     if ([Console]::IsInputRedirected) { throw '需要交互终端；输入重定向或 EOF 时停止。只读检查请传 -Plan / -Check。' }
-    Write-Host ('日志位于系统临时目录 JobsFlutter-' + $Action + '-时间戳.log')
+    Write-JobsEnterChoiceText ('日志位于系统临时目录 JobsFlutter-' + $Action + '-时间戳.log')
     if ((Read-JobsEnterChoiceHost '回车继续，其它输入取消') -cne '') { throw '用户取消。' }
     $log = Join-Path ([IO.Path]::GetTempPath()) ('JobsFlutter-' + $Action + '-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [guid]::NewGuid().ToString('N').Substring(0,8) + '.log')
     Start-Transcript -LiteralPath $log | Out-Null
@@ -593,7 +751,7 @@ function Invoke-JobsTask {
                 $output=$Options.OutputPath
                 if(-not $output){$output=[Environment]::GetFolderPath('DesktopDirectory')}
                 $output=Resolve-JobsDirectory $output
-                Invoke-JobsDart $root @((Join-Path $PSScriptRoot 'ExtractFlutterDependencies.dart'),'--project',$root,'--destination',$output)
+                Invoke-JobsDart $root @((Join-Path $PSScriptRoot 'ExtractFlutterDependencies.dart/ExtractFlutterDependencies.dart'),'--project',$root,'--destination',$output)
             }
             'clean' { Confirm-JobsChange ('执行 flutter clean，移除所选工程生成缓存：' + $root) 'CLEAN'; Invoke-JobsFlutter $root @('clean'); Invoke-JobsFlutter $root @('pub','get') }
             'assets' {
@@ -626,18 +784,18 @@ function Invoke-JobsTask {
                 Write-JobsMessage '已切换资源管理器普通隐藏文件显示；按 F5 刷新。再次运行可切回；不改变受保护系统文件显示。'
             }
             'authorize' {
-                if(-not $Options.TargetPath){$Options.TargetPath=Read-Host '输入或拖入一个普通文件'}
+                if(-not $Options.TargetPath){$Options.TargetPath=Read-JobsEnterChoiceHost '输入或拖入一个普通文件'}
                 $target=Get-Item -LiteralPath ($Options.TargetPath.Trim('"')) -Force
                 if($target.PSIsContainer -or ($target.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0){throw '仅支持一个普通文件。'}
                 Confirm-JobsChange ('解除文件下载区域标记：' + $target.FullName + '。不执行文件、不改系统执行策略。')
                 Unblock-File -LiteralPath $target.FullName
             }
             'color' {
-                $value=$Options.Value; if(-not $value){$value=Read-Host '输入 #RRGGBB 或 #AARRGGBB'}
+                $value=$Options.Value; if(-not $value){$value=Read-JobsEnterChoiceHost '输入 #RRGGBB 或 #AARRGGBB'}
                 if($value -notmatch '^#?(?:[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$'){throw '颜色格式无效。'}
                 $hex=$value.TrimStart('#'); if($hex.Length -eq 6){$hex='FF'+$hex}
                 $a=[Convert]::ToInt32($hex.Substring(0,2),16);$r=[Convert]::ToInt32($hex.Substring(2,2),16);$g=[Convert]::ToInt32($hex.Substring(4,2),16);$b=[Convert]::ToInt32($hex.Substring(6,2),16)
-                Write-Host ('ARGB：#{0}；CSS：rgba({1}, {2}, {3}, {4:F3})；Flutter：Color(0x{0})' -f $hex,$r,$g,$b,($a/255.0))
+                Write-JobsEnterChoiceText ('ARGB：#{0}；CSS：rgba({1}, {2}, {3}, {4:F3})；Flutter：Color(0x{0})' -f $hex,$r,$g,$b,($a/255.0))
             }
             'profile' { if(-not(Test-Path -LiteralPath $PROFILE.CurrentUserAllHosts)){throw '当前用户 PowerShell profile 尚不存在。'}; Start-Process -FilePath (Get-JobsCommand 'notepad.exe') -ArgumentList @($PROFILE.CurrentUserAllHosts); Write-JobsMessage '编辑后请在新终端确认效果；不会自动执行未知 profile。' }
             'jobsfunction' {

@@ -168,9 +168,9 @@ SDK 缓存在用户缓存目录的 `JobsFlutter/fvm/harmony/versions/`。已有 
 │   ├── project_config.py
 │   └── CreateHarmonySimulator.zsh
 └── Tests/
-    ├── test_harmony_setup.py
-    ├── test_binding_versions.py
-    └── CreateHarmonySimulatorTests.rb
+    ├── test_harmony_setup.py/test_harmony_setup.py
+    ├── test_binding_versions.py/test_binding_versions.py
+    └── CreateHarmonySimulatorTests.rb/CreateHarmonySimulatorTests.rb
 ```
 
 主日志为系统临时目录 `JobsFlutterHarmonySetup.*/setup.log`，运行交互另存同目录 `run.typescript`；后者是保留终端显示和热重载能力的原始终端记录，可能包含控制字符。模拟器独立日志在系统临时目录 `JobsHarmonySimulator.*/CreateHarmonySimulator.log`。
@@ -179,10 +179,10 @@ SDK 缓存在用户缓存目录的 `JobsFlutter/fvm/harmony/versions/`。已有 
 
 ```shell
 /bin/zsh -n './【MacOS】⚙️一键配置Flutter／鸿蒙项目至运行.command'
-/bin/zsh -n './Scripts/harmony_workflow.zsh'
-/bin/zsh -n './Scripts/CreateHarmonySimulator.zsh'
+/bin/zsh -n './Scripts/【MacOS】harmony_workflow.zsh/【MacOS】harmony_workflow.zsh'
+/bin/zsh -n './Scripts/【MacOS】CreateHarmonySimulator.zsh/【MacOS】CreateHarmonySimulator.zsh'
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s Tests -p 'test_*.py' -v
-/usr/bin/ruby './Tests/CreateHarmonySimulatorTests.rb'
+/usr/bin/ruby './Tests/CreateHarmonySimulatorTests.rb/CreateHarmonySimulatorTests.rb'
 ```
 
 2026-10-23 验证：主流程与配置保护 **57 项测试通过**，模拟器核心 **58 组 / 457 个断言通过**；三份 zsh 语法检查通过。

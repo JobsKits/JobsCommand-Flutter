@@ -25,8 +25,8 @@
 
 | 文件 | 当前职责 |
 | --- | --- |
-| [flutter_workflow.zsh](./flutter_workflow.zsh) | 选择工程、官方/鸿蒙 SDK、项目 FVM 或显式全局模式；检查依赖、准备平台与设备，运行工作流；被 source 时只定义函数 |
-| [project_config.py](./project_config.py) | 读取/校验 JSON 和路径；生成工程环境、编辑器配置与启动器；备份/恢复 FVM 绑定；从标准输入筛选设备 |
+| [flutter_workflow.zsh](./【MacOS】flutter_workflow.zsh/【MacOS】flutter_workflow.zsh) | 选择工程、官方/鸿蒙 SDK、项目 FVM 或显式全局模式；检查依赖、准备平台与设备，运行工作流；被 source 时只定义函数 |
+| [project_config.py](./project_config.py/project_config.py) | 读取/校验 JSON 和路径；生成工程环境、编辑器配置与启动器；备份/恢复 FVM 绑定；从标准输入筛选设备 |
 | [vendor/CreateHarmonySimulator.zsh](./vendor/CreateHarmonySimulator.zsh) | 随包鸿蒙模拟器快照，提供工具/镜像发现、许可、实例创建与启动；由工作流调用 |
 
 ## <span id="jobs-toc-heading-3" data-jobs-toc="v2">二、输入输出与边界 <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a></span><!-- jobs-toc:heading-end -->

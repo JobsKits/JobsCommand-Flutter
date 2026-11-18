@@ -126,6 +126,6 @@ Flutter SDK 安装读取官方 Windows 稳定发布清单、按 SHA-256 校验�
 
 ## <span id="jobs-toc-heading-6" data-jobs-toc="v2">六、验证与限制</span><!-- jobs-toc:heading-end -->
 
-PowerShell 全树语法解析和 Tests/Portable.Tests.ps1 的临时夹具、全部 46 个入口 Plan / Check 可验证；包括中文与空格路径、FVM 缺失停止、URI 编码幂等、配置保留、namespace 不覆盖、依赖 ZIP、原生命令非零失败。Tests/HarmonyBuild.Tests.ps1 额外隔离验证双产物命令顺序、能力缺失、任一构建失败、空产物与环境恢复。MacOS 原脚本与现有资源的移动前后字节核对另行执行。
+PowerShell 全树语法解析和 Tests/Portable.Tests.ps1/Portable.Tests.ps1 的临时夹具、全部 46 个入口 Plan / Check 可验证；包括中文与空格路径、FVM 缺失停止、URI 编码幂等、配置保留、namespace 不覆盖、依赖 ZIP、原生命令非零失败。Tests/HarmonyBuild.Tests.ps1/HarmonyBuild.Tests.ps1 额外隔离验证双产物命令顺序、能力缺失、任一构建失败、空产物与环境恢复。MacOS 原脚本与现有资源的移动前后字节核对另行执行。
 
 验证未进行真实网络下载、安装、用户环境写入、缓存清理、设备运行或构建；Windows PowerShell 5.1 与 Windows 实机尚需目标机验收。运行测试见 [Tests/README.md](./Tests/README.md)。

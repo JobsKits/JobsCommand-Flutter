@@ -780,7 +780,7 @@ jobs_command_sdk_platform '' ohos-v1 fake_flutter ohos
 
 
     def test_failed_partial_git_output_does_not_contaminate_resolved_ref(self):
-        workflow = PACKAGE / 'Scripts/flutter_workflow.zsh'
+        workflow = PACKAGE / 'Scripts/【MacOS】flutter_workflow.zsh/【MacOS】flutter_workflow.zsh'
         result = self.run_zsh('source ' + shlex.quote(str(workflow)) + '\n' + r'''
 JOBS_SDK_REPO=https://private.test/sdk.git JOBS_SDK_REF=release
 jobs_git() {
@@ -800,7 +800,7 @@ print -r -- "commit:$JOBS_SDK_COMMIT"
         self.assertEqual((self.root / 'git-count').read_text().strip(), '2')
 
     def test_existing_conflicting_harmony_cache_is_not_retried(self):
-        workflow = PACKAGE / 'Scripts/flutter_workflow.zsh'
+        workflow = PACKAGE / 'Scripts/【MacOS】flutter_workflow.zsh/【MacOS】flutter_workflow.zsh'
         self.run_zsh('source ' + shlex.quote(str(workflow)) + '\n' + r'''
 JOBS_FVM_CACHE="$TEST_ROOT/fvm" JOBS_FVM_VERSION=custom_test JOBS_SDK_REF=release
 mkdir -p "$JOBS_FVM_CACHE/versions/$JOBS_FVM_VERSION"

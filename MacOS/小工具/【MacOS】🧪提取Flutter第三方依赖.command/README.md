@@ -11,6 +11,7 @@
 - [一、目录与运行](#jobs-toc-heading-2)
 - [二、输出与范围](#jobs-toc-heading-3)
 - [三、日志与排查](#jobs-toc-heading-4)
+- [四、运行规则补充（脚本统一）](#jobs-toc-heading-5)
 
 </details>
 <!-- jobs-toc:end -->
@@ -98,5 +99,9 @@ Pub 的解析与缓存机制见 [Dart pub get](https://dart.dev/tools/pub/cmd/pu
 引擎与交互均经过临时项目验证，交互回归入口为完整工程的 `Tests/ExtractionShellTests.rb`。该三件套可独立运行，不注册右键菜单；需要 Finder 菜单时，另用完整 `JobsFlutterDependencyExtractor` 工程的独立安装入口。
 
 **终端配色保护：** 独立运行时，在支持完整保存与恢复配色的交互终端中临时使用黑底白字及统一强调色；正常结束、失败或可捕获中断后恢复进入前的配色，不修改终端全局偏好或 Shell 启动配置。不支持完整保护、无交互终端、`NO_COLOR`、既有纯文本模式和 Sourcetree 场景不切换配色，并沿用纯文本输出约定。强制终止（如 `kill -9`）无法由脚本自身保证恢复，请使用运行时显示的独立恢复入口。
+
+## <span id="jobs-toc-heading-5" data-jobs-toc="v2">四、运行规则补充（脚本统一） <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a></span><!-- jobs-toc:heading-end -->
+
+本轮按所选职责准备必要依赖；健康工具直接复用，缺失/损坏才条件获取并刷新当前进程路径后复检。临时网络失败持续重试，Ctrl+C/EOF 或确定的本地、版本、许可错误停止；只读、未选及卸载不因检查触发安装。原生GUI安装、系统权限、目标SDK构建与设备流程尚待对应系统实机验证。
 
 <a id="🔚" href="#前言" style="font-size:17px; color:green; font-weight:bold;">我是有底线的➤点我回到首页</a>

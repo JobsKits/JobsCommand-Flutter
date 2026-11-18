@@ -6,11 +6,13 @@
 # - 运行提示：由已确认的业务入口 source，Ctrl+C 结束当前获取。
 # SDK 网络只作用于本次子进程；业务调用方在 SDK 就绪后单独执行。
 typeset -g JOBS_COMMAND_SDK_MODULE="${${(%):-%x}:A:h:h}/【MacOS】FlutterSDK网络选路.zsh/【MacOS】FlutterSDK网络选路.zsh"
+# 从脚本自身位置加载共享 SDK 获取器，避免依赖启动工作目录。
 jobs_command_sdk_load() {
   (( $+functions[jobs_flutter_sdk_retry] )) && return 0
   [[ -r "$JOBS_COMMAND_SDK_MODULE" ]] || { print -u2 -r -- "缺少随包 SDK 网络模块：$JOBS_COMMAND_SDK_MODULE"; return 1; }
   source "$JOBS_COMMAND_SDK_MODULE"
 }
+# 把当前 SDK 命令和原始参数交给共享获取器，保留失败及取消状态。
 jobs_command_sdk() {
   local title="$1" sdk="$2" version="$3" sdk_log="${LOG_FILE:-}"; shift 3
   jobs_command_sdk_load || return $?
@@ -22,6 +24,7 @@ jobs_command_sdk_git() {
   JOBS_FLUTTER_ROUTE_MODE=git JOBS_FLUTTER_ROUTE_SOURCE_URL="$JOBS_SDK_REPO" \
     JOBS_FLUTTER_ROUTE_GIT_REF="${JOBS_SDK_GIT_REF:-HEAD}" jobs_command_sdk "$@"
 }
+# 按当前系统及架构选择 SDK 平台，不改变调用方参数。
 jobs_command_sdk_platform() {
   local sdk="$1" version="$2" flutter="$3" platform="$4" help_text=""
   if [[ "$platform" == ohos ]]; then

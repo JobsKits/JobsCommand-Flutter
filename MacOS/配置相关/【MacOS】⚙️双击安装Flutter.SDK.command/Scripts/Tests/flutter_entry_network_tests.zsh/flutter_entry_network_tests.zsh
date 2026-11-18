@@ -525,6 +525,7 @@ ENTRY_ROOT="${SCRIPTS_ROOT:h}"
 TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp/}JobsFlutterEntries.XXXXXXXX")" || exit 1
 TEST_COUNT=0
 TEST_FAILURES=0
+# 测试退出或取消时回收本用例拥有的临时夹具。
 TRAPEXIT() { [[ -d "$TEST_ROOT" && "${TEST_ROOT:t}" == JobsFlutterEntries.* ]] && /bin/rm -r -- "$TEST_ROOT"; }
 # 每项保留入口文件名和解释器，所有SDK及下载层明确替换。
 verify_entry() {
@@ -561,7 +562,14 @@ ENTRY
     [[ "$(/usr/bin/grep -Fxc 'flutter|build|space arg' "$TEST_TRACE")" == 1 ]] &&
     /usr/bin/grep -Fxq -- --run "$TEST_TRACE" && /usr/bin/grep -Fxq -- --once "$TEST_TRACE"
 }
-main() {
+# 展示自动化回归的用途与作用范围，保留原有测试调用协议。
+show_script_intro_and_wait() {
+  print -r -- '脚本自述：执行隔离回归并汇总断言结果。'
+  print -r -- '影响：仅使用原测试声明的临时夹具；不运行真实安装或系统清理。'
+  print -r -- '运行策略：保留原自动化参数与退出码；Ctrl+C 取消。'
+}
+# 执行入口网络适配回归并保留原汇总结果。
+run_regression_cases() {
   local entry=''
   for entry in "$ENTRY_ROOT"/*.command(N); do
     /usr/bin/grep -q '^# JOBS_FLUTTER_NETWORK_ADAPTER_BEGIN$' "$entry" || continue
@@ -570,5 +578,10 @@ main() {
   done
   print -r -- "结果：${TEST_COUNT}个入口，失败${TEST_FAILURES}。"
   (( TEST_COUNT > 0 && TEST_FAILURES == 0 ))
+}
+# 编排测试说明与隔离回归。
+main() {
+  show_script_intro_and_wait # 展示自动化测试用途、隔离范围和取消方式。
+  run_regression_cases "$@" # 执行既有夹具并保留失败统计和退出码。
 }
 main "$@"

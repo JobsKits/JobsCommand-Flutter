@@ -34,7 +34,7 @@
 
 ## 依赖与启用
 
-- Shell 选择器需要 fzf。本机已有安装时直接复用，优先查找 PATH，然后查找 Apple Silicon / Intel Homebrew、用户目录 Homebrew 和 `~/.fzf/bin/fzf`。缺少时提示安装，例如 `brew install fzf`；不退回编号选择。
+- Shell 选择器需要 fzf。本机已有安装时直接复用，优先查找 PATH，然后查找 Apple Silicon / Intel Homebrew、用户目录 Homebrew 和 `~/.fzf/bin/fzf`。缺失或版本/参数健康检查失败时，在本次已选流程通过 Homebrew 条件安装或精确修复并复检；默认取消，不退回编号选择。
 - macOS 10.15 或更高版本；安装时需要 Xcode 或 Command Line Tools 中的 `clang` 与 macOS SDK。缺失时先运行 `xcode-select --install`，完成后重新安装。
 - 安装器为当前机器架构编译，默认使用本机 ad-hoc 签名，不需要开发者账号。生成的 App 供本机使用；跨机器分发应另行处理签名和公证。
 - 若系统需要用户启用扩展，在“系统设置”中搜索“扩展”，找到 Finder 扩展并启用“切换 Shell”。不同 macOS 版本的设置位置可能不同。
@@ -64,16 +64,21 @@ Shell 选择器只列出 `/etc/shells` 中存在且可执行的文件；执行�
 - `【MacOS】🎈切换Shell.command`：命令入口、fzf 模糊搜索选择、确认和账户结果核验。
 - `FinderMenu/FinderSync.m`：桌面 / Finder 空白处菜单和挂载卷覆盖。
 - `FinderMenu/Launcher.m`：定位内置脚本并交由系统 Terminal 打开。
-- `FinderMenu/install.zsh`：暂存编译、签名校验、安装更新、注册、状态查询和卸载。安装替换失败时恢复旧 App；同名非本工具应用不会被覆盖。
-- `tests/shell_switcher.zsh`：使用替身验证 fzf 取消 / 故障 / 非法输出、确认取消、非法目标、重复选择、`chsh` 失败、结果核验和成功路径，**不执行真实账户修改**。
+- `FinderMenu/【MacOS】install.zsh/【MacOS】install.zsh`：暂存编译、签名校验、安装更新、注册、状态查询和卸载。安装替换失败时恢复旧 App；同名非本工具应用不会被覆盖。
+- `tests/【MacOS】shell_switcher.zsh/【MacOS】shell_switcher.zsh`：使用替身验证 fzf 取消 / 故障 / 非法输出、确认取消、非法目标、重复选择、`chsh` 失败、结果核验和成功路径，**不执行真实账户修改**。
 
 ```zsh
 /bin/zsh -n ./【MacOS】🎈切换Shell.command
-/bin/zsh -n FinderMenu/install.zsh
-/bin/zsh tests/shell_switcher.zsh
+/bin/zsh -n FinderMenu/【MacOS】install.zsh/【MacOS】install.zsh
+/bin/zsh tests/【MacOS】shell_switcher.zsh/【MacOS】shell_switcher.zsh
 ```
 
 端到端验证应包含桌面右键、普通文件夹空白处右键、点击后显示 fzf Shell 选择器，以及取消后账户默认 Shell 保持不变。
 
 **终端配色保护：** 独立运行时，在支持完整保存与恢复配色的交互终端中临时使用黑底白字及统一强调色；正常结束、失败或可捕获中断后恢复进入前的配色，不修改终端全局偏好或 Shell 启动配置。不支持完整保护、无交互终端、`NO_COLOR`、既有纯文本模式和 Sourcetree 场景不切换配色，并沿用纯文本输出约定。强制终止（如 `kill -9`）无法由脚本自身保证恢复，请使用运行时显示的独立恢复入口。
+
+
+## 一、运行规则补充（脚本统一） <a href="#前言" style="font-size:17px; color:green;"><b>🔼</b></a> <a href="#🔚" style="font-size:17px; color:green;"><b>🔽</b></a>
+
+本轮按所选职责准备必要依赖；健康工具直接复用，缺失/损坏才条件获取并刷新当前进程路径后复检。临时网络失败持续重试，Ctrl+C/EOF 或确定的本地、版本、许可错误停止；只读、未选及卸载不因检查触发安装。原生GUI安装、系统权限、目标SDK构建与设备流程尚待对应系统实机验证。
 
